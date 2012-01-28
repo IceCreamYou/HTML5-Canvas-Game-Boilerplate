@@ -1,0 +1,49 @@
+* {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  padding: 0;
+  margin: 0;
+}
+
+h1 {
+  font-size: 34px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+pre {
+  font-family: monospace;
+  white-space: pre;
+}
+
+p, pre {
+  padding-bottom: 10px;
+}
+
+li {
+  list-style-position: inside;
+}
+
+header {
+  border-bottom: 1px solid #999999;
+  padding: 10px 0;
+  text-align: center;
+}
+
+#main {
+  background-color: #EEEEEE;
+  padding: 30px 0;
+}
+
+#canvas {
+  background-color: #FFFFFF;
+  border: 1px solid black;
+  display: block;
+  margin: 0 auto;
+}
+
+footer {
+  border-top: 1px solid #999999;
+  padding: 10px;
+  text-align: center;
+}
