@@ -2,13 +2,21 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Canvas</title>
+    <title>HTML5 Canvas Library/Boilerplate</title>
     <link type="text/css" rel="stylesheet" media="all" href="styles.css" />
     <script type="text/javascript" src="jquery-1.7.1.js"></script>
     <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="classes.js"></script>
     <script type="text/javascript" src="utilities.js"></script>
     <script type="text/javascript" src="actors.js"></script>
     <script type="text/javascript" src="main.js"></script>
+    <!--
+      There are a number of best practices you may want to follow when setting
+      up your webpage, such as specifying a meta description. This template is
+      designed to be the absolute minimum, but really all you need for this
+      library to work is the JS files and a <canvas> element. If you want to be
+      more thorough, check out https://github.com/h5bp/html5-boilerplate.
+    -->
 </head>
 <body>
   <header>
@@ -16,7 +24,20 @@
   </header>
   <div id="main">
     <noscript>You must have JavaScript enabled.</noscript>
-    <canvas id="canvas" width="800" height="600"></canvas>
+    <!--
+      You can add several custom attributes to the canvas element to achieve
+      different behavior. The "width" and "height" attributes will specify the
+      minimum width and height of the canvas. The "data-maxwidth" and
+      "data-maxheight" attributes specify the maximum size of the canvas. The
+      canvas size will be automatically adjusted within that range depending
+      on the browser size. If "data-maxwidth" or "data-maxheight" are not
+      provided, the maximum size is unlimited. You can also specify the
+      "data-worldwidth" and "data-worldheight" properties to set the size of
+      the complete playable area. If the world size is larger than the canvas,
+      the viewable area will scroll as the player approaches the edge of the
+      canvas.
+    -->
+    <canvas id="canvas" width="800" height="600" data-maxwidth="1280" data-maxheight="1024"></canvas>
   </div><!-- /main -->
   <footer>
     <p>An <a href="http://www.isaacsukin.com/">Isaac Sukin</a> production.</p>
