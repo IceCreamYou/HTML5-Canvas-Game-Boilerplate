@@ -7,11 +7,6 @@
  *   - Support sprite animation.
  *   - Stop "sticking" against walls due to the collision checking
  *   - Cross-browser testing.
- *
- * TODO to prepare for open-sourcing the library:
- *   - Remove this block comment.
- *   - Add a README.
- *   - Add a license.
  */
 
 var bgLayer; // the background layer
