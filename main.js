@@ -103,9 +103,12 @@ function setup() {
  * Set up an example scene.
  */
 function setupExampleScene() {
-	// Position player at the starting point.
-	player.x = 50;
-	player.y = 370;
+	// Optionally set the world size.
+	world.resize(1600, 960);
+	
+	// Optionally position player at the starting point (defaults to center).
+	player.x = 760;
+	player.y = 440;
 	
 	// Create the environment.
 	walls = new Collection([
