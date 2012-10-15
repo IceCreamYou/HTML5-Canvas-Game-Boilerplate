@@ -24,7 +24,7 @@ that the viewport will scroll as the player approaches its edges.
 
 To customize your project you should usually start by personalizing index.html:
 
- - Set the title in the <title> and <h1> tags as well as the copyright notice
+ - Set the title in the title and h1 tags as well as the copyright notice
    in the footer.
  - Set the meta description in the document head.
  - Put a favicon.ico and apple-touch-icon.png file in the root directory.
@@ -312,8 +312,9 @@ Author
 ------
 
 Isaac Sukin
-http://www.isaacsukin.com/contact
-https://github.com/IceCreamYou
-https://twitter.com/IceCreamYou
+
+ - [Contact](http://www.isaacsukin.com/contact)
+ - [Github](https://github.com/IceCreamYou)
+ - [Twitter](https://twitter.com/IceCreamYou)
 
 I'd love to hear what you make!
