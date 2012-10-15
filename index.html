@@ -1,46 +1,69 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>HTML5 Canvas Library/Boilerplate</title>
-    <link type="text/css" rel="stylesheet" media="all" href="styles.css" />
-    <script type="text/javascript" src="jquery-1.7.1.js"></script>
-    <script type="text/javascript" src="jquery.hotkeys.js"></script>
-    <script type="text/javascript" src="classes.js"></script>
-    <script type="text/javascript" src="utilities.js"></script>
-    <script type="text/javascript" src="actors.js"></script>
-    <script type="text/javascript" src="main.js"></script>
-    <!--
-      There are a number of best practices you may want to follow when setting
-      up your webpage, such as specifying a meta description. This template is
-      designed to be the absolute minimum, but really all you need for this
-      library to work is the JS files and a <canvas> element. If you want to be
-      more thorough, check out https://github.com/h5bp/html5-boilerplate.
-    -->
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Site</title>
+
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width">
+
+  <!-- <link rel="author" href="humans.txt" /> -->
+
+  <link rel="stylesheet" media="all" href="css/reset.css" />
+  <link rel="stylesheet" media="all" href="css/main.css" />
+  <link rel="stylesheet" media="all" href="css/utilities.css" />
+  <link rel="stylesheet" media="screen" href="css/media.css" />
+  <link rel="stylesheet" media="print" href="css/print.css" />
 </head>
 <body>
   <header>
-    <h1>Canvas</h1>
+  <!-- Prompt IE 6/7/8 users to install Chrome Frame.
+    Earlier IE doesn't have good enough Canvas support.
+    Flash libraries that claim to add Canvas support back don't support some of
+    the tricks we use like context.transform(). -->
+  <!--[if lt IE 9 ]>
+    <p class="chromeframe">
+      Your browser is <em>ancient</em>!
+      <a href="http://browsehappy.com/">Upgrade to a different browser</a> or
+      <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a>
+      to experience this site.
+    </p>
+  <![endif]-->
+    <h1 id="title">Site</h1>
   </header>
-  <div id="main">
-    <noscript>You must have JavaScript enabled.</noscript>
-    <!--
-      You can add several custom attributes to the canvas element to achieve
-      different behavior. The "width" and "height" attributes will specify the
-      minimum width and height of the canvas. The "data-maxwidth" and
-      "data-maxheight" attributes specify the maximum size of the canvas. The
-      canvas size will be automatically adjusted within that range depending
-      on the browser size. If "data-maxwidth" or "data-maxheight" are not
-      provided, the maximum size is unlimited. You can also specify the
-      "data-worldwidth" and "data-worldheight" properties to set the size of
-      the complete playable area. If the world size is larger than the canvas,
-      the viewable area will scroll as the player approaches the edge of the
-      canvas.
-    -->
-    <canvas id="canvas" width="800" height="600" data-maxwidth="1280" data-maxheight="1024"></canvas>
-  </div><!-- /main -->
+  <div id="main" role="main">
+    <div id="content">
+      <noscript>You must have JavaScript enabled to use this site.</noscript>
+      <canvas id="canvas" width="800" height="600" data-resize="full">
+        Your browser does not support the &lt;canvas&gt; element!
+      </canvas>
+    </div> <!-- /content -->
+  </div> <!-- /main -->
   <footer>
-    <p>An <a href="http://www.isaacsukin.com/">Isaac Sukin</a> production.</p>
+    <ul id="footer-links">
+      <li class="horizontal first last">&copy; Site</li>
+    </ul>
   </footer>
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="js/jquery-1.8.2.min.js"><\/script>')</script>
+
+  <script src="js/jquery.store.js"></script>
+  <script src="js/jquery.hotkeys.js"></script>
+  <script src="js/classes.js"></script>
+  <script src="js/sprite.js"></script>
+  <script src="js/utilities.js"></script>
+  <script src="js/actors.js"></script>
+  <script src="js/main.js"></script>
+  <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
+  <script>
+    var _gaq=[['_setAccount','UA-XXXXXXXX-X'],['_trackPageview']];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
 </body>
 </html>
