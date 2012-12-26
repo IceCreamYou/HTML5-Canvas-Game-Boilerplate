@@ -1,31 +1,29 @@
 /**
+ * Provides persistent local storage that preserves object type.
+ *
  * If you wanted to be really comprehensive with local storage you could use
  * something like https://github.com/alexmng/sticky/blob/master/sticky-2.8.js.
  * However, localStorage is supported in every browser that supports enough
  * Canvas API operations to be useful, so that is all we need to support.
- */
-
-/**
- * Provides persistent local storage that preserves object type.
  *
- * The methods of $.store do basically the same thing as their localStorage
+ * The methods of App.storage do basically the same thing as their localStorage
  * equivalents:
- * - $.store.get(key, defaultValue) gets the value stored at the key. If there
- *   is no value, returns defaultValue (undefined by default).
- * - $.store.set(key, value) sets the value at key. If value is undefined,
- *   removes the value at key.
- * - $.store.remove(key) removes the value at key.
- * - $.store.clear() removes all values from storage.
- * - $.store.length() returns the number of items in storage.
- * - $.store.key(index) returns the value at the relevant numeric index.
- * - $.store.enabled is a boolean indicating whether or not local storage is
- *   supported in this browser. If false, a fake storage system is substituted
- *   that does not persist between sessions.
+ * - .get(key, defaultValue) gets the value stored at the key. If there is no
+ *   value, returns defaultValue (undefined by default).
+ * - .set(key, value) sets the value at key. If value is undefined, removes the
+ *   value at key.
+ * - .remove(key) removes the value at key.
+ * - .clear() removes all values from storage.
+ * - .length() returns the number of items in storage.
+ * - .key(index) returns the value at the relevant numeric index.
+ * - .enabled is a boolean indicating whether or not local storage is supported
+ *   in this browser. If false, a fake storage system is substituted that does
+ *   not persist between sessions.
  *
  * Note that local storage does not work in some browsers on documents accessed
  * via the file:// protocol.
  */
-jQuery.store = (function(window, undefined) {
+App.storage = (function(window, undefined) {
   var api = {}, namespace = '__jqstore__', storage = window.localStorage;
   api.enabled = true;
   // Provide equivalents to the localStorage interface.
@@ -36,7 +34,7 @@ jQuery.store = (function(window, undefined) {
     storage.setItem(key, JSON.stringify(value));
   };
   api.get = function(key, defaultValue) {
-    return $.parseJSON(storage.getItem(key)) || defaultValue;
+    return JSON.parse(storage.getItem(key)) || defaultValue;
   };
   api.remove = function(key) {
     storage.removeItem(key);
@@ -67,7 +65,7 @@ jQuery.store = (function(window, undefined) {
   // If localStorage is unavailable, fake it.
   // No point falling back to anything else; all we're going for here is
   // avoiding breaking errors. Doing this avoids having to check for
-  // $.store.enabled every time you want to store something.
+  // App.storage.enabled every time you want to store something.
   if (!api.enabled) {
     storage = {
         __fake: true,

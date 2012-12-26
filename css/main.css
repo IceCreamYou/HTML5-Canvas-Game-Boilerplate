@@ -34,13 +34,7 @@ h1 {
   letter-spacing: 1px;
 }
 
-pre {
-  font-family: monospace;
-  white-space: pre;
-}
-
-p,
-pre {
+p {
   padding-bottom: 1em;
 }
 
@@ -78,4 +72,5 @@ canvas {
   border: 1px solid black;
   display: block;
   margin: 0 auto;
+  user-select: none;
 }

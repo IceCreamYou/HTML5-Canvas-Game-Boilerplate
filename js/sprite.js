@@ -1,161 +1,15 @@
 /**
- * A powerful, easy-to-use Sprite animation library designed for HTML5 Canvas.
+ * @file
+ *   A powerful, easy-to-use Sprite animation library for HTML5 Canvas.
  *
- * The Sprite class relies on John Resig's JavaScript Inheritance Library. If
- * you do not want to use this library, removing it as a dependency should be a
- * straightforward task for an experienced JavaScript programmer.
- *
- * Few changes would be needed to modify this library to animate sprites in
- * other mediums like CSS background images, and I will accept patches/pull
- * requests that support this while preserving Canvas functionality. However,
- * CSS animations are usually a more appropriate tool:
- * https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_animations
+ * @author Isaac Sukin (IceCreamYou)
  *
  * MIT Licensed: http://opensource.org/licenses/mit-license.php
  */
 
-// BEGIN JOHN RESIG'S JAVASCRIPT INHERITANCE LIBRARY ==========================
-
-/**
- * Simple JavaScript Inheritance
- * By John Resig http://ejohn.org/
- * MIT Licensed.
- */
-// Inspired by base2 and Prototype
-(function() {
-  var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
-
-  // The base Class implementation (does nothing)
-  this.Class = function(){};
- 
-  // Create a new Class that inherits from this class
-  Class.extend = function(prop) {
-    var _super = this.prototype;
-   
-    // Instantiate a base class (but only create the instance,
-    // don't run the init constructor)
-    initializing = true;
-    var prototype = new this();
-    initializing = false;
-   
-    // Copy the properties over onto the new prototype
-    for (var name in prop) {
-      // Check if we're overwriting an existing function
-      prototype[name] = typeof prop[name] == "function" &&
-        typeof _super[name] == "function" && fnTest.test(prop[name]) ?
-        (function(name, fn){
-          return function() {
-            var tmp = this._super;
-           
-            // Add a new ._super() method that is the same method
-            // but on the super-class
-            this._super = _super[name];
-           
-            // The method only need to be bound temporarily, so we
-            // remove it when we're done executing
-            var ret = fn.apply(this, arguments);       
-            this._super = tmp;
-           
-            return ret;
-          };
-        })(name, prop[name]) :
-        prop[name];
-    }
-   
-    // The dummy class constructor
-    function Class() {
-      // All construction is actually done in the init method
-      if ( !initializing && this.init )
-        this.init.apply(this, arguments);
-    }
-   
-    // Populate our constructed prototype object
-    Class.prototype = prototype;
-   
-    // Enforce the constructor to be what we expect
-    Class.prototype.constructor = Class;
-
-    // And make this class extendable
-    Class.extend = arguments.callee;
-   
-    return Class;
-  };
-})();
-
-// END JOHN RESIG'S JAVASCRIPT INHERITANCE LIBRARY ============================
-// BEGIN IMAGE CACHE HELPERS ==================================================
-
-(function(window, undefined) {
-  var images = {}; // Image cache
-
-  /**
-   * Get an image from the cache.
-   *
-   * @param src
-   *   The file path of the image.
-   *
-   * @return
-   *   The Image object associated with the file or null if the image object
-   *   has not yet been cached.
-   */
-  window.getImageFromCache = function(src) {
-    return images[src] ? images[src] : null;
-  };
-
-  /**
-   * Save an image to the cache.
-   * 
-   * @param src
-   *   The file path of the image.
-   * @param image
-   *   The Image object to cache.
-   */
-  window.saveImageToCache = function(src, image) {
-    images[src] = image;
-  };
-})(window);
-
-/**
- * Preload a list of images asynchronously.
- * 
- * @param files
- *   An array of paths to images to preload.
- * @param options
- *   A map of options for this function.
- *   - finishCallback: A function to run when all images have finished loading.
- *     Receives the number of images loaded as a parameter.
- *   - itemCallback: A function to run when an image has finished loading.
- *     Receives the file path of the loaded image, how many images have been
- *     loaded so far (including the current one), and the total number of
- *     images to load.
- */
-
-function preloadImages(files, options) {
-  var l = files.length, m = -1;
-  var notifyLoaded = function(itemCallback, src) {
-    m++;
-    if (itemCallback) {
-      itemCallback(src, m, l);
-    }
-    if (m == l && options.finishCallback) {
-      options.finishCallback(l);
-    }
-  };
-  notifyLoaded();
-  while (files.length) {
-    var src = files.pop();
-    var image = new Image();
-    image.num = l-files.length;
-    image.onload = function() {
-      Caches.images[this.src] = this;
-      notifyLoaded(options.itemCallback, this.src);
-    }
-    image.src = src;
-  }
-}
-
-// END IMAGE CACHE HELPERS ====================================================
 // BEGIN SPRITE MAP LIBRARY ===================================================
+
+(function(undefined) {
 
 /**
  * Manage multiple sprite animations in the same sprite sheet.
@@ -176,36 +30,54 @@ function preloadImages(files, options) {
  *     last row.
  *   - endCol: The column at which to end the animation sequence. Defaults to
  *     the last column.
+ *   - squeeze: Changes the way frames are grouped together. See the
+ *     explanation of the options for the Sprite constructor for more details.
+ *   Alternatively, instead of the inner values being objects with the
+ *   properties specified above, they can be arrays that hold the same values
+ *   (in the same order). This is less clear to read, but more concise to
+ *   write.
  * @param options
  *   This parameter is the same as the options parameter for the Sprite class.
  */
-var SpriteMap = Class.extend({
-  init: function(src, animations, options) {
-    this.sprite = new Sprite(src, options);
-    this.maps = {};
-    var name;
-    for (name in animations) {
-      if (animations.hasOwnProperty(name)) {
-        this.set(name, animations[name]);
-      }
+function SpriteMap(src, animations, options) {
+  this.sprite = new Sprite(src, options);
+  this.maps = {};
+  var name;
+  for (name in animations) {
+    if (animations.hasOwnProperty(name)) {
+      this.set(name, animations[name]);
     }
-  },
+  }
+}
+SpriteMap.prototype = {
   /**
    * Add or modify an animation sequence.
    *
    * @param name
    *   The name of the sequence.
    * @param options
-   *   (Optional) An object with startRow, startCol, endRow, and/or endRow
-   *   properties.
+   *   (Optional) An object with startRow, startCol, endRow, endCol, squeeze,
+   *   and/or flipped properties, or an array with those values (in that order,
+   *   but all optional).
    */
   set: function(name, options) {
+    if (options instanceof Array) {
+      options = {
+          startRow: options[0],
+          startCol: options[1],
+          endRow: options[2],
+          endCol: options[3],
+          squeeze: options[4],
+          flipped: options[5],
+      };
+    }
     this.maps[name] = {
-        startRow: options.startRow === undefined ? 0 : options.startRow,
-        startCol: options.startCol === undefined ? 0 : options.startCol,
-        endRow: options.endRow === undefined ? this.sprite.rows-1 : options.endRow,
-        endCol: options.endCol === undefined ? this.sprite.cols-1 : options.endCol,
-        squeeze: options.squeeze === undefined ? false : options.squeeze,
+        startRow: typeof options.startRow != 'undefined' ? options.startRow : 0,
+        startCol: typeof options.startCol != 'undefined' ? options.startCol : 0,
+        endRow:   typeof options.endRow   != 'undefined' ? options.endRow   : this.sprite.rows-1,
+        endCol:   typeof options.endCol   != 'undefined' ? options.endCol   : this.sprite.cols-1,
+        squeeze:  typeof options.squeeze  != 'undefined' ? options.squeeze  : false,
+        flipped:  typeof options.flipped  != 'undefined' ? options.flipped  : [false, false],
     };
   },
   /**
@@ -224,10 +96,17 @@ var SpriteMap = Class.extend({
    *
    * @param name
    *   The name of the animation sequence to switch to.
+   * @param restartIfInUse
+   *   (Optional) A boolean indicating whether to restart the animation
+   *   sequence if the specified sequence is already in use. Defaults to false.
    */
-  use: function(name) {
+  use: function(name, restartIfInUse) {
+    if (this.activeLoop == name && !restartIfInUse) {
+      return this;
+    }
+    this.activeLoop = name;
     var m = this.maps[name];
-    this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze);
+    this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze, m.flipped);
     return this;
   },
   /**
@@ -282,22 +161,30 @@ var SpriteMap = Class.extend({
   },
   /**
    * Draw the sprite's current frame.
-   *
-   * context.drawLoadedImage() is recommended instead, for consistency.
    */
   draw: function(ctx, x, y, w, h) {
     this.sprite.draw(ctx, x, y, w, h);
   },
-});
+  /**
+   * Clone the SpriteMap (return an identical copy).
+   */
+  clone: function() {
+    return new SpriteMap(this.sprite.sourceFile, this.maps, this.sprite);
+  },
+};
+
+this.SpriteMap = SpriteMap;
+
+}).call(this);
 
 // END SPRITE MAP LIBRARY =====================================================
 // BEGIN SPRITE ANIMATION LIBRARY =============================================
 
+(function(undefined) {
+
 /**
  * Support sprite animation.
  *
- * - Sprites can be drawn with context.drawLoadedImage(sprite, x, y), much like
- *   normal images.
  * - Animations are always run left-to-right, top-to-bottom.
  * - All frames in the loop are assumed to be the same size.
  * - Rows and columns are zero-indexed (row, col, startRow, startCol, endRow,
@@ -366,10 +253,16 @@ var SpriteMap = Class.extend({
  *     less accurate, and in any case it can be up to 15ms off on Windows) but
  *     it is more performance-friendly and also ensures that frames will never
  *     skip if the sprite is not drawn.
+ *   - flipped: An array with two boolean values indicating whether to draw
+ *     each frame flipped right-to-left and top-to-bottom, respectively.
+ *     Defaults to [false, false] (not flipped along either axis).
  *   - postInitCallback: A function that will run at the end of the
- *     initialization process (if the base image has not been loaded before,
+ *     initialization process (if the source image has not been loaded before,
  *     this will be after the image has been fully loaded asynchronously).
- *     This function receives the Sprite object as its only parameter.
+ *     If the source image was not pre-loaded and you draw() the Sprite before
+ *     this callback is invoked, nothing will be drawn because the image won't
+ *     be loaded yet. This function receives the Sprite object as its only
+ *     parameter.
  *
  * Each of the properties in the options parameter will be attached to the
  * Sprite object directly, along with other calculated properties. It is best
@@ -378,23 +271,23 @@ var SpriteMap = Class.extend({
  * strongly recommended not to set properties directly because doing so will
  * likely have unexpected consequences. 
  */
-var Sprite = Class.extend({
-  // Runs automatically when the class is instantiated.
-  init: function(src, options) {
-    this.sourceFile = src;
-    var cachedImage = getImageFromCache(src);
-    if (cachedImage) {
-      this._init(cachedImage, options);
-    }
-    else {
-      var image = new Image(), t = this;
-      image.onload = function() {
-        t._init(this, options);
-      };
-      image.src = src;
-      saveImageToCache(src, image);
-    }
-  },
+function Sprite(src, options) {
+  this.sourceFile = src;
+  var cachedImage = Sprite.getImageFromCache(src);
+  if (cachedImage) {
+    this._init(cachedImage, options);
+  }
+  else {
+    var image = new Image(), t = this;
+    image.onload = function() {
+      t._init(this, options);
+    };
+    image._src = src;
+    image.src = src;
+    Sprite.saveImageToCache(src, image);
+  }
+}
+Sprite.prototype = {
   // Calculates and stores initial values based on a loaded image.
   _init: function(img, options) {
     this.image = img;
@@ -414,8 +307,9 @@ var Sprite = Class.extend({
     this.col = this.startCol;
     this.frame = 1;
     this.squeeze = options.squeeze || false;
-    this.interval = options.interval || 125;
+    this.interval = (options.interval === undefined ? 125 : options.interval);
     this.useTimer = (options.useTimer === undefined ? true : options.useTimer);
+    this.flipped = options.flipped || [false, false];
     this.lastFrameUpdateTime = 0;
     this._runOnce = false;
     if (this.squeeze) {
@@ -428,10 +322,6 @@ var Sprite = Class.extend({
   },
   /**
    * Draws the sprite.
-   *
-   * If you are using the Canvas Context helper functions, you can use
-   * context.drawLoadedImage(sprite, x, y, w, h) instead. This is useful for
-   * consistency with drawing other images.
    *
    * @param ctx
    *   The canvas graphics context onto which the sprite should be drawn.
@@ -450,21 +340,38 @@ var Sprite = Class.extend({
    *   (Optional) The height of the image when drawn onto the canvas. Defaults
    *   to the sprite's projected height, which in turn defaults to the frame
    *   height.
-   *
-   * @see CanvasRenderingContext2D.prototype.drawLoadedImage()
    */
   draw: function(ctx, x, y, w, h) {
-    ctx.drawImage(
-        this.image,       // image
-        this.col * this.frameW, // image x-offset
-        this.row * this.frameH, // image y-offset
-        this.frameW,      // image slice width
-        this.frameH,      // image slice height
-        x,            // canvas x-position
-        y,            // canvas y-position
-        w || this.projectedW, // slice width on canvas
-        h || this.projectedH  // slice height on canvas
-    );
+    try {
+      ctx.save();
+      w = w || this.projectedW;
+      h = h || this.projectedH;
+      if (this.flipped[0] || this.flipped[1]) {
+        ctx.scale(this.flipped[0] ? -1 : 1, this.flipped[1] ? -1 : 1);
+        if (this.flipped[0]) x = -x - w;
+        if (this.flipped[1]) y = -y - h;
+      }
+      ctx.drawImage(
+          this.image,             // image
+          this.col * this.frameW, // image x-offset
+          this.row * this.frameH, // image y-offset
+          this.frameW,            // image slice width
+          this.frameH,            // image slice height
+          x,                      // canvas x-position
+          y,                      // canvas y-position
+          w,                      // slice width on canvas
+          h                       // slice height on canvas
+      );
+      ctx.restore();
+    } catch(e) {
+      if (console && console.error) {
+        // Usually the reason you would get an error here is if you tried to
+        // draw() an image before it was fully loaded. That's an ignore-able
+        // error, because if you're animating, the image will just pop in when
+        // it loads.
+        console.error(e);
+      }
+    }
     if (!this.useTimer && Date.now() - this.lastFrameUpdateTime > this.interval) {
       this.nextFrame();
     }
@@ -540,8 +447,12 @@ var Sprite = Class.extend({
    *   frames from any column can be used (after startCol in startRow and
    *   before endCol in endRow). Defaults to false. For more information on
    *   how this works, see the documentation on instantiating a new Sprite.
+   * @param flipped
+   *   (Optional) An array with two boolean values indicating whether to draw
+ *     each frame flipped right-to-left and top-to-bottom, respectively.
+ *     Defaults to [false, false] (not flipped along either axis).
    */
-  setLoop: function(startRow, startCol, endRow, endCol, squeeze) {
+  setLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.stopLoop();
     if (endRow === null || endRow === undefined) {
       endRow = this.rows-1;
@@ -551,6 +462,9 @@ var Sprite = Class.extend({
     }
     if (squeeze != undefined) {
       this.squeeze = squeeze;
+    }
+    if (flipped != undefined) {
+      this.flipped = flipped;
     }
     this.startRow = startRow, this.startCol = startCol,
     this.endRow = endRow, this.endCol = endCol;
@@ -567,9 +481,9 @@ var Sprite = Class.extend({
    * takes the same parameters as setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
    */
-  startLoop: function(startRow, startCol, endRow, endCol, squeeze) {
+  startLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     if (startRow != undefined && startCol != undefined) {
-      this.setLoop(startRow, startCol, endRow, endCol, squeeze);
+      this.setLoop(startRow, startCol, endRow, endCol, squeeze, flipped);
     }
     this.lastFrameUpdateTime = Date.now();
     if (this.interval && this.useTimer) {
@@ -604,14 +518,11 @@ var Sprite = Class.extend({
    * takes the same parameters as setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
    */
-  runLoop: function(callback, startRow, startCol, endRow, endCol, squeeze) {
+  runLoop: function(callback, startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.runLoopCallback = callback || function() {};
     this._runOnce = true;
-    var len = arguments.length, a = [];
-    for (var i = 1; i < len; i++) {
-      a[i-1] = arguments[i];
-    }
-    this.startLoop.apply(this, a);
+    Array.prototype.shift.call(arguments);
+    this.startLoop.apply(this, arguments);
   },
   /**
    * Goes back one frame in the animation loop.
@@ -690,163 +601,93 @@ var Sprite = Class.extend({
       col = (frame + this.startCol - 1) % this.cols;
     }
     return {frame: frame, row: row, col: col};
-  }
-});
+  },
+  /**
+   * Clone the Sprite (return an identical copy).
+   */
+  clone: function() {
+    return new Sprite(this.sourceFile, this);
+  },
+};
+
+this.Sprite = Sprite;
+
+}).call(this);
 
 // END SPRITE ANIMATION LIBRARY ===============================================
-// BEGIN CANVAS DRAWING HELPERS ===============================================
+// BEGIN IMAGE CACHE HELPERS ==================================================
 
 /**
- * Clear the canvas.
- * 
- * Passing the optional fillStyle parameter will cause the canvas to be filled
- * in with that style. Otherwise the canvas is simply wiped.
+ * Override these functions to provide alternative cache implementations.
  */
-CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
-  if (fillStyle) {
-    this.fillStyle = fillStyle;
-    this.fillRect(0, 0, this.canvas.width, this.canvas.height);
-  }
-  else {
-    this.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  }
-};
+(function() {
+  var images = {}; // Image cache
 
-/**
- * Draws an image onto the canvas.
- *
- * This function is preferred over the standard context.drawImage() for drawing
- * images from files because it offers significant performance advantages when
- * drawing the same image repeatedly, e.g. during animation or canvas
- * refreshing. The performance gain comes from caching images so that they do
- * not have to be loaded from the disk each time.
- *
- * Additionally, this function can draw Sprite and SpriteMap objects as well as
- * the usual standard images, videos, and canvases. Using this function instead
- * of Sprite.draw() or SpriteMap.draw() is recommended for consistency (since
- * this function is also used for images). It also allows drawing an image by
- * passing in the file path, whereas using context.drawImage() requires that
- * you manually load the image.
- * 
- * This image is helpful to understand the sx/sy/sw/sh parameters:
- * http://images.whatwg.org/drawImage.png
- *
- * This function falls back to the default handling for videos rather than
- * attempting to manage loading and caching them. Note that usually if you want
- * to display a video in a canvas being animated, you should draw it to a
- * separate canvas and draw that canvas instead (or overlay it).
- *
- * Other than as described above, this function has the same behavior as
- * context.drawImage(), including errors thrown. More details are available at
- * http://j.mp/whatwg-canvas-drawing
- * 
- * @param src
- *   One of the following, indicating what to draw:
- *   - The file path of an image to draw
- *   - A Sprite or SpriteMap object
- *   - An HTMLCanvasElement
- *   - An HTMLImageElement
- *   - An HTMLVideoElement
- *   If something else is passed in, this function throws a TypeMismatchError.
- * @param x
- *   The x-coordinate of the canvas graphics context at which to draw the
- *   top-left corner of the image. (Often this is the number of pixels from the
- *   left side of the canvas.)
- * @param y
- *   The y-coordinate of the canvas graphics context at which to draw the
- *   top-left corner of the image. (Often this is the number of pixels from the
- *   top of the canvas.)
- * @param w
- *   (Optional) The width of the image. Defaults to the image width (or, for a
- *   Sprite or SpriteMap, defaults to the projectedW).
- * @param h
- *   (Optional) The height of the image. Defaults to the image height (or, for
- *   a Sprite or SpriteMap, defaults to the projectedH).
- * @param sx, sy, sw, sh
- *   (Optional) If any of these parameters are specified, each of the others
- *   must also be specified, and together they define a rectangle within the
- *   image that will be drawn onto the canvas. sx and sy are the x- and y-
- *   coordinates (within the image) of the upper-left corner of the source
- *   rectangle, respectively, and sw and sh are the width and height of the
- *   source rectangle, respectively. These parameters are ignored when drawing
- *   a Sprite or SpriteMap.
- * @param finished
- *   (Optional) The first time an image is drawn, it will be drawn
- *   asynchronously and could appear out of order (e.g. "above" an image that
- *   was supposed to be drawn later) because the image needs to be loaded
- *   before it can be rendered. You can get around this by passing a function
- *   to this parameter, in which case it will always be run after the image is
- *   painted. Alternatively this delay can be eliminated by pre-loading the
- *   image in question with preloadImages().
- */
-CanvasRenderingContext2D.prototype.drawLoadedImage = function(src, x, y, w, h, sx, sy, sw, sh, finished) {
-  var _drawImage = function(t, image, x, y, w, h, sx, sy, sw, sh) {
-    if (w && h) {
-      if (sw && sh) {
-        t.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+  /**
+   * Get an image from the cache.
+   *
+   * @param src
+   *   The file path of the image.
+   *
+   * @return
+   *   The Image object associated with the file or null if the image object
+   *   has not yet been cached.
+   */
+  Sprite.getImageFromCache = function(src) {
+    return images[src] ? images[src] : null;
+  };
+
+  /**
+   * Save an image to the cache.
+   * 
+   * @param src
+   *   The file path of the image.
+   * @param image
+   *   The Image object to cache.
+   */
+  Sprite.saveImageToCache = function(src, image) {
+    images[src] = image;
+  };
+
+  /**
+   * Preload a list of images asynchronously.
+   * 
+   * @param files
+   *   An array of paths to images to preload.
+   * @param options
+   *   A map of options for this function.
+   *   - finishCallback: A function to run when all images have finished
+   *     loading. Receives the number of images loaded as a parameter.
+   *   - itemCallback: A function to run when an image has finished loading.
+   *     Receives the file path of the loaded image, how many images have been
+   *     loaded so far (including the current one), and the total number of
+   *     images to load.
+   */
+  Sprite.preloadImages = function(files, options) {
+    var l = files.length, m = -1;
+    var notifyLoaded = function(itemCallback, src) {
+      m++;
+      if (typeof itemCallback == 'function') {
+        itemCallback(src, m, l);
       }
-      else {
-        t.drawImage(image, x, y, w, h);
+      if (m == l && typeof options.finishCallback == 'function') {
+        options.finishCallback(l);
       }
-    }
-    else {
-      t.drawImage(image, x, y);
-    }
-    if (typeof finished == 'function') {
-      finished();
+    };
+    notifyLoaded();
+    while (files.length) {
+      var src = files.pop();
+      var image = new Image();
+      image.num = l-files.length;
+      image._src = src;
+      image.onload = function() {
+        Sprite.saveImageToCache(this._src, this);
+        notifyLoaded(options.itemCallback, this.src);
+      }
+      image.src = src;
     }
   };
-  if (src instanceof Sprite || src instanceof SpriteMap) { // draw a sprite
-    src.draw(this, x, y, w, h);
-    if (typeof finished == 'function') {
-      finished();
-    }
-  }
-  else if (src instanceof HTMLCanvasElement || // draw a canvas
-      src instanceof HTMLVideoElement) { // draw a video
-    _drawImage(this, src, x, y, w, h, sx, sy, sw, sh);
-  }
-  else if (src instanceof HTMLImageElement) { // draw an image directly
-    var image = src, src = image.src, t = this;
-    if (!src) { // can't draw an empty image
-      return;
-    }
-    if (!Caches.images[src]) { // cache the image by source
-      Caches.images[src] = image;
-    }
-    if (image.complete) { // if the image is loaded, draw it
-      _drawImage(this, image, x, y, w, h, sx, sy, sw, sh);
-    }
-    else { // if the image is not loaded, wait to draw it until it's loaded
-      if (typeof image.onload == 'function') {
-        var o = image.onload;
-        image.onload = function() {
-          o();
-          _drawImage(t, image, x, y, w, h, sx, sy, sw, sh);
-        };
-      }
-      else {
-        image.onload = function() {
-          _drawImage(t, image, x, y, w, h, sx, sy, sw, sh);
-        };
-      }
-    }
-  }
-  else if (typeof src == 'string' && Caches.images[src]) { // cached image path
-    _drawImage(this, Caches.images[src], x, y, w, h, sx, sy, sw, sh);
-  }
-  else if (typeof src == 'string') { // uncached image path
-    var image = new Image();
-    var t = this;
-    image.onload = function() {
-      Caches.images[src] = image;
-      _drawImage(t, image, x, y, w, h, sx, sy, sw, sh);
-    };
-    image.src = src;
-  }
-  else {
-    throw new TypeMismatchError('drawLoadedImage(): Could not draw; type not recognized.');
-  }
-};
 
-// END CANVAS DRAWING HELPERS =================================================
+}).call(this);
+
+// END IMAGE CACHE HELPERS ====================================================

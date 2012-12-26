@@ -1,0 +1,24 @@
+Switch to velocity for movement rather than just updating position
+  Movement happens by getting the x and y components of a radial direction and
+    multiplying by the velocity (solves faster diagonal movement with no
+    gravity)
+  Pressing a key adds a vector of velocity in a given direction (i.e. speed)
+    Problem: do we just set the velocity vector to that direction (complete
+    control) or do we add a new vector (slipperiness)? If we set it, we need
+    two vectors since we need to be able to move in two independent directions
+    (i.e. pressing "right" can't stop us moving up). If we add it, we can't
+    turn on a dime.
+  Step the velocity and position
+    velocity = velocity + acceleration*delta_time/2
+    position = position + velocity*delta_time
+    velocity = velocity + acceleration*delta_time/2
+  Track an acceleration vector (magnitude & direction)
+    Figure out the best way for outside objects to affect acceleration (slipperiness)
+Add an alternate way to do timestepping http://gafferongames.com/game-physics/fix-your-timestep/
+Generate documentation
+
+Flexible scaling (specify things in percent of canvas size)
+Zooming
+Ladder
+
+Add parallax to the article
