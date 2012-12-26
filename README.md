@@ -25,7 +25,6 @@ function. It's really that simple, and these functions already have comments
 and some useful code filled in to demonstrate what you can do.
 
 To learn how to use the different APIs and features available, check out the
-[tutorial](http://www.isaacsukin.com/node/188). Or, take a look at the
 "examples" folder to see how quickly and easily different games can be built.
 The default project (which you can view by visiting index.html) provides a
 player that can move around when a user presses the arrow keys on their
