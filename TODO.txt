@@ -15,7 +15,10 @@ Switch to velocity for movement rather than just updating position
   Track an acceleration vector (magnitude & direction)
     Figure out the best way for outside objects to affect acceleration (slipperiness)
 Add an alternate way to do timestepping http://gafferongames.com/game-physics/fix-your-timestep/
-Generate documentation
+Make sure we're retina-ready https://plus.google.com/113862800338869870683/posts/DZ3bkF3aA8g
+Improve auto-generated documentation
+  CanvasBoilerplate>..\..\Downloads\jsduck-4.5.1.exe js js\libraries --output docs
+  https://github.com/senchalabs/jsduck/wiki/Guide
 
 Flexible scaling (specify things in percent of canvas size)
 Zooming
