@@ -172,8 +172,7 @@ jQuery(window).load(function() {
  *   `data-resize` attribute set to `false`, processing stops here and no more
  *   resizing rules are applied.
  * - If the canvas element has a `data-resize` attribute set to `full`, it will
- *   be resized to the maximum size that fits within the browser window,
- *   excluding the height of any &lt;header&gt; or &lt;footer&gt; region.
+ *   be resized to the maximum size that fits within the browser window.
  * - If the canvas element has `data-minwidth` or `data-minheight` attributes
  *   (with numeric values in pixels) it will not be scaled smaller than those
  *   dimensions.
@@ -207,10 +206,12 @@ App.setDefaultCanvasSize = function() {
   var $window = jQuery(window);
   // If requested, make the canvas the size of the browser window.
   if ($canvas.attr('data-resize') == 'full') {
-    canvas.width = $window.innerWidth();
-    canvas.height = $window.height() -
-        (jQuery('header').outerHeight() || 0) -
-        (jQuery('footer').outerHeight() || 0);
+    canvas.width = $window.innerWidth() -
+      parseInt($canvas.css('border-left-width'), 10) -
+      parseInt($canvas.css('border-right-width'), 10) - 1;
+    canvas.height = $window.innerHeight() -
+      parseInt($canvas.css('border-top-width'), 10) -
+      parseInt($canvas.css('border-bottom-width'), 10) - 1;
   }
   // Use the following properties to determine canvas size automatically:
   // width, height, data-minwidth, data-maxwidth, data-minheight, data-maxheight

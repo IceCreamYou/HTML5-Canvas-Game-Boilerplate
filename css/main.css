@@ -11,60 +11,14 @@ html, button, input, select, textarea {
 
 /*****************************************************************************/
 
-/* apply a natural box layout model to all elements
- * http://paulirish.com/2012/box-sizing-border-box-ftw/
- */
-* { -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
-
-/*****************************************************************************/
-
 html, body {
   background-color: #EEEEEE;
   font-family: Arial, sans-serif;
 }
 
-html, body, h1, h2, h3, h4, h5, h6, pre, p, ul, li, header, footer, canvas {
+html, body, canvas {
   padding: 0;
   margin: 0;
-}
-
-h1 {
-  font-size: 34px;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-
-p {
-  padding-bottom: 1em;
-}
-
-ul {
-  padding: 1em;
-}
-
-li {
-  list-style-position: inside;
-}
-
-header h1,
-footer {
-  border: 1px solid #999999;
-  border-width: 0 1px;
-  padding: 10px 0;
-  text-align: center;
-}
-
-li.horizontal {
-  display: inline;
-  list-style-type: none;
-  padding: 0 0.5em;
-}
-
-header,
-footer {
-  background-color: #FFFFFF;
-  margin: 0 auto;
-  width: 100%;
 }
 
 canvas {

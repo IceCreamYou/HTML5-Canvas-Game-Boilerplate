@@ -433,6 +433,11 @@ These libraries have not necessarily been tested with this project.
    alternative to the App.storage localStorage wrapper.
  - [Box2D](https://github.com/kripken/box2d.js/): A physics library ported from
    C++ using Emscripten.
+ - [BigScreen](https://github.com/bdougherty/BigScreen): Makes it easy to go
+   full-screen.
+ - [History.js](https://github.com/balupton/history.js): Handle refreshless URL
+   updates. This can allow storing information in the URL, which could allow
+   e.g. linking directly to in-game content.
 
 
 Notes
@@ -440,8 +445,7 @@ Notes
 
 Before deploying to production, there are a few things you may want to do:
 
- - Set the title in the title and h1 tags as well as the copyright notice
-   in the footer.
+ - Set the title in the title tag.
  - Set the meta description in the document head.
  - Put a favicon.ico and apple-touch-icon.png file in the root directory.
  - Add a [humans.txt file](http://humanstxt.org/) and uncomment the rel=author
