@@ -683,7 +683,7 @@ App.animate = function() {
   var t = new Timer();
 
   // update
-  Mouse.scroll._update();
+  Mouse.Scroll._update();
   update();
 
   if (App.debugMode) {
@@ -1390,13 +1390,13 @@ App.isHovered = function(obj) {
       Mouse.coords.y &gt; yPos &amp;&amp; Mouse.coords.y &lt; yPos + obj.height;
 };
 
-<span id='Mouse-scroll'>/**
-</span> * @class Mouse.scroll
+<span id='Mouse-Scroll'>/**
+</span> * @class Mouse.Scroll
  *   Encapsulates mouse position scrolling.
  *
  * @static
  */
-Mouse.scroll = (function() {
+Mouse.Scroll = (function() {
   var THRESHOLD = 0.2, MOVEAMOUNT = 350;
   var translating = false, scrolled = {x: 0, y: 0}, enabled = false;
   function translate(doOffset) {
@@ -1452,7 +1452,7 @@ Mouse.scroll = (function() {
 
     if (doOffset &amp;&amp; translating != t) {
       if (translating) { // We were scrolling. Now we're not.
-<span id='Mouse-scroll-event-mousescrollon'>        /**
+<span id='Mouse-Scroll-event-mousescrollon'>        /**
 </span>         * @event mousescrollon
          *   Fires on the document when the viewport starts scrolling. Binding
          *   to this event may be useful if you want to pause animation or
@@ -1461,7 +1461,7 @@ Mouse.scroll = (function() {
         jQuery(document).trigger('mousescrollon');
       }
       else { // We weren't scrolling. Now we are.
-<span id='Mouse-scroll-event-mousescrolloff'>        /**
+<span id='Mouse-Scroll-event-mousescrolloff'>        /**
 </span>         * @event mousescrolloff
          *   Fires on the document when the viewport stops scrolling. Binding
          *   to this event may be useful if you want to pause animation or
@@ -1474,7 +1474,7 @@ Mouse.scroll = (function() {
     return scrolled;
   }
   return {
-<span id='Mouse-scroll-static-method-enable'>    /**
+<span id='Mouse-Scroll-static-method-enable'>    /**
 </span>     * Enable mouse position scrolling.
      * @static
      */
@@ -1493,7 +1493,7 @@ Mouse.scroll = (function() {
         jQuery(this).off('.translate');
       });
     },
-<span id='Mouse-scroll-static-method-disable'>    /**
+<span id='Mouse-Scroll-static-method-disable'>    /**
 </span>     * Disable mouse position scrolling.
      * @static
      */
@@ -1502,14 +1502,14 @@ Mouse.scroll = (function() {
       translating = false;
       enabled = false;
     },
-<span id='Mouse-scroll-static-method-isEnabled'>    /**
+<span id='Mouse-Scroll-static-method-isEnabled'>    /**
 </span>     * Test whether mouse position scrolling is enabled.
      * @static
      */
     isEnabled: function() {
       return enabled;
     },
-<span id='Mouse-scroll-static-method-isScrolling'>    /**
+<span id='Mouse-Scroll-static-method-isScrolling'>    /**
 </span>     * Test whether the viewport is currently mouse-scrolling.
      * @static
      */
@@ -1521,24 +1521,24 @@ Mouse.scroll = (function() {
         return translate();
       }
     },
-<span id='Mouse-scroll-static-method-setThreshold'>    /**
+<span id='Mouse-Scroll-static-method-setThreshold'>    /**
 </span>     * Sets how close to the edge of the canvas the mouse triggers scrolling.
      *
      * The threshold is a fractional percentage [0.0-0.5) of the width of the
      * canvas. If the mouse is within this percent of the edge of the canvas,
      * the viewport attempts to scroll. The default threshold is 0.2 (20%).
      *
-     * See also Mouse.scroll.getThreshold().
+     * See also Mouse.Scroll.getThreshold().
      *
      * @static
      */
     setThreshold: function(t) {
       THRESHOLD = t;
     },
-<span id='Mouse-scroll-static-method-getThreshold'>    /**
+<span id='Mouse-Scroll-static-method-getThreshold'>    /**
 </span>     * Gets how close to the edge of the canvas the mouse triggers scrolling.
      *
-     * See also Mouse.scroll.getThreshold().
+     * See also Mouse.Scroll.getThreshold().
      *
      * @return {Number}
      *   The mouse-scrolling threshold. The threshold is a fractional
@@ -1551,7 +1551,7 @@ Mouse.scroll = (function() {
     getThreshold: function() {
       return THRESHOLD;
     },
-<span id='Mouse-scroll-static-method-setScrollDistance'>    /**
+<span id='Mouse-Scroll-static-method-setScrollDistance'>    /**
 </span>     * Sets how fast the mouse will cause the viewport to scroll.
      *
      * @param {Number} a
@@ -1564,7 +1564,7 @@ Mouse.scroll = (function() {
     setScrollDistance: function(a) {
       MOVEAMOUNT = a;
     },
-<span id='Mouse-scroll-static-method-getScrollDistance'>    /**
+<span id='Mouse-Scroll-static-method-getScrollDistance'>    /**
 </span>     * Gets how fast the mouse will cause the viewport to scroll.
      *
      * @return {Number}

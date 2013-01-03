@@ -666,7 +666,7 @@ App.animate = function() {
   var t = new Timer();
 
   // update
-  Mouse.scroll._update();
+  Mouse.Scroll._update();
   update();
 
   if (App.debugMode) {
@@ -1374,12 +1374,12 @@ App.isHovered = function(obj) {
 };
 
 /**
- * @class Mouse.scroll
+ * @class Mouse.Scroll
  *   Encapsulates mouse position scrolling.
  *
  * @static
  */
-Mouse.scroll = (function() {
+Mouse.Scroll = (function() {
   var THRESHOLD = 0.2, MOVEAMOUNT = 350;
   var translating = false, scrolled = {x: 0, y: 0}, enabled = false;
   function translate(doOffset) {
@@ -1511,7 +1511,7 @@ Mouse.scroll = (function() {
      * canvas. If the mouse is within this percent of the edge of the canvas,
      * the viewport attempts to scroll. The default threshold is 0.2 (20%).
      *
-     * See also Mouse.scroll.getThreshold().
+     * See also Mouse.Scroll.getThreshold().
      *
      * @static
      */
@@ -1521,7 +1521,7 @@ Mouse.scroll = (function() {
     /**
      * Gets how close to the edge of the canvas the mouse triggers scrolling.
      *
-     * See also Mouse.scroll.getThreshold().
+     * See also Mouse.Scroll.getThreshold().
      *
      * @return {Number}
      *   The mouse-scrolling threshold. The threshold is a fractional

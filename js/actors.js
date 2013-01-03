@@ -1316,7 +1316,9 @@ function Layer(options) {
 }
 
 /**
- * Actors are Boxes that can move.
+ * Actors are {@link Box Boxes} that can move.
+ *
+ * @extends Box
  */
 var Actor = Box.extend({
 
@@ -1414,7 +1416,13 @@ var Actor = Box.extend({
   accelDirection: 0,
 
   /**
-   * Initialize an Actor.
+   * @constructor
+   *   Initialize an Actor.
+   *
+   * Takes the same parameters as the Box constructor.
+   * **Inherited documentation:**
+   *
+   * @inheritdoc Box#constructor
    */
   init: function() {
     this._super.apply(this, arguments);
@@ -1425,21 +1433,25 @@ var Actor = Box.extend({
 
   /**
    * Actors draw as a smiley face by default.
+   *
+   * **Inherited documentation:**
+   *
+   * @inheritdoc Box#drawDefault
    */
   drawDefault: function(ctx, x, y, w, h) {
     context.drawSmiley(x + w/2, y + h/2, (w+h)/4);
   },
 
   /**
-   * Update the Actor every cycle.
+   * Update the Actor for a new frame.
    *
-   * @param direction
-   *   An array of directions in which to move the Actor. Directions are
+   * @param {String[]} [direction]
+   *   An Array of directions in which to move the Actor. Directions are
    *   expected to correspond to keys on the keyboard (as described by
-   *   jQuery.hotkeys).
+   *   {@link jQuery.hotkeys}).
    *
-   * @return
-   *   An object with 'x' and 'y' properties indicating the number of pixels
+   * @return {Object}
+   *   An object with `x` and `y` properties indicating the number of pixels
    *   the Actor has moved in the respective direction.
    */
   update: function(direction) {
@@ -1486,16 +1498,16 @@ var Actor = Box.extend({
   /**
    * Moves the Actor in a given direction.
    *
-   * @param direction
-   *   An array of directions in which to move the Actor. Directions are
+   * Called from Actor#update().
+   *
+   * @param {String[]} direction
+   *   An Array of directions in which to move the Actor. Directions are
    *   expected to correspond to keys on the keyboard (as described by
-   *   jQuery.hotkeys).
+   *   {@link jQuery.hotkeys}).
    *
-   * @return
-   *   An object with 'x' and 'y' properties indicating the number of pixels
+   * @return {Object}
+   *   An object with `x` and `y` properties indicating the number of pixels
    *   the Actor has moved in the respective direction.
-   *
-   * @see Actor.update()
    */
   move: function(direction) {
     var moveAmount = this.MOVEAMOUNT * App.timer.lastDelta,
@@ -1615,16 +1627,16 @@ var Actor = Box.extend({
   /**
    * Moves this Actor outside of another Box so that it no longer overlaps.
    *
-   * @param other
+   * This is called as part of Actor#collideSolid().
+   *
+   * See also Actor#moveOutsideX() and Actor#moveOutsideY().
+   *
+   * @param {Box} other
    *   The other Box that this Actor should be moved outside of.
    *
-   * @return
-   *   An object with 'x' and 'y' properties indicating how far this Actor
+   * @return {Object}
+   *   An object with `x` and `y` properties indicating how far this Actor
    *   moved in order to be outside of the other Box, in pixels.
-   *
-   * @see collideSolid()
-   * @see moveOutsideX()
-   * @see moveOutsideY()
    */
   moveOutside: function(other) {
     var overlapsX = Math.min(this.x + this.width - other.x, other.x + other.width - this.x),
@@ -1646,13 +1658,13 @@ var Actor = Box.extend({
   /**
    * Moves this Actor outside of another Box on the x-axis to avoid overlap.
    *
-   * @param other
+   * See also Actor#moveOutside().
+   *
+   * @param {Box} other
    *   The other Box that this Actor should be moved outside of.
    *
-   * @return
+   * @return {Number}
    *   The distance in pixels that this Actor moved on the x-axis.
-   *
-   * @see moveOutside()
    */
   moveOutsideX: function(other) {
     var moved = 0, movedTo;
@@ -1677,13 +1689,13 @@ var Actor = Box.extend({
   /**
    * Moves this Actor outside of another Box on the y-axis to avoid overlap.
    *
-   * @param other
+   * See also Actor#moveOutside().
+   *
+   * @param {Box} other
    *   The other Box that this Actor should be moved outside of.
    *
-   * @return
+   * @return {Number}
    *   The distance in pixels that this Actor moved on the y-axis.
-   *
-   * @see moveOutside()
    */
   moveOutsideY: function(other) {
     var moved = 0, movedTo;
@@ -1708,13 +1720,10 @@ var Actor = Box.extend({
   /**
    * Start falling.
    *
-   * This method has no meaning if GRAVITY is false.
+   * This method has no meaning if {@link Actor#GRAVITY GRAVITY} is false.
    *
-   * @see stopFalling()
-   * @see isInAir()
-   * @see isJumping()
-   * @see isFalling()
-   * @see hasAirMomentum()
+   * Related: Actor#stopFalling(), Actor#isInAir(), Actor#isJumping(),
+   * Actor#isFalling(), Actor#hasAirMomentum()
    */
   startFalling: function() {
     // Keep going at the same horizontal speed when walking off a ledge.
@@ -1730,11 +1739,8 @@ var Actor = Box.extend({
    *
    * This method has no meaning if GRAVITY is false.
    *
-   * @see startFalling()
-   * @see isInAir()
-   * @see isJumping()
-   * @see isFalling()
-   * @see hasAirMomentum()
+   * Related: Actor#startFalling(), Actor#isInAir(), Actor#isJumping(),
+   * Actor#isFalling(), Actor#hasAirMomentum()
    */
   stopFalling: function() {
     if (this.y + this.height + this.speed * App.timer.lastDelta > world.height &&
@@ -1751,11 +1757,8 @@ var Actor = Box.extend({
   /**
    * Check whether the Actor is in the air or not.
    *
-   * @see startFalling()
-   * @see stopFalling()
-   * @see isJumping()
-   * @see isFalling()
-   * @see hasAirMomentum()
+   * Related: Actor#startFalling(), Actor#stopFalling(), Actor#isJumping(),
+   * Actor#isFalling(), Actor#hasAirMomentum()
    */
   isInAir: function() {
     return this.inAir;
@@ -1764,11 +1767,8 @@ var Actor = Box.extend({
   /**
    * Check whether the Actor is jumping or not.
    *
-   * @see startFalling()
-   * @see stopFalling()
-   * @see isInAir()
-   * @see isFalling()
-   * @see hasAirMomentum()
+   * Related: Actor#startFalling(), Actor#stopFalling(), Actor#isInAir(),
+   * Actor#isFalling(), Actor#hasAirMomentum()
    */
   isJumping: function() {
     return this.numJumps > 0;
@@ -1777,11 +1777,8 @@ var Actor = Box.extend({
   /**
    * Check whether the Actor is in the air from falling (as opposed to jumping).
    *
-   * @see startFalling()
-   * @see stopFalling()
-   * @see isInAir()
-   * @see isJumping()
-   * @see hasAirMomentum()
+   * Related: Actor#startFalling(), Actor#stopFalling(), Actor#isInAir(),
+   * Actor#isJumping(), Actor#hasAirMomentum()
    */
   isFalling: function() {
     return this.isInAir() && this.numJumps === 0;
@@ -1790,11 +1787,8 @@ var Actor = Box.extend({
   /**
    * Check whether the Actor has air momentum (as opposed to air control).
    *
-   * @see startFalling()
-   * @see stopFalling()
-   * @see isInAir()
-   * @see isJumping()
-   * @see isFalling()
+   * Related: Actor#startFalling(), Actor#stopFalling(), Actor#isInAir(),
+   * Actor#isJumping(), Actor#isFalling()
    */
   hasAirMomentum: function() {
     return this.fallLeft !== null ||
@@ -1803,7 +1797,9 @@ var Actor = Box.extend({
   },
 
   /**
-   * Check whether this Actor is standing on top of the box.
+   * Check whether this Actor is standing on top of a Box.
+   *
+   * @param {Box} box The box to check.
    */
   standingOn: function(box) {
     if (box instanceof Collection || box instanceof TileMap) {
@@ -1822,13 +1818,13 @@ var Actor = Box.extend({
   /**
    * Check collision with solids and adjust the Actor's position as necessary.
    *
-   * @param moved
-   *   An object with 'x' and 'y' properties indicating the distance in pixels
+   * @param {Object} moved
+   *   An object with `x` and `y` properties indicating the distance in pixels
    *   that the Actor moved since the last repaint.
-   * @param collideWith
+   * @param {Box/Collection/TileMap} collideWith
    *   A Box, Collection, or TileMap of objects with which to check collision.
    *
-   * @return
+   * @return {Boolean}
    *   true if the Actor collided with something; false otherwise.
    */
   collideSolid: function(moved, collideWith) {
@@ -1862,17 +1858,19 @@ var Actor = Box.extend({
   /**
    * Check collision with a single solid and adjust the Actor's position.
    *
-   * @param moved
+   * See also Actor#collideSolid().
+   *
+   * @param {Object} moved
    *   An object with 'x' and 'y' properties indicating the distance in pixels
    *   that the Actor moved since the last repaint.
-   * @param collideWith
+   * @param {Box} collideWith
    *   A Box with which to check collision.
    *
-   * @return
-   *   An object with 'falling' and 'collided' properties (both Booleans
+   * @return {Object}
+   *   An object with `falling` and `collided` properties (both Booleans
    *   indicating whether the Actor is falling or has collided with a solid).
    *
-   * @see collideSolid()
+   * @ignore
    */
   _collideSolidBox: function(moved, collideWith) {
     // "Falling" here really just means "not standing on top of this Box."
@@ -1922,17 +1920,16 @@ var Actor = Box.extend({
    * This is useful for making sure Actors can't walk through walls if the
    * frame rate drops dramatically or they're going really fast.
    *
-   * @param moved
-   *   An object with 'x' and 'y' properties indicating the number of pixels
+   * @param {Object} moved
+   *   An object with `x` and `y` properties indicating the number of pixels
    *   the Actor has moved along each axis.
-   * @param collideWith
+   * @param {Box/Collection/TileMap} collideWith
    *   A Box, Collection, or TileMap indicating the solid object(s) with which
    *   to check for collision.
-   * @param fix
-   *   A boolean indicating whether or not to correct the move if it is not
-   *   allowed. Defaults to false.
+   * @param {Boolean} [fix=false]
+   *   Indicates whether or not to correct the move if it is not allowed.
    *
-   * @return
+   * @return {Boolean}
    *   true if the move is allowed; false otherwise.
    */
   isMoveAllowed: function(moved, collideWith, fix) {
@@ -1992,13 +1989,14 @@ var Actor = Box.extend({
   },
 
   /**
-   * Change the Actor's animation sequence if it uses a SpriteMap.
+   * Change the Actor's animation sequence if it uses a {@link SpriteMap}.
    *
    * All animations fall back to the "stand" animation if they are not
    * available. The "jumpRight" and "jumpLeft" sequences will try to fall back
    * to the "lookRight" and "lookLeft" sequences first, respectively, if they
    * are not available. Animations that will play by default if they are
    * available include:
+   *
    * - stand (required)
    * - left
    * - right
@@ -2020,18 +2018,19 @@ var Actor = Box.extend({
    * - lookUpLeft
    * - lookDownRight
    * - lookDownLeft
+   * - drag
    *
    * Override this function if you want to modify the custom rules for which
    * animations to play (or what the animations' names are).
    *
-   * This function does nothing if the Actor's "src" attribute is not a
+   * This function does nothing if the Actor's `src` attribute is not a
    * SpriteMap.
    *
-   * @param moved
-   *   An object with 'x' and 'y' properties indicating the number of pixels
-   *   the Actor has moved along each axis.
+   * See also Actor#useAnimation().
    *
-   * @see useAnimation()
+   * @param {Object} moved
+   *   An object with `x` and `y` properties indicating the number of pixels
+   *   the Actor has moved along each axis.
    */
   updateAnimation: function(moved) {
     if (!(this.src instanceof SpriteMap)) {
@@ -2121,18 +2120,22 @@ var Actor = Box.extend({
   },
 
   /**
-   * Try to switch to a different SpriteMap animation sequence.
+   * Try to switch to a different {@link SpriteMap} animation sequence.
    *
    * Takes animation sequence names as arguments as switches to the first named
    * sequence that exists in the SpriteMap. If you already know what animation
-   * sequences you have available, you might as well just call this.src.use()
+   * sequences you have available, you might as well just call `this.src.use()`
    * directly.
    *
-   * @return
+   * See also Actor#updateAnimation().
+   *
+   * @param {Arguments} ...
+   *   Animation sequence names. Switches to the first one that the SpriteMap
+   *   defines.
+   *
+   * @return {String/Boolean}
    *   The name of the animation sequence to which the Actor switched, if
    *   successful; false otherwise.
-   *
-   * @see updateAnimation()
    */
   useAnimation: function() {
     for (var i = 0; i < arguments.length; i++) {
@@ -2153,6 +2156,8 @@ var Actor = Box.extend({
    * axis, it will still only move along that axis. Collision still applies,
    * but you may find that collision doesn't quite work the way you think it
    * does.
+   *
+   * @param {Boolean} on Whether to enable or disable dragging.
    */
   setDraggable: function(on) {
     if (!on) {
@@ -2181,8 +2186,8 @@ var Actor = Box.extend({
    * given continuously (such as when holding down a key) and those being given
    * intermittently (such as a simple key press).
    *
-   * @param releasedDirections
-   *   An array containing directions that are no longer being given.
+   * @param {String[]} releasedDirections
+   *   An Array containing directions that are no longer being given.
    */
   release: function(releasedDirections) {
     if (this.GRAVITY && typeof keys != 'undefined' &&
@@ -2200,6 +2205,8 @@ var Actor = Box.extend({
  * situations where a Player is desired, and in other cases (e.g. when the
  * viewport should shift based on the mouse's location) generally a Player
  * should not be used.
+ *
+ * @extends Actor
  */
 var Player = Actor.extend({
   /**
@@ -2225,7 +2232,13 @@ var Player = Actor.extend({
   JUMP_RELEASE: true,
 
   /**
-   * Initialize a Player.
+   * @constructor
+   *   Initialize a Player.
+   *
+   * Takes the same parameters as the Box constructor.
+   * **Inherited documentation:**
+   *
+   * @inheritdoc Box#constructor
    */
   init: function() {
     this._super.apply(this, arguments);
@@ -2240,7 +2253,11 @@ var Player = Actor.extend({
   },
 
   /**
-   * Override Actor.move() to respond to keyboard input automatically.
+   * Override Actor#move() to respond to keyboard input automatically.
+   *
+   * **Inherited documentation:**
+   *
+   * @inheritdoc Actor#move
    */
   move: function(direction) {
     if (direction === undefined) {
@@ -2250,7 +2267,11 @@ var Player = Actor.extend({
   },
 
   /**
-   * Override Actor.update() to move the viewport as the Player nears an edge.
+   * Override Actor#update() to move the viewport as the Player nears an edge.
+   *
+   * **Inherited documentation:**
+   *
+   * @inheritdoc Actor#update
    */
   update: function(direction) {
     var moved = this._super(direction);
@@ -2262,6 +2283,10 @@ var Player = Actor.extend({
 
   /**
    * Toggle whether the Player can be dragged around by the mouse.
+   *
+   * **Inherited documentation:**
+   *
+   * @inheritdoc Actor#setDraggable
    */
   setDraggable: function(on) {
     if (!on) {
@@ -2287,18 +2312,18 @@ var Player = Actor.extend({
   /**
    * Move the viewport when the Player gets near the edge.
    *
-   * @param moved
-   *   An object with 'x' and 'y' properties indicating the number of pixels
+   * @param {Object} moved
+   *   An object with `x` and `y` properties indicating the number of pixels
    *   the Player has moved along each axis.
    *
-   * @return
-   *   An object with 'x' and 'y' properties indicating the number of pixels
+   * @return {Object}
+   *   An object with `x` and `y` properties indicating the number of pixels
    *   this method caused the viewport to shift along each axis.
    */
   adjustViewport: function(moved) {
     var offsets = world.getOffsets(), changed = {x: 0, y: 0};
     // We should only have mouse or player scrolling, but not both.
-    if (Mouse.scroll.isEnabled()) {
+    if (Mouse.Scroll.isEnabled()) {
       return changed;
     }
     // left
