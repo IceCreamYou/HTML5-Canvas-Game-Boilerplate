@@ -1,7 +1,4 @@
-/**
- * @file
- *   The main logic for your project goes in this file.
- */
+// The main logic for your project goes in this file.
 
 /**
  * The Player object; an Actor controlled by user input.
@@ -59,7 +56,7 @@ var Enemy = Actor.extend({
     this.lastLooked = keys.right; // Start off moving right
     this.src = new SpriteMap('images/centipede.png', {
       stand: [0, 13, 0, 13],
-      left: [0, 0, 0, 12, false, [true, false]],
+      left: [0, 0, 0, 12, false, {horizontal: true, vertical: false}],
       right: [0, 0, 0, 12],
     }, {
       frameW: 52,
@@ -100,11 +97,11 @@ var Bullet = Actor.extend({
   /**
    * Initialize a Bullet.
    *
-   * @param direction
-   *   An array of keys representing the Bullet's initial direction.
-   * @param x
+   * @param {String[]} direction
+   *   An Array of keys representing the Bullet's initial direction.
+   * @param {Number} x
    *   The x-coordinate of the top-left corner of the Bullet.
-   * @param y
+   * @param {Number} y
    *   The y-coordinate of the top-left corner of the Bullet.
    */
   init: function(direction, x, y) {
@@ -234,9 +231,9 @@ function setup(again) {
   var Grass = Box.extend({ src: 'images/grass.png', });
   var Dirt = Box.extend({ src: 'images/dirt.png', });
   var Rock = Box.extend({ src: 'images/rock.png', });
-  var grid =  "_________D______GG________\n" +
-              "______________GGDDGG______\n" +
-              "______GG____GGRRRRRRGG__GG";
+  var grid =  "         D      GG        \n" +
+              "              GGDDGG      \n" +
+              "      GG    GGRRRRRRGG  GG";
   solid = new TileMap(grid, {D: Dirt, G: Grass, R: Rock});
 
   // Add enemies.

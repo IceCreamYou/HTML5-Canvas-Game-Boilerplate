@@ -1,7 +1,4 @@
-/**
- * @file
- *   The main logic for your project goes in this file.
- */
+// The main logic for your project goes in this file.
 
 /**
  * The Player object; an Actor controlled by user input.

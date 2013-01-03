@@ -1,16 +1,49 @@
 /**
  * Simple JavaScript Inheritance
- * By John Resig http://ejohn.org/
+ * By [John Resig](http://ejohn.org/)
  * MIT Licensed.
+ * @ignore
  */
 // Inspired by base2 and Prototype
 (function() {
   var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
 
-  // The base Class implementation (does nothing)
-  this.Class = function(){};
+  /**
+   * @class Class
+   *   The base Class implementation (does nothing).
+   *
+   * This is [John Resig's "simple JavaScript inheritance" library](http://ejohn.org/blog/simple-javascript-inheritance/).
+   *
+   * Define a new class with Class#extend:
+   *
+   *      var MyClass = Class.extend({
+   *        // This is the constructor.
+   *        init: function() {
+   *          // this._super is the parent object's method.
+   *          this._super.apply(this, arguments);
+   *        },
+   *        // This is a custom method.
+   *        myMethod: function() {
+   *          alert('hi');
+   *        },
+   *      });
+   *      var myInstance = new MyClass();
+   *      alert(myInstance instanceof MyClass); // true
+   *      var MyChildClass = MyClass.extend({
+   *        // Overrides the parent method.
+   *        myMethod: function() {
+   *          alert('hi there');
+   *        },
+   *      });
+   *      var myChild = new MyChildClass();
+   *      alert(myChild instanceof MyChildClass && myChild instanceof myClass); // true
+   *      myChild.myMethod(); // hi there
+   */
+  this.Class = function() {};
  
-  // Create a new Class that inherits from this class
+  /**
+   * Create a new Class that inherits from this class.
+   */
   Class.extend = function(prop) {
     var _super = this.prototype;
    

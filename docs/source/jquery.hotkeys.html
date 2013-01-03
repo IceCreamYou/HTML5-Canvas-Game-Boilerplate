@@ -18,53 +18,60 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * jQuery Hotkeys Plugin
  *
- * This is a heavily modified version of John Resig's v0.8:
- * https://github.com/jeresig/jquery.hotkeys
- * This in turn was based upon the plugin by Tzury Bar Yochay:
- * https://github.com/tzuryby/jquery.hotkeys
- * The original idea was from Binny V A:
- * http://www.openjs.com/scripts/events/keyboard_shortcuts/
- * ...and I am Isaac Sukin.
+ * Dual licensed under the MIT or GPLv2 licenses.
  *
- * Some additional minor modifications to Resig's v0.8 were adapted from
- * kwillia at https://github.com/jeresig/jquery.hotkeys/pull/4/files
- * and kevingorski at https://github.com/jeresig/jquery.hotkeys/pull/2/files
+ * Credits:
+ * - [Isaac Sukin](https://github.com/IceCreamYou) wrote this revision
+ * - [John Resig](https://github.com/jeresig/jquery.hotkeys)
+ * - [Tzury Bar Yochay](https://github.com/tzuryby/jquery.hotkeys)
+ * - [Binny V A](http://www.openjs.com/scripts/events/keyboard_shortcuts/)
+ * - [kwillia](https://github.com/jeresig/jquery.hotkeys/pull/4/files)
+ * - [kevingorski](https://github.com/jeresig/jquery.hotkeys/pull/2/files)
  *
- * Dual licensed under the MIT or GPL Version 2 licenses.
- *
- * USAGE:
- * - Bind the keydown, keypress, or keyup events to an element:
- *     $(selector).keypress('ctrl+a down', function(event) {}); OR
- *     $(selector).on('keypress', 'ctrl+a down', function(event) {});
- *   Separate key combinations that should trigger the callback with spaces.
- *   In the examples above, the callback would fire if 'ctrl+a' or 'down' was
- *   pressed. You can specify keys in combination with the control keys: alt,
- *   ctrl, meta, and shift. In the event callback, event.keyPressed holds the
- *   combination that actually triggered the callback.
- * - Instead of binding to key events, you can also just call
- *   jQuery.hotkeys.areKeysDown() to determine whether a set of keys is
- *   currently being pressed, or examine the list of currently pressed keys
- *   yourself in jQuery.hotkeys.keysDown.
- * - If you only care about keys that were pressed (and released) instead of
- *   which keys are being held down, you can call
- *   jQuery.hotkeys.lastKeyPressed() or examine the last 5 keys pressed in
- *   jQuery.hotkeys.lastKeysPressed.
- *
- * NOTE: Firefox is the only major browser that will reliably let you override
- * all key shortcuts built into the browser. This won't be a problem for most
- * applications, but you should avoid binding to combinations like ctrl+Q and
- * alt+F4 because most browsers will still react to those by closing the
- * window.
+ * @ignore
  */
-
 (function(jQuery){
-
+<span id='jQuery-hotkeys'>  /**
+</span>   * @class jQuery.hotkeys
+   *   Provides easy, literal handling for keyboard input.
+   *
+   * USAGE:
+   *
+   * - Bind the `keydown`, `keypress`, or `keyup` events to an element:
+   *
+   *       $(selector).keypress('ctrl+a down', function(event) {});
+   *       // OR
+   *       $(selector).on('keypress', 'ctrl+a down', function(event) {});
+   *
+   *   Separate key combinations that should trigger the callback with spaces.
+   *   In the examples above, the callback would fire if `ctrl+a` or `down` was
+   *   pressed. You can specify keys in combination with the control keys: alt,
+   *   ctrl, meta, and shift. In the event callback, `event.keyPressed` holds
+   *   the combination that actually triggered the callback.
+   *
+   * - Instead of binding to key events, you can also just call
+   *   `jQuery.hotkeys.areKeysDown()` to determine whether a set of keys is
+   *   currently being pressed, or examine the list of currently pressed keys
+   *   yourself in `jQuery.hotkeys.keysDown`.
+   *
+   * - If you only care about keys that were pressed (and released) instead of
+   *   which keys are being held down, you can call
+   *   `jQuery.hotkeys.lastKeyPressed()` or examine the last 5 keys pressed in
+   *   `jQuery.hotkeys.lastKeysPressed`.
+   *
+   * NOTE: Firefox is the only major browser that will reliably let you override
+   * all key shortcuts built into the browser. This won't be a problem for most
+   * applications, but you should avoid binding to combinations like ctrl+Q and
+   * alt+F4 because most browsers will still react to those by closing the
+   * window.
+   */
   jQuery.hotkeys = {
     version: &quot;0.9&quot;,
 
     keysDown: [], // keys currently held down
 
-    lastKeysPressed: [], // the last 5 keys pressed and released (most recent key at the end)
+    // the last 5 keys pressed and released (most recent key at the end)
+    lastKeysPressed: [],
 
     textTypes: [
                 'text', 'search', 'tel', 'url', 'email', 'password', 'number', 'range',
@@ -80,7 +87,7 @@
       112: &quot;f1&quot;, 113: &quot;f2&quot;, 114: &quot;f3&quot;, 115: &quot;f4&quot;, 116: &quot;f5&quot;, 117: &quot;f6&quot;, 118: &quot;f7&quot;, 119: &quot;f8&quot;,
       120: &quot;f9&quot;, 121: &quot;f10&quot;, 122: &quot;f11&quot;, 123: &quot;f12&quot;, 144: &quot;numlock&quot;, 145: &quot;scroll&quot;,
       186: &quot;;&quot;, 187: &quot;=&quot;, 188: &quot;,&quot;, 189: &quot;-&quot;, 190: &quot;.&quot;,
-      191: &quot;/&quot;, 219: &quot;\[&quot;, 220: &quot;\\&quot;, 221: &quot;]&quot;, 222: &quot;'&quot;, 191: &quot;/&quot;, 224: &quot;meta&quot;
+      191: &quot;/&quot;, 219: &quot;[&quot;, 220: &quot;\\&quot;, 221: &quot;]&quot;, 222: &quot;'&quot;, 224: &quot;meta&quot;
     }, // charcodes for when String.fromCharCode() doesn't work
 
     shiftNums: {
@@ -89,37 +96,38 @@
       &quot;.&quot;: &quot;&gt;&quot;,  &quot;/&quot;: &quot;?&quot;,  &quot;\\&quot;: &quot;|&quot;, &quot;[&quot;: &quot;{&quot;, &quot;]&quot;: &quot;}&quot;
     },
 
-<span id='global-method-areKeysDown'>    /**
+<span id='jQuery-hotkeys-method-areKeysDown'>    /**
 </span>     * Tests whether a set of keys is currently pressed down.
-     * 
+     *
      * If no control key (alt, ctrl, meta, shift) is currently held down,
      * the specified keys will match in any order. Otherwise, they have to
      * match in the given order.
-     * 
-     * @param keyArray
-     *   An Array or string of keys to check. If an Array is passed, all
-     *   the keys in the array must be currently held down, and no keys can
-     *   be held down that are not in the array. If a String is passed,
-     *   combinations of characters should be connected with + signs and
-     *   separated with spaces. Each combination will be checked and this
-     *   function will return true if any of the combinations matches. For
-     *   example, the string &quot;up down left+right&quot; will return true if
-     *   either the up arrow key, the down arrow key, or both the left and
+     *
+     * @param {Array/String} keyArray
+     *   An Array or string of keys to check. If an Array is passed, this
+     *   method tests whether *all* the keys in the array are currently held
+     *   down *and* whether any keys are held down that are not in the array.
+     *   If a String is passed, combinations of characters should be connected
+     *   with + signs and separated with spaces. Each combination will be
+     *   checked and this function will return true if any of the combinations
+     *   matches. For example, the string &quot;up down left+right&quot; will return true
+     *   if either the up arrow key, the down arrow key, or both the left and
      *   right arrow keys are currently pressed.
-     *   
+     *
      *   NOTE: Instead of writing shift-key characters like &quot;@&quot;, write
      *   &quot;shift+2&quot;. This avoids ambiguity and makes it less likely that
      *   invalid character sequences could be specified.
      *
-     * @return
+     * @return {Boolean}
      *   true if the given keys match the set of keys currently pressed
      *   down; false otherwise.
      */
     areKeysDown: function(keyArray) {
+      var i;
       // If the parameter is a string, split it apart and check each combination.
       if (typeof keyArray == 'string') {
         var choices = keyArray.split(' ');
-        for (var i = 0; i &lt; choices.length; i++) {
+        for (i = 0; i &lt; choices.length; i++) {
           if (this.areKeysDown(choices[i].split('+'))) {
             return true;
           }
@@ -132,7 +140,7 @@
         return false;
       }
       // Check for control keys so we know whether order matters.
-      for (var i = 0; i &lt; l; i++) {
+      for (i = 0; i &lt; l; i++) {
         if (jQuery.inArray(this.keysDown[i], ['alt', 'ctrl', 'meta', 'shift']) &gt; -1) {
           foundControlKey = true;
           break;
@@ -140,7 +148,7 @@
       }
       if (foundControlKey) {
         // Compare keyArray with $.hotkeys.keysDown, order doesn't matter
-        for (var i = 0; i &lt; l; i++) {
+        for (i = 0; i &lt; l; i++) {
           if (jQuery.inArray(this.keysDown[i], keyArray) == -1) {
             return false;
           }
@@ -148,7 +156,7 @@
       }
       else {
         // Compare keyArray with $.hotkeys.keysDown, order matters
-        for (var i = 0; i &lt; l; i++) {
+        for (i = 0; i &lt; l; i++) {
           if (this.keysDown[i] != keyArray[i]) {
             return false;
           }
@@ -157,12 +165,12 @@
       return true;
     },
 
-<span id='global-method-lastKeyPressed'>    /**
+<span id='jQuery-hotkeys-method-lastKeyPressed'>    /**
 </span>     * Return the last key pressed.
      */
     lastKeyPressed: function() {
       return this.lastKeysPressed[this.lastKeysPressed.length-1];
-    },
+    }
   };
 
   function keyHandler( handleObj ) {
@@ -217,17 +225,18 @@
       }
 
       // Record which keys are down
+      var i, keyPressed;
       if (event.type === &quot;keydown&quot;) {
-        var keyPressed = special || character;
-        var i = jQuery.inArray(keyPressed, jQuery.hotkeys.keysDown);
+        keyPressed = special || character;
+        i = jQuery.inArray(keyPressed, jQuery.hotkeys.keysDown);
         if (i === undefined || i &lt; 0) {
           jQuery.hotkeys.keysDown.push(keyPressed);
         }
       }
       // Release keys
       else if (event.type === &quot;keyup&quot;) {
-        var keyPressed = special || character;
-        var i = jQuery.inArray(keyPressed, jQuery.hotkeys.keysDown);
+        keyPressed = special || character;
+        i = jQuery.inArray(keyPressed, jQuery.hotkeys.keysDown);
         if (i !== undefined &amp;&amp; i &gt; -1) {
           jQuery.hotkeys.keysDown.splice(i, 1);
         }
@@ -237,7 +246,7 @@
         }
       }
 
-      for ( var i = 0, l = keys.length; i &lt; l; i++ ) {
+      for ( i = 0, l = keys.length; i &lt; l; i++ ) {
         if ( possible[ keys[i] ] ) {
           event.keyPressed = keys[i]; // note which key combination was actually pressed
           return origHandler.apply( this, arguments );

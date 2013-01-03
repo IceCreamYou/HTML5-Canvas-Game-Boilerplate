@@ -1,55 +1,117 @@
 /**
- * Provides persistent local storage that preserves object type.
+ * @class App.Storage
+ *   Provides persistent local storage that preserves object type.
  *
- * If you wanted to be really comprehensive with local storage you could use
- * something like https://github.com/alexmng/sticky/blob/master/sticky-2.8.js.
- * However, localStorage is supported in every browser that supports enough
- * Canvas API operations to be useful, so that is all we need to support.
- *
- * The methods of App.storage do basically the same thing as their localStorage
- * equivalents:
- * - .get(key, defaultValue) gets the value stored at the key. If there is no
- *   value, returns defaultValue (undefined by default).
- * - .set(key, value) sets the value at key. If value is undefined, removes the
- *   value at key.
- * - .remove(key) removes the value at key.
- * - .clear() removes all values from storage.
- * - .length() returns the number of items in storage.
- * - .key(index) returns the value at the relevant numeric index.
- * - .enabled is a boolean indicating whether or not local storage is supported
- *   in this browser. If false, a fake storage system is substituted that does
- *   not persist between sessions.
+ * Behavior is very similar to using localStorage directly except that it
+ * supports storing any kind of object rather than just strings.
  *
  * Note that local storage does not work in some browsers on documents accessed
  * via the file:// protocol.
  */
-App.storage = (function(window, undefined) {
-  var api = {}, namespace = '__jqstore__', storage = window.localStorage;
-  api.enabled = true;
-  // Provide equivalents to the localStorage interface.
+App.Storage = (function(window, undefined) {
+  var api = {enabled: true},
+      namespace = '__appstore__',
+      storage = window.localStorage,
+      internal = {},
+      fake = false;
+  /**
+   * Sets the value at key.
+   *
+   * If value is undefined, removes the value at key.
+   *
+   * @param {String} key
+   *   The identifier for the value to set.
+   * @param {Mixed} value
+   *   The value to assign at the key.
+   */
   api.set = function(key, value) {
+    key = namespace + key;
     if (value === undefined) {
       return api.remove(key);
     }
     storage.setItem(key, JSON.stringify(value));
   };
+  /**
+   * Get the value stored at key.
+   *
+   * @param {String} key
+   *   The identifier for the value to retrieve.
+   * @param {Mixed} [defaultValue=undefined]
+   *   If there is no value at key, this value is returned instead.
+   *
+   * @return {Mixed}
+   *   The value stored at key if it exists, or defaultValue otherwise.
+   */
   api.get = function(key, defaultValue) {
-    return JSON.parse(storage.getItem(key)) || defaultValue;
+    key = namespace + key;
+    try {
+      var item = storage.getItem(key);
+      // If it's a string, we probably put it there. Un-stringify it.
+      if (typeof item === 'string') {
+        return JSON.parse(item);
+      }
+      // Someone put something here.
+      else if (item !== null) {
+        return item;
+      }
+    } catch(e) {
+      if (console && console.error) {
+        console.error(e);
+      }
+    }
+    // There is nothing at key or JSON.parse failed.
+    return defaultValue;
   };
+  /**
+   * Removes the value at key.
+   *
+   * @param {String} key
+   *   The identifier for the value to remove.
+   */
   api.remove = function(key) {
-    storage.removeItem(key);
+    storage.removeItem(namespace + key);
   };
+  /**
+   * Removes all values from storage.
+   */
   api.clear = function() {
     storage.clear();
   };
+  /**
+   * Returns the number of items in storage.
+   *
+   * @return {Number}
+   *   The number of items in storage.
+   */
   api.length = function() {
-    if (storage.__fake) {
-      return storage.internal.length;
+    if (fake) {
+      return internal.length;
     }
     return storage.length;
   };
+  /**
+   * Returns the value at a numeric index.
+   *
+   * @param {Number} index
+   *   The index at which to retrieve the value.
+   *
+   * @return {Mixed}
+   *   The value at the specified numeric index.
+   */
   api.key = function(index) {
     return storage.key(index);
+  };
+  /**
+   * Indicates whether persistent storage is supported in this browser.
+   *
+   * If it is not supported, storage will only persist for the current session.
+   *
+   * @return {Boolean}
+   *   A Boolean indicating whether persistent storage is supported in this
+   *   browser.
+   */
+  api.isEnabled = function() {
+    return api.enabled;
   };
   // Safari Private mode throws an error when localStorage is used.
   // Learned at https://github.com/marcuswestin/store.js
@@ -62,35 +124,39 @@ App.storage = (function(window, undefined) {
   } catch(e) {
     api.enabled = false;
   }
-  // If localStorage is unavailable, fake it.
-  // No point falling back to anything else; all we're going for here is
-  // avoiding breaking errors. Doing this avoids having to check for
-  // App.storage.enabled every time you want to store something.
+  // If localStorage is unavailable, fake it. No point falling back to anything
+  // else; all we're going for here is avoiding breaking errors. Doing this
+  // avoids having to check for App.Storage.enabled every time you want to
+  // store something. If you wanted to be really comprehensive with local
+  // storage you could use something like
+  // [sticky.js](https://github.com/alexmng/sticky/blob/master/sticky-2.8.js).
+  // However, localStorage is supported in every browser that supports enough
+  // Canvas API operations to be useful, so that is all we need to support.
   if (!api.enabled) {
     storage = {
-        __fake: true,
-        __internal: {},
         setItem: function(key, value) {
-          this.__internal[key] = value;
+          internal[key] = value;
         },
         getItem: function(key) {
-          return this.__internal[key];
+          return internal[key];
         },
         removeItem: function(key) {
-          delete this.__internal[key];
+          delete internal[key];
         },
         clear: function() {
-          this.__internal = {};
+          internal = {};
         },
         key: function(index) {
           var i = 0;
-          for (var k in this.__internal) {
-            if (i == index) {
-              return this.__internal[k];
+          for (var k in internal) {
+            if (internal.hasOwnProperty(k)) {
+              if (i == index) {
+                return internal[k];
+              }
+              i++;
             }
-            i++;
           }
-        },
+        }
     };
   }
   return api;

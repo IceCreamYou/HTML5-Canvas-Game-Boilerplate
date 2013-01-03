@@ -1,11 +1,23 @@
 /**
- * @file
- *   Provides helpful utilities for common Canvas operations.
+ * Provides helpful utilities for common Canvas operations.
+ *
+ * @ignore
  */
 
-// The App object holds utilities that are usually unnecessary to use directly.
+/**
+ * The App object holds all the miscellaneous things that don't deserve to be
+ * global.
+ * @static
+ */
 var App = {};
+/**
+ * @property
+ *   Whether Debug Mode is on or off (shows or hides debugging information).
+ * @member App
+ * @static
+ */
 App.debugMode = false;
+// App.Debug is used for tracking debugging information.
 App.Debug = {};
 App.Debug.updateTimeElapsed = 0;
 App.Debug.clearTimeElapsed = 0;
@@ -14,14 +26,37 @@ App.Debug.drawTimeElapsed = 0;
 // SETUP ----------------------------------------------------------------------
 
 /**
- * Global environment.
+ * The Canvas DOM element.
+ * @member global
  */
-var canvas, $canvas, context, world;
+var canvas;
+/**
+ * The jQuery representation of the Canvas element.
+ * @member global
+ */
+var $canvas;
+/**
+ * The main Canvas graphics context.
+ * @member global
+ */
+var context;
+/**
+ * The {@link World} object for the current environment.
+ * @member global
+ */
+var world;
 
 /**
- * Current position of the mouse coordinates relative to the canvas.
+ * Handles mouse motion and scrolling.
+ * @static
  */
-var mouse = {
+var Mouse = {
+    /**
+     * @property
+     *   The coordinates of the mouse relative to the upper-left corner of the
+     *   canvas.
+     * @static
+     */
     coords: {x: 9999, y: 9999},
 };
 
@@ -39,9 +74,10 @@ jQuery(document).ready(function() {
   context = canvas.getContext('2d');
 
   // Set up the world.
-  // Lots of drawing depends on the world size, so set this before anything else
-  // and try not to change it.
+  // Lots of drawing depends on the world size, so set this before anything
+  // else and try not to change it.
   world = new World();
+  context.__layer = world;
 
   // Track the mouse.
   $canvas.hover(function() {
@@ -51,14 +87,14 @@ jQuery(document).ready(function() {
         // Prevent window scrolling on iPhone and display freeze on Android
         e.preventDefault();
       }
-      mouse.coords = {
+      Mouse.coords = {
           x: e.pageX - $this.offset().left,
           y: e.pageY - $this.offset().top,
       };
     });
   }, function() {
     jQuery(this).off('.coords');
-    mouse.coords = {x: -9999, y: -9999};
+    Mouse.coords = {x: -9999, y: -9999};
   });
 
   // Track and delegate click events.
@@ -66,7 +102,16 @@ jQuery(document).ready(function() {
     App.Events.trigger(e.type, e);
   });
 
-  // Keep track of time, but don't start the timer until we start animating.
+  /**
+   * @property {Timer} timer
+   *   Tracks time elapsed while the app is running and during each frame.
+   *
+   * App.timer.lastDelta tracks the amount of time since the last frame was
+   * drawn. This value is useful to smooth animation.
+   * 
+   * @member App
+   * @static
+   */
   App.timer = new Timer(false);
   App.timer.frames = 0; // The number of frames that have been painted.
 });
@@ -100,9 +145,17 @@ jQuery(window).load(function() {
         startAnimating();
       }
 
-      // Announce that we've started. Responding to this event could be useful
-      // for stopping animation (for example, if the user needs to press a
-      // "start" button first) or for running some kind of intro graphics.
+      /**
+       * @event start
+       *   Fires on the document when all setup is complete.
+       *
+       * Unless specified otherwise by the return value of setup(), animation
+       * will have started by this point.
+       *
+       * Useful for running intro graphics.
+       *
+       * @member global
+       */
       jQuery(document).trigger('start');
     },
   });
@@ -111,7 +164,40 @@ jQuery(window).load(function() {
 /**
  * Sets the default size of the canvas as early as possible.
  *
- * This function is magic-named and can be overridden for alternate behavior.
+ * The canvas is resized according to the following rules, in order of
+ * precedence:
+ *
+ * - The browser will first automatically set the canvas to the size specified
+ *   by its `width` and `height` attributes. If the canvas element has a
+ *   `data-resize` attribute set to `false`, processing stops here and no more
+ *   resizing rules are applied.
+ * - If the canvas element has a `data-resize` attribute set to `full`, it will
+ *   be resized to the maximum size that fits within the browser window,
+ *   excluding the height of any &lt;header&gt; or &lt;footer&gt; region.
+ * - If the canvas element has `data-minwidth` or `data-minheight` attributes
+ *   (with numeric values in pixels) it will not be scaled smaller than those
+ *   dimensions.
+ * - If the canvas element has `data-maxwidth` or `data-maxheight` attributes
+ *   (with numeric values in pixels) it will not be scaled larger than those
+ *   dimensions.
+ * - The canvas will scale to the largest size that fits within both the window
+ *   and the max attributes (if they are present).
+ * - In all cases except when `data-resize="false"`, the `data-aspectratio`
+ *   attribute takes effect if present. This causes the canvas to resize to the
+ *   largest possible size within the boundaries of the size calculated from
+ *   the other rules, while still maintaining the specified aspect ratio. The
+ *   value of this attribute can be any floating point number or one of the
+ *   common ratios "4:3", "16:9", "16:10", or "8:5". For example, with an
+ *   aspect ratio of 4:3, if the width was calculated to be 1024 and the height
+ *   was calculated to be 800, the height would be adjusted to 768.
+ *
+ * Note that using CSS to resize the canvas causes it to scale the graphics as
+ * well; it changes the size of each virtual "pixel" on the canvas rather than
+ * changing the number of pixels inside the canvas. Unless you want to stretch
+ * the canvas display, using CSS to resize the canvas is not recommended.
+ *
+ * @member App
+ * @static
  */
 App.setDefaultCanvasSize = function() {
   // Do not resize if data-resize is false (fall back to CSS).
@@ -162,29 +248,41 @@ App.setDefaultCanvasSize = function() {
 
 /**
  * Tracks cached items.
+ * @static
  */
 var Caches = {
     /**
      * A map from image file paths to Image objects.
+     * @static
      */
     images: {},
     /**
      * A map from image file paths to CanvasPattern objects.
+     * @static
      */
     imagePatterns: {},
     /**
      * Preload a list of images asynchronously.
-     *
-     * @param files
-     *   An array of paths to images to preload.
-     * @param options
+     * 
+     * @param {String[]} files
+     *   An Array of paths to images to preload.
+     * @param {Object} [options]
      *   A map of options for this function.
-     *   - finishCallback: A function to run when all images have finished
-     *     loading. Receives the number of images loaded as a parameter.
-     *   - itemCallback: A function to run when an image has finished loading.
-     *     Receives the file path of the loaded image, how many images have
-     *     been loaded so far (including the current one), and the total number
-     *     of images to load.
+     * @param {Function} [options.finishCallback]
+     *   A function to run when all images have finished loading.
+     * @param {Number} [options.finishCallback.numLoaded]
+     *   The number of images that were preloaded.
+     * @param {Function} [options.itemCallback]
+     *   A function to run when an image has finished loading.
+     * @param {String} [options.itemCallback.filepath]
+     *   The file path of the loaded image.
+     * @param {Number} [options.itemCallback.numLoaded]
+     *   The number of images that have been loaded so far (including the
+     *   current one).
+     * @param {Number} [options.itemCallback.numImages]
+     *   The total number of images to load.
+     *
+     * @static
      */
     preloadImages: function(files, options) {
       var l = files.length, m = -1, src, image;
@@ -198,15 +296,16 @@ var Caches = {
         }
       };
       notifyLoaded();
+      var onload = function() {
+        Caches.images[this._src] = this;
+        notifyLoaded(options.itemCallback, this._src);
+      };
       while (files.length) {
         src = files.pop();
         image = new Image();
-        image.num = l-files.length;
+        image._num = l-files.length;
         image._src = src;
-        image.onload = function() {
-          Caches.images[this._src] = this;
-          notifyLoaded(options.itemCallback, this.src);
-        }
+        image.onload = onload;
         image.src = src;
       }
     },
@@ -229,15 +328,49 @@ App._handlePointerBehavior = function() {
 
 /**
  * An event system for canvas objects.
+ *
+ * The browser has no way to distinguish between different objects being
+ * displayed on the canvas; as far as it is concerned, the canvas is just a
+ * single image. App.Events provides a way to listen for and trigger events on
+ * non-DOM objects.
+ *
+ * @alternateClassName Events
+ * @static
  */
 App.Events = {
   _listeners: {},
   /**
    * Listen for a specific event.
    *
-   * @see Box.listen()
+   * {@link Box} objects can listen for events by calling Box#listen() rather
+   * than calling this method directly.
+   *
+   * @param {Object} obj
+   *   The object which should listen for the event being called on it.
+   * @param {String} eventName
+   *   The name of the event for which to listen, e.g. "click." The event can
+   *   have a namespace using a dot, e.g. "click.custom" will bind to the
+   *   "click" event with the "custom" namespace. Namespaces are useful for
+   *   unlisten()ing to specific callbacks assigned to that namespace or for
+   *   unlisten()ing to callbacks bound to a namespace across multiple events.
+   * @param {Function} callback
+   *   A function to execute when the relevant event is triggered on the
+   *   listening object. The function's `this` object is the listening object
+   *   and it receives any other parameters passed by the trigger call. Usually
+   *   an event object is the first parameter, and propagation can be stopped
+   *   by calling the event's stopPropagation() method.
+   * @param {Number} [weight=0]
+   *   An integer indicating the order in which callbacks for the relevant
+   *   event should be triggered. Lower numbers cause the callback to get
+   *   triggered earlier than higher numbers. This can be useful for getting
+   *   around the fact that the canvas doesn't track display order so event
+   *   callbacks can't distinguish which object should be triggered first if
+   *   multiple listening objects are overlapping.
+   *
+   * @static
    */
-  listen: function(obj, eventName, callback, weight, once) {
+  listen: function(obj, eventName, callback, weight) {
+    var once = arguments[4];
     // Allow specifying multiple space-separated event names.
     var events = eventName.split(' ');
     if (events.length > 1) {
@@ -271,7 +404,31 @@ App.Events = {
   /**
    * Listen for a specific event and only react the first time it is triggered.
    *
-   * @see Box.once()
+   * {@link Box} objects have a corresponding Box#once() method.
+   *
+   * @param {Object} obj
+   *   The object which should listen for the event being called on it.
+   * @param {String} eventName
+   *   The name of the event for which to listen, e.g. "click." The event can
+   *   have a namespace using a dot, e.g. "click.custom" will bind to the
+   *   "click" event with the "custom" namespace. Namespaces are useful for
+   *   unlisten()ing to specific callbacks assigned to that namespace or for
+   *   unlisten()ing to callbacks bound to a namespace across multiple events.
+   * @param {Function} callback
+   *   A function to execute when the relevant event is triggered on the
+   *   listening object. The function's `this` object is the listening object
+   *   and it receives any other parameters passed by the trigger call. Usually
+   *   an event object is the first parameter, and propagation can be stopped
+   *   by calling the event's stopPropagation() method.
+   * @param {Number} [weight=0]
+   *   An integer indicating the order in which callbacks for the relevant
+   *   event should be triggered. Lower numbers cause the callback to get
+   *   triggered earlier than higher numbers. This can be useful for getting
+   *   around the fact that the canvas doesn't track display order so event
+   *   callbacks can't distinguish which object should be triggered first if
+   *   multiple listening objects are overlapping.
+   *
+   * @static
    */
   once: function(obj, eventName, callback, weight) {
     return App.Events.listen(obj, eventName, callback, weight, true);
@@ -279,7 +436,20 @@ App.Events = {
   /**
    * Stop listening for a specific event.
    *
-   * @see Box.unlisten()
+   * {@link Box} objects have a corresponding Box#unlisten() method.
+   *
+   * @param {Object} obj
+   *   The object which should unlisten for the specified event.
+   * @param {String} eventName
+   *   The name of the event for which to listen, e.g. "click." The event can
+   *   have a namespace using a dot, e.g. "click.custom" will unbind obj's
+   *   listeners for the "click" that are using the "custom" namespace. You can
+   *   also unlisten to multiple events using the same namespace, e.g.
+   *   ".custom" could unlisten to "mousemove.custom" and "touchmove.custom."
+   *   If the event specified does not have a namespace, all callbacks will be
+   *   unbound regardless of their namespace.
+   *
+   * @static
    */
   unlisten: function(obj, eventName) {
     // Allow specifying multiple space-separated event names.
@@ -297,10 +467,21 @@ App.Events = {
       eventName = eventName.substring(0, i);
     }
     // Remove all relevant listeners.
-    if (App.Events._listeners[eventName]) {
+    if (eventName && App.Events._listeners[eventName]) {
       for (e = App.Events._listeners[eventName], i = e.length-1; i >= 0; i--) {
         if (e[i].object == obj && (!namespace || e[i].namespace == namespace)) {
           App.Events._listeners[eventName].splice(i, 1);
+        }
+      }
+    }
+    else if (!eventName && namespace) {
+      for (eventName in App.Events._listeners) {
+        if (App.Events._listeners.hasOwnProperty(eventName)) {
+          for (e = App.Events._listeners[eventName], i = e.length-1; i >= 0; i--) {
+            if (e[i].object == obj && e[i].namespace == namespace) {
+              App.Events._listeners[eventName].splice(i, 1);
+            }
+          }
         }
       }
     }
@@ -310,15 +491,17 @@ App.Events = {
   /**
    * Trigger an event.
    *
-   * @param eventName
+   * {@link Box} objects have a corresponding Box#trigger() method.
+   *
+   * @param {String} eventName
    *   The name of the event to trigger, e.g. "click."
-   * @param event
-   *   An event object.
-   * @param ...
+   * @param {Arguments} ...
    *   Additional arguments to pass to the relevant callbacks.
+   *
+   * @static
    */
-  trigger: function() {
-    var eventName = Array.prototype.shift.call(arguments);
+  trigger: function(eventName) {
+    Array.prototype.shift.call(arguments);
     var e = App.Events._listeners[eventName]; // All listeners for this event
     if (e) {
       // Sort listeners by weight (lowest first).
@@ -336,7 +519,7 @@ App.Events = {
           }
           // Stop processing overlapping objects if propagation is stopped.
           var event = Array.prototype.shift.call(arguments);
-          if (event && event.isPropagationStopped()) {
+          if (event && event.isPropagationStopped && event.isPropagationStopped()) {
             break;
           }
         }
@@ -345,26 +528,70 @@ App.Events = {
   },
   /**
    * Determine whether an object should be triggered for a specific event.
+   *
+   * The Behaviors object has event names as keys and functions as values. The
+   * functions evaluate whether the relevant event has been triggered on a
+   * given listening object. The listening object is the functions' `this`
+   * object, and the functions receive all the same parameters passed to the
+   * App.Events.trigger() method (usually starting with an Event object). Add
+   * elements to App.Events.Behaviors if you want to support new event types
+   * with conditional filters.
+   *
+   * @static
    */
   Behaviors: {
+    /**
+     * @event mousedown
+     *   The mousedown event is sent to an object when the mouse pointer is
+     *   over the object and the mouse button is pressed.
+     * @param {Event} e The event object.
+     * @member Box
+     */
     mousedown: App._handlePointerBehavior,
+    /**
+     * @event mouseup
+     *   The mouseup event is sent to an object when the mouse pointer is over
+     *   the object and the mouse button is released.
+     * @param {Event} e The event object.
+     * @member Box
+     */
     mouseup: App._handlePointerBehavior,
+    /**
+     * @event click
+     *   The mouseup event is sent to an object when the mouse pointer is over
+     *   the object and the mouse button is pressed and released.
+     * @param {Event} e The event object.
+     * @member Box
+     */
     click: App._handlePointerBehavior,
+    /**
+     * @event touchstart
+     *   The touchstart event is sent to an object when the object is touched.
+     * @param {Event} e The event object.
+     * @member Box
+     */
     touchstart: App._handlePointerBehavior,
+    /**
+     * @event touchend
+     *   The touchend event is sent to an object when a touch is released over
+     *   the object.
+     * @param {Event} e The event object.
+     * @member Box
+     */
     touchend: App._handlePointerBehavior,
   },
 };
 
 // ANIMATION ------------------------------------------------------------------
 
-// requestAnimFrame shim for smooth animation
-window.requestAnimFrame = (function(callback){
+// requestAnimationFrame shim for smooth animation
+window.requestAnimFrame = (function() {
     return window.requestAnimationFrame ||
     window.webkitRequestAnimationFrame ||
     window.mozRequestAnimationFrame ||
     window.oRequestAnimationFrame ||
     window.msRequestAnimationFrame ||
-    function(callback){
+    function(callback) {
         window.setTimeout(callback, 1000 / 60);
     };
 })();
@@ -372,7 +599,9 @@ window.requestAnimFrame = (function(callback){
 /**
  * Start animating the canvas.
  * 
- * @see stopAnimating()
+ * See also {@link #stopAnimating}
+ *
+ * @member global
  */
 function startAnimating() {
   if (!App._animate) {
@@ -385,7 +614,9 @@ function startAnimating() {
 /**
  * Stop animating the canvas.
  * 
- * @see startAnimating()
+ * See also {@link #startAnimating}
+ *
+ * @member global
  */
 function stopAnimating() {
   App._animate = false;
@@ -418,10 +649,11 @@ function stopAnimating() {
 
 /**
  * Animates the canvas. This is intended for private use and should not be
- * called directly. Instead see startAnimating() and stopAnimating().
- * 
- * @see startAnimating()
- * @see stopAnimating()
+ * called directly. Instead see {@link #startAnimating} and
+ * {@link #stopAnimating}.
+ *
+ * @member App
+ * @ignore
  */
 App.animate = function() {
   // Record the amount of time since the last tick. Used to smooth animation.
@@ -434,7 +666,7 @@ App.animate = function() {
   var t = new Timer();
 
   // update
-  mouse.scroll._update();
+  Mouse.scroll._update();
   update();
 
   if (App.debugMode) {
@@ -464,16 +696,12 @@ App.animate = function() {
 /**
  * Stops animating when the window (tab) goes out of focus.
  *
- * This is great because it stops running the CPU when we don't need it,
- * although it can lead to some weird behavior if you expect something to be
- * running in the background or if you have the browser still visible when you
- * switch to another program. If you don't want this behavior, you can toggle
- * it off like this:
+ * This stops running the CPU when we don't need it, but it can cause
+ * unexpected behavior if you expect something to be running in the background
+ * while focus is not on the browser. If you don't want this behavior, you can
+ * toggle it off with `$(window).off('.animFocus');`
  *
- * $(window).off('.animFocus');
- *
- * For much more comprehensive support for detecting and acting on page
- * visibility, use https://github.com/ai/visibility.js
+ * @ignore
  */
 jQuery(window).on('focus.animFocus', function() {
   if (App._blurred) {
@@ -489,19 +717,51 @@ jQuery(window).on('blur.animFocus', function() {
 // RENDERING ------------------------------------------------------------------
 
 /**
+ * @class CanvasRenderingContext2D
+ *   The native JavaScript canvas graphics context class.
+ *
+ * This class has been extended with custom methods (and one overridden
+ * method).
+ *
+ * The canvas graphics context for the main canvas is stored in the
+ * {@link global#context context} global variable.
+ */
+
+/**
  * Clear the canvas.
+ *
+ * If the rendering context is the {@link global#context global context} for
+ * the main canvas or if it belongs to a {@link Layer}, the visible area of the
+ * relevant canvas will be cleared. Otherwise, the context doesn't know its
+ * transformation matrix, so we have to temporarily reset it to clear the
+ * canvas. This has the effect of clearing the visible area of the canvas, but
+ * if the fillStyle is being used to draw something, it will not scroll with
+ * the rest of the canvas.
  * 
- * Passing the optional fillStyle parameter will cause the entire canvas to be
- * filled in with that style. Otherwise the canvas is simply wiped.
+ * @param {String} [fillStyle]
+ *   If this parameter is passed, the visible area of the canvas will be filled
+ *   in with the specified style. Otherwise, the canvas is simply wiped.
+ *
+ * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
-  if (fillStyle) {
-    this.fillStyle = fillStyle;
-    this.fillRect(0, 0, world.width, world.height);
+  this.save();
+  var x = 0, y = 0;
+  if (this.__layer) {
+    x = this.__layer.xOffset;
+    y = this.__layer.yOffset;
   }
   else {
-    this.clearRect(world.xOffset, world.yOffset, this.canvas.width, this.canvas.height);
+    this.setTransform(1, 0, 0, 1, 0, 0);
   }
+  if (fillStyle) {
+    this.fillStyle = fillStyle;
+    this.fillRect(x, y, this.canvas.width, this.canvas.height);
+  }
+  else {
+    this.clearRect(x, y, this.canvas.width, this.canvas.height);
+  }
+  this.restore();
 };
 
 // Store the original drawImage function so we can actually use it.
@@ -509,64 +769,86 @@ CanvasRenderingContext2D.prototype.__drawImage = CanvasRenderingContext2D.protot
 /**
  * Draws an image onto the canvas.
  *
- * This method is better than the original context.drawImage() for several
- * reasons:
+ * This method is better than the original `drawImage()` for several reasons:
+ *
  * - It uses a cache to allow images to be drawn immediately if they were
  *   pre-loaded and to store images that were not pre-loaded so that they can
  *   be drawn immediately later.
- * - It can draw Sprite, SpriteMap, and Layer objects as well as the usual
- *   images, videos, and canvases. (Note that when Layers are drawn using this
- *   method, their "relative" property IS taken into account.)
+ * - It can draw {@link Sprite}, {@link SpriteMap}, and {@link Layer} objects
+ *   as well as the usual images, videos, and canvases. (Note that when Layers
+ *   are drawn using this method, their "relative" property IS taken into
+ *   account.)
  * - It allows drawing an image by passing in the file path instead of an
  *   Image object.
  *
- * Additionally, this method has an optional "finished" parameter which is a
- * callback that runs when the image passed in the "src" parameter is finished
+ * Additionally, this method has an optional `finished` parameter which is a
+ * callback that runs when the image passed in the `src` parameter is finished
  * loading (or immediately if the image is already loaded or is a video). The
- * callback's context (its "this" object) is the canvas graphics object. Having
+ * callback's context (its `this` object) is the canvas graphics object. Having
  * this callback is useful because if you do not pre-load images, the image
  * will not be loaded (and therefore will not be drawn) for at least the first
- * time that drawing it is attempted. You can use the finished callback to draw
- * the image after it has been loaded if you want.
+ * time that drawing it is attempted. You can use the `finished` callback to
+ * draw the image after it has been loaded if you want.
  *
  * Apart from the additions above, this method works the same way as the
- * original in the spec. More details are available at
- * http://www.w3.org/TR/2dcontext/#drawing-images-to-the-canvas
+ * [original in the spec](http://www.w3.org/TR/2dcontext/#drawing-images-to-the-canvas).
  *
  * As a summary, this method can be invoked three ways:
- * - drawImage(src, x, y[, finished])
- * - drawImage(src, x, y, w, h[, finished])
- * - drawImage(src, sx, sy, sw, sh, x, y, w, h[, finished])
  *
- * In each case, the src parameter accepts one of the following:
+ * - `drawImage(src, x, y[, finished])`
+ * - `drawImage(src, x, y, w, h[, finished])`
+ * - `drawImage(src, sx, sy, sw, sh, x, y, w, h[, finished])`
+ *
+ * In each case, the `src` parameter accepts one of the following:
+ *
  *   - The file path of an image to draw
- *   - A Sprite or SpriteMap object
- *   - A Layer object
+ *   - A {@link Sprite} or {@link SpriteMap} object
+ *   - A {@link Layer} object
  *   - An HTMLCanvasElement
  *   - An HTMLImageElement (same thing as an Image)
  *   - An HTMLVideoElement
  *
- * The x and y parameters indicate the coordinates of the canvas graphics
+ * The `x` and `y` parameters indicate the coordinates of the canvas graphics
  * context at which to draw the top-left corner of the image. (Often this is
  * the number of pixels from the top-left corner of the canvas, though the
  * context can be larger than the canvas if the viewport has scrolled, e.g.
  * with context.translate().)
  *
- * The w and h parameters indicate the width and height of the image,
+ * The `w` and `h` parameters indicate the width and height of the image,
  * respectively. Defaults to the image width and height, respectively (or, for
  * a Sprite or SpriteMap, defaults to the projectedW and projectedH,
  * respectively).
  *
- * The sx, sy, sw, and sh parameters define a rectangle within the image that
- * will be drawn onto the canvas. sx and sy are the x- and y- coordinates
- * (within the image) of the upper-left corner of the source rectangle,
- * respectively, and sw and sh are the width and height of the source
- * rectangle, respectively. These parameters are ignored when drawing a Sprite
- * or SpriteMap. The W3C provides a helpful image to understand these
- * parameters at http://www.w3.org/TR/2dcontext/images/drawImage.png
+ * The `sx`, `sy`, `sw`, and `sh` parameters define a rectangle within the
+ * image that will be drawn onto the canvas. `sx` and `sy` are the x- and y-
+ * coordinates (within the image) of the upper-left corner of the source
+ * rectangle, respectively, and `sw` and `sh` are the width and height of the
+ * source rectangle, respectively. These parameters are ignored when drawing a
+ * Sprite or SpriteMap. The W3C provides a helpful image to understand these
+ * parameters:
  *
- * @see drawPattern()
- * @see Caches.preloadImages()
+ * <img src="http://www.w3.org/TR/2dcontext/images/drawImage.png" alt="drawImage" />
+ *
+ * See also {@link CanvasRenderingContext2D#drawPattern}() and
+ * Caches.preloadImages().
+ *
+ * @param {Mixed} src
+ * @param {Number} [sx]
+ * @param {Number} [sy]
+ * @param {Number} [sw]
+ * @param {Number} [sh]
+ * @param {Number} x
+ * @param {Number} y
+ * @param {Number} [w]
+ * @param {Number} [h]
+ * @param {Function} [finished]
+ * @param {Array} [finished.args]
+ *   An array containing the arguments passed to the drawImage() invocation.
+ * @param {Boolean} [finished.drawn]
+ *   Whether the image was actually drawn (it will not be drawn if the image
+ *   wasn't loaded before drawImage() attempted to draw it).
+ *
+ * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, y, w, h, finished) {
   // Allow the finished parameter to come last,
@@ -637,7 +919,8 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src, src = image._src || image.src; // check for preloaded src
+    var image = src;
+    src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
         finished.call(t, a, false);
@@ -695,53 +978,60 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
  *
  * This function is preferred over createPattern() with fillRect() for drawing
  * patterns for several reasons:
+ *
  * - It uses a cache to allow images to be drawn immediately if they were
  *   pre-loaded and to store images that were not pre-loaded so that they can
  *   be drawn immediately later.
- * - It can draw Layer objects as well as the usual images, videos, and
+ * - It can draw {@link Layer} objects as well as the usual images, videos, and
  *   canvases. (Note that when Layers are drawn using this method, their
  *   "relative" property IS taken into account.)
  * - It allows drawing an image by passing in the file path instead of an
  *   Image object.
  *
- * Unlike our modified drawImage(), this method cannot draw Sprites or
- * SpriteMaps. If you need to draw a Sprite or SpriteMap as a pattern, draw the
- * part you want onto a Layer or a new canvas and then pass that as the src.
+ * Unlike our modified `drawImage()`, this method cannot draw {@link Sprite}s
+ * or {@link SpriteMap}s. If you need to draw a Sprite or SpriteMap as a
+ * pattern, draw the part you want onto a Layer or a new canvas and then pass
+ * that as the src.
  *
- * @param src
+ * See also {@link CanvasRenderingContext2D#drawImage}() and
+ * Caches.preloadImages().
+ *
+ * @param {Mixed} src
  *   The image to draw as a pattern. Accepts one of the following types:
+ *
  *   - The file path of an image to draw
- *   - A Layer object
+ *   - A {@link Layer} object
  *   - An HTMLCanvasElement
  *   - An HTMLImageElement (same thing as an Image)
  *   - An HTMLVideoElement
  *   - A CanvasPattern
- * @param x
- *   (Optional) The x-coordinate at which to draw the top-left corner of the
- *   pattern. Defaults to 0 (zero).
- * @param y
- *   (Optional) The y-coordinate at which to draw the top-left corner of the
- *   pattern. Defaults to 0 (zero).
- * @param w
- *   (Optional) The width of the pattern. Defaults to the canvas width.
- * @param h
- *   (Optional) The height of the pattern. Defaults to the canvas height.
- * @param rpt
- *   (Optional) The repeat pattern type. One of repeat, repeat-x, repeat-y,
- *   no-repeat. This parameter can be omitted even if a finished callback is
- *   passed, so the call drawPattern(src, x, y, w, h, finished) is legal.
- *   Defaults to repeat.
- * @param finished
- *   (Optional) A callback that runs when the image passed in the "src"
- *   parameter is finished loading (or immediately if the image is already
- *   loaded or is a video). The callback's context (its "this" object) is the
- *   canvas graphics object. Having this callback is useful because if you do
- *   not pre-load images, the image will not be loaded (and therefore will not
- *   be drawn) for at least the first time that drawing it is attempted. You
- *   can use the finished callback to draw the image after it has been loaded
- *   if you want.
+ * @param {Number} [x=0]
+ *   The x-coordinate at which to draw the top-left corner of the pattern.
+ * @param {Number} [y=0]
+ *   The y-coordinate at which to draw the top-left corner of the pattern.
+ * @param {Number} [w]
+ *   The width of the pattern. Defaults to the canvas width.
+ * @param {Number} [h]
+ *   The height of the pattern. Defaults to the canvas height.
+ * @param {"repeat"/"repeat-x"/"repeat-y"/"no-repeat"} [rpt="repeat"]
+ *   The repeat pattern type. This parameter can be omitted even if a finished
+ *   callback is passed, so the call `drawPattern(src, x, y, w, h, finished)`
+ *   is legal.
+ * @param {Function} [finished]
+ *   A callback that runs when the image passed in the "src" parameter is
+ *   finished loading (or immediately if the image is already loaded or is a
+ *   video). The callback's context (its `this` object) is the canvas graphics
+ *   object. Having this callback is useful because if you do not pre-load
+ *   images, the image will not be loaded (and therefore will not be drawn) for
+ *   at least the first time that drawing it is attempted. You can use the
+ *   finished callback to draw the image after it has been loaded if you want.
+ * @param {Array} [finished.args]
+ *   An array containing the arguments passed to the drawPattern() invocation.
+ * @param {Boolean} [finished.drawn]
+ *   Whether the image was actually drawn (it will not be drawn if the image
+ *   wasn't loaded before drawPattern() attempted to draw it).
  *
- * @return
+ * @return {CanvasPattern}
  *   The CanvasPattern object for the pattern that was drawn, if possible; or
  *   undefined if a pattern could not be drawn (usually because the image
  *   specified for drawing had not yet been loaded). If your source parameter
@@ -749,10 +1039,9 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
  *   drawn cannot be cached, so it can be helpful for performance to store this
  *   return value and pass it in as the src parameter in the future if you need
  *   to draw the same pattern repeatedly. (Another option is to cache the
- *   drawn pattern in a Layer.)
+ *   drawn pattern in a {@link Layer}.)
  *
- * @see drawImage()
- * @see Caches.preloadImages()
+ * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, finished) {
   if (typeof x === 'undefined') x = 0;
@@ -799,7 +1088,8 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src, src = image._src || image.src; // check for preloaded src
+    var image = src;
+    src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
         finished.call(this, arguments, false);
@@ -820,7 +1110,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
     if (image.complete || (image.width && image.height)) { // draw loaded images
       this.fillStyle = this.createPattern(image, rpt);
       this.fillRect(x, y, w, h);
-      Caches.imagePatterns[src] = t.fillStyle;
+      Caches.imagePatterns[src] = this.fillStyle;
       if (finished instanceof Function) {
         finished.call(this, arguments, true);
       }
@@ -851,8 +1141,9 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       }
     }
     else if (Caches.images[src]) { // Image is cached, but no pattern
+      var image = Caches.images[src];
       if (image.complete || (image.width && image.height)) { // Cached image is loaded
-        this.fillStyle = this.createPattern(Caches.images[src], rpt);
+        this.fillStyle = this.createPattern(image, rpt);
         this.fillRect(x, y, w, h);
         Caches.imagePatterns[src] = this.fillStyle;
         if (finished instanceof Function) {
@@ -884,38 +1175,38 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
  * Draw a checkerboard pattern.
  *
  * This method can be invoked in two ways:
- * - drawCheckered(squareSize, x, y, w, h, color1, color2);
- * - drawCheckered(color1, color2, squareSize, x, y, w, h);
+ *
+ * - `drawCheckered(squareSize, x, y, w, h, color1, color2);`
+ * - `drawCheckered(color1, color2, squareSize, x, y, w, h);`
  *
  * All parameters are optional either way.
  *
- * @param squareSize
- *   (Optional) The width and height, in pixels, of each square in the
- *   checkerboard pattern. Defaults to 80.
- * @param x
- *   (Optional) The x-coordinate of where the pattern's upper-left corner
- *   should be drawn on the canvas. Defaults to 0.
- * @param y
- *   (Optional) The y-coordinate of where the pattern's upper-left corner
- *   should be drawn on the canvas. Defaults to 0.
- * @param w
- *   (Optional) The width of the pattern to draw onto the canvas. Defaults to
- *   twice the squareSize.
- * @param h
- *   (Optional) The height of the pattern to draw onto the canvas. Defaults to
- *   twice the squareSize.
- * @param color1
- *   (Optional) The color of one set of squares in the checkerboard. Defaults
- *   to 'silver'.
- * @param color2
- *   (Optional) The color of the other set of squares in the checkerboard.
- *   Defaults to 'lightGray'.
+ * @param {Number} [squareSize=80]
+ *   The width and height, in pixels, of each square in the checkerboard
+ *   pattern.
+ * @param {Number} [x=0]
+ *   The x-coordinate of where the pattern's upper-left corner should be drawn
+ *   on the canvas.
+ * @param {Number} [y=0]
+ *   The y-coordinate of where the pattern's upper-left corner should be drawn
+ *   on the canvas.
+ * @param {Number} [w=squareSize*2]
+ *   The width of the pattern to draw onto the canvas.
+ * @param {Number} [h=squareSize*2]
+ *   The height of the pattern to draw onto the canvas.
+ * @param {String} [color1="silver"]
+ *   The color of one set of squares in the checkerboard.
+ * @param {String} [color2="lightGray"]
+ *   The color of the other set of squares in the checkerboard.
  *
- * @return
+ * @return {CanvasPattern}
  *   The CanvasPattern object for the pattern that was drawn. It can be helpful
  *   for performance to store this return value and use it to call
- *   drawPattern() in the future if you need to draw this same pattern
- *   repeatedly. (Another option is to cache the drawn pattern in a Layer.)
+ *   {@link CanvasRenderingContext2D#drawPattern}() in the future if you need
+ *   to draw this same pattern repeatedly. (Another option is to cache the
+ *   drawn pattern in a {@link Layer}.)
+ *
+ * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w, h, color1, color2) {
   if (typeof squareSize === 'undefined') squareSize = 80;
@@ -940,20 +1231,22 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
 
 /**
  * Draw a circle.
- * 
- * @param x
+ *
+ * @param {Number} x
  *   The x-coordinate of the center of the circle.
- * @param y
+ * @param {Number} y
  *   The y-coordinate of the center of the circle.
- * @param r
+ * @param {Number} r
  *   The radius of the circle.
- * @param fillStyle
- *   A canvas fillStyle used to fill the circle. If not specified, the circle uses the current
- *   fillStyle. If null, the circle is not filled.
- * @param strokeStyle
+ * @param {String} [fillStyle]
+ *   A canvas fillStyle used to fill the circle. If not specified, the circle
+ *   uses the current fillStyle. If null, the circle is not filled.
+ * @param {String} [strokeStyle]
  *   A canvas strokeStyle used to draw the circle's border. If not specified,
  *   no border is drawn on the circle. If null, the border uses the current
  *   strokeStyle.
+ *
+ * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.circle = function(x, y, r, fillStyle, strokeStyle) {
   // Circle
@@ -976,17 +1269,19 @@ CanvasRenderingContext2D.prototype.circle = function(x, y, r, fillStyle, strokeS
 
 /**
  * Draw a smiley face.
- * 
- * The Actor class uses this as a placeholder.
- * 
- * @param x
+ *
+ * The {@link Actor} class uses this as a placeholder image.
+ *
+ * @param {Number} x
  *   The x-coordinate of the center of the smiley face.
- * @param y
+ * @param {Number} y
  *   The y-coordinate of the center of the smiley face.
- * @param r
+ * @param {Number} r
  *   The radius of the smiley face.
- * @param fillStyle
- *   (optional) The color / fill-style of the smiley face.
+ * @param {String} [fillStyle]
+ *   The color of the smiley face.
+ *
+ * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.drawSmiley = function(x, y, r, fillStyle) {
   var thickness = Math.max(Math.ceil(r/15), 1);
@@ -1015,6 +1310,8 @@ CanvasRenderingContext2D.prototype.drawSmiley = function(x, y, r, fillStyle) {
  * Draws a blue-and-yellow radial gradient across the entire background of the
  * world. This is mainly useful to demonstrate that scrolling works if the
  * world is bigger than the canvas.
+ *
+ * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.drawBkgdRadialGradient = function() {
   // Draw a radial gradient on the background.
@@ -1032,11 +1329,22 @@ CanvasRenderingContext2D.prototype.drawBkgdRadialGradient = function() {
 
 /**
  * Prevent the default behavior from occurring when hitting keys.
- * 
+ *
  * This won't prevent everything -- for example it won't prevent combinations
  * of multiple non-control-character keys -- and if you want to do something
  * like prevent the default effect of hitting Enter but not Shift+Enter then
  * you need to handle that yourself.
+ *
+ * Behavior of the keys specified in the `keys` variable are automatically
+ * prevented by default.
+ *
+ * @param {String} combinations
+ *   A string containing key combinations to prevent. See
+ *   {@link jQuery.hotkeys} for an explanation of what key combinations are
+ *   acceptable.
+ *
+ * @member App
+ * @static
  */
 App.preventDefaultKeyEvents = function(combinations) {
   jQuery(document).keydown(combinations, function() { return false; });
@@ -1044,41 +1352,34 @@ App.preventDefaultKeyEvents = function(combinations) {
 
 /**
  * Determines whether the mouse is hovering over an object.
- * 
- * The object in question must have these properties: x, y, width, height.
- * 
- * @param obj
+ *
+ * The object in question must have these properties: `x`, `y`, `width`,
+ * `height`. (All {@link Box}es have these properties.)
+ *
+ * @param {Box} obj
  *   The object to check.
+ *
+ * @return {Boolean}
+ *   Whether the mouse is hovering over the object.
+ *
+ * @member App
+ * @static
  */
 App.isHovered = function(obj) {
-  var offsets = world.getOffsets(), xPos = obj.x - offsets.x, yPos = obj.y - offsets.y;
-  return mouse.coords.x > xPos && mouse.coords.x < xPos + obj.width &&
-      mouse.coords.y > yPos && mouse.coords.y < yPos + obj.height;
+  var offsets = world.getOffsets(),
+      xPos = obj.x - offsets.x,
+      yPos = obj.y - offsets.y;
+  return Mouse.coords.x > xPos && Mouse.coords.x < xPos + obj.width &&
+      Mouse.coords.y > yPos && Mouse.coords.y < yPos + obj.height;
 };
 
 /**
- * Encapsulates mouse position scrolling.
+ * @class Mouse.scroll
+ *   Encapsulates mouse position scrolling.
  *
- * To use mouse scrolling, call mouse.scroll.enable(). To disable, call
- * .disable(). To check if mouse scrolling is enabled, test .isEnabled().
- *
- * .isScrolling() returns true when the viewport is scrolling and false
- * otherwise. The "mousescrollon" and "mousescrolloff" events are fired on the
- * document when the viewport starts and stops scrolling, respectively. Binding
- * to them may be useful if you want to pause animation or display something
- * while the viewport is moving.
- *
- * .getThreshold() and .setThreshold() refer to a fractional percentage
- * [0.0-0.5) of the width of the canvas. If the mouse is within this percent of
- * the edge of the canvas, the viewport attempts to scroll. The default is 0.2
- * (20%).
- *
- * .getScrollDistance() and .setScrollDistance() refer to the maximum distance
- * in pixels that the viewport will move each second while scrolling (the
- * movement can be less when the viewport is very close to an edge of the
- * world). Defaults to 350.
+ * @static
  */
-mouse.scroll = (function() {
+Mouse.scroll = (function() {
   var THRESHOLD = 0.2, MOVEAMOUNT = 350;
   var translating = false, scrolled = {x: 0, y: 0}, enabled = false;
   function translate(doOffset) {
@@ -1086,7 +1387,7 @@ mouse.scroll = (function() {
     if (doOffset === undefined) doOffset = true;
 
     // Left
-    if (mouse.coords.x < canvas.width * THRESHOLD) {
+    if (Mouse.coords.x < canvas.width * THRESHOLD) {
       if (doOffset) {
         ma = Math.round(Math.min(world.xOffset, MOVEAMOUNT * App.timer.lastDelta));
         world.xOffset -= ma;
@@ -1096,7 +1397,7 @@ mouse.scroll = (function() {
       t = true;
     }
     // Right
-    else if (mouse.coords.x > canvas.width * (1-THRESHOLD)) {
+    else if (Mouse.coords.x > canvas.width * (1-THRESHOLD)) {
       if (doOffset) {
         ma = Math.round(Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.timer.lastDelta));
         world.xOffset += ma;
@@ -1107,7 +1408,7 @@ mouse.scroll = (function() {
     }
 
     // Up
-    if (mouse.coords.y < canvas.height * THRESHOLD) {
+    if (Mouse.coords.y < canvas.height * THRESHOLD) {
       if (doOffset) {
         ma = Math.round(Math.min(world.yOffset, MOVEAMOUNT * App.timer.lastDelta));
         world.yOffset -= ma;
@@ -1117,7 +1418,7 @@ mouse.scroll = (function() {
       t = true;
     }
     // Down
-    else if (mouse.coords.y > canvas.height * (1-THRESHOLD)) {
+    else if (Mouse.coords.y > canvas.height * (1-THRESHOLD)) {
       if (doOffset) {
         ma = Math.round(Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.timer.lastDelta));
         world.yOffset += ma;
@@ -1128,15 +1429,27 @@ mouse.scroll = (function() {
     }
 
     // We're not translating if we're not moving.
-    if (doOffset && scrolled.x == 0 && scrolled.y == 0) {
+    if (doOffset && scrolled.x === 0 && scrolled.y === 0) {
       t = false;
     }
 
     if (doOffset && translating != t) {
       if (translating) { // We were scrolling. Now we're not.
+        /**
+         * @event mousescrollon
+         *   Fires on the document when the viewport starts scrolling. Binding
+         *   to this event may be useful if you want to pause animation or
+         *   display something while the viewport is moving.
+         */
         jQuery(document).trigger('mousescrollon');
       }
       else { // We weren't scrolling. Now we are.
+        /**
+         * @event mousescrolloff
+         *   Fires on the document when the viewport stops scrolling. Binding
+         *   to this event may be useful if you want to pause animation or
+         *   display something while the viewport is moving.
+         */
         jQuery(document).trigger('mousescrolloff');
       }
     }
@@ -1144,6 +1457,10 @@ mouse.scroll = (function() {
     return scrolled;
   }
   return {
+    /**
+     * Enable mouse position scrolling.
+     * @static
+     */
     enable: function() {
       if (enabled) {
         return;
@@ -1159,14 +1476,26 @@ mouse.scroll = (function() {
         jQuery(this).off('.translate');
       });
     },
+    /**
+     * Disable mouse position scrolling.
+     * @static
+     */
     disable: function() {
       $canvas.off('.translate');
       translating = false;
       enabled = false;
     },
+    /**
+     * Test whether mouse position scrolling is enabled.
+     * @static
+     */
     isEnabled: function() {
       return enabled;
     },
+    /**
+     * Test whether the viewport is currently mouse-scrolling.
+     * @static
+     */
     isScrolling: function() {
       return translating;
     },
@@ -1175,15 +1504,59 @@ mouse.scroll = (function() {
         return translate();
       }
     },
+    /**
+     * Sets how close to the edge of the canvas the mouse triggers scrolling.
+     *
+     * The threshold is a fractional percentage [0.0-0.5) of the width of the
+     * canvas. If the mouse is within this percent of the edge of the canvas,
+     * the viewport attempts to scroll. The default threshold is 0.2 (20%).
+     *
+     * See also Mouse.scroll.getThreshold().
+     *
+     * @static
+     */
     setThreshold: function(t) {
       THRESHOLD = t;
     },
+    /**
+     * Gets how close to the edge of the canvas the mouse triggers scrolling.
+     *
+     * See also Mouse.scroll.getThreshold().
+     *
+     * @return {Number}
+     *   The mouse-scrolling threshold. The threshold is a fractional
+     *   percentage [0.0-0.5) of the width of the canvas. If the mouse is
+     *   within this percent of the edge of the canvas, the viewport attempts
+     *   to scroll. The default threshold is 0.2 (20%).
+     *
+     * @static
+     */
     getThreshold: function() {
       return THRESHOLD;
     },
+    /**
+     * Sets how fast the mouse will cause the viewport to scroll.
+     *
+     * @param {Number} a
+     *   The maximum distance in pixels that the viewport will move each second
+     *   while scrolling (the movement can be less when the viewport is very
+     *   close to an edge of the world). Defaults to 350.
+     *
+     * @static
+     */
     setScrollDistance: function(a) {
       MOVEAMOUNT = a;
     },
+    /**
+     * Gets how fast the mouse will cause the viewport to scroll.
+     *
+     * @return {Number}
+     *   The maximum distance in pixels that the viewport will move each second
+     *   while scrolling (the movement can be less when the viewport is very
+     *   close to an edge of the world). Defaults to 350.
+     *
+     * @static
+     */
     getScrollDistance: function() {
       return MOVEAMOUNT;
     },
@@ -1195,11 +1568,11 @@ mouse.scroll = (function() {
 /**
  * A timer.
  *
- * Adapted from https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js
+ * Adapted from the [three.js clock](https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js).
  *
- * @param autoStart
+ * @param {Boolean} autoStart
  *   Whether to start the timer immediately upon instantiation or wait until
- *   the start() method is called.
+ *   the Timer#start() method is called.
  */
 function Timer(autoStart) {
   this.autoStart = autoStart === undefined ? true : autoStart;
@@ -1247,7 +1620,7 @@ function Timer(autoStart) {
     this.elapsedTime += this.getDelta();
   };
   /**
-   * Get the amount of time the timer has been running.
+   * Get the amount of time the timer has been running, in seconds.
    */
   this.getElapsedTime = function() {
     this.elapsedTime += this.getDelta();
@@ -1260,20 +1633,51 @@ function Timer(autoStart) {
 
 // UTILITIES ------------------------------------------------------------------
 
+/**
+ * @class App.Utils
+ *   A miscellaneous collection of utilities.
+ * @alternateClassName Utils
+ * @static
+ */
 App.Utils = {};
 
 /**
- * Convert a percent (out of 100%) to the corresponding pixel position in the world.
+ * Convert a percent to the corresponding pixel position in the world.
+ *
+ * This is useful for specifying the size of objects relative to the size of
+ * the canvas or world.
+ *
+ * @param {Number} percent
+ *   A percent (out of 100%) across the canvas or world from the upper-left
+ *   corner.
+ * @param {Boolean} [relativeToCanvas=true]
+ *   Whether the result is relative to the canvas (true) or to the world
+ *   (false).
+ *
+ * @return {Object}
+ *   An object with `x` and `y` properties denoting a pixel position at the
+ *   given percent. For example, in a 100x100px canvas, calling
+ *   `App.Utils.percentToPixels(25)` would return `{x: 25, y: 25}`.
+ *
+ * @static
  */
-App.Utils.percentToPixels = function(percent) {
+App.Utils.percentToPixels = function(percent, relativeToCanvas) {
+  if (typeof relativeToCanvas === 'undefined') {
+    relativeToCanvas = true;
+  }
   return {
-    x: Math.floor(world.width * percent / 100),
-    y: Math.floor(world.height * percent / 100),
+    x: Math.floor((relativeToCanvas ? canvas : world).width  * percent / 100),
+    y: Math.floor((relativeToCanvas ? canvas : world).height * percent / 100),
   };
 };
 
 /**
  * Get a random number between two numbers.
+ *
+ * @param {Number} lo The first number.
+ * @param {Number} hi The second number.
+ * @return {Number} A random number between lo and hi.
+ * @static
  */
 App.Utils.getRandBetween = function(lo, hi) {
   if (lo > hi) {
@@ -1292,6 +1696,11 @@ App.Utils.getRandBetween = function(lo, hi) {
  * floats. If either of the numbers is a float, the random distribution remains
  * equal among eligible integers; that is, if lo==3.3 and hi==5, 4 and 5 are
  * equally likely to be returned. Negative numbers work as well.
+ *
+ * @param {Number} lo The first number.
+ * @param {Number} hi The second number.
+ * @return {Number} A random integer between lo and hi.
+ * @static
  */
 App.Utils.getRandIntBetween = function(lo, hi) {
   if (lo > hi) {
@@ -1305,31 +1714,17 @@ App.Utils.getRandIntBetween = function(lo, hi) {
 };
 
 /**
- * Get the keys (property names) of an object.
+ * Check if any of the elements in an Array are found in another Array.
  *
- * This would be useful as an extension of Object, but extending Object can
- * break quite a lot of external code (including jQuery).
- */
-App.Utils.keys = function(obj) {
-  var ks = [];
-  for (var key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      ks.push(key);
-    }
-  }
-  return ks;
-};
-
-/**
- * Check if any of the elements in an array are found in another array.
+ * @param {Array} search
+ *   An Array of elements to search for in the target.
+ * @param {Array} target
+ *   An Array in which to search for matching elements.
  *
- * @param search
- *   An array of elements to search for in the target.
- * @param target
- *   An array in which to search for matching elements.
- *
- * @return
+ * @return {Boolean}
  *   true if at least one match was found; false otherwise.
+ *
+ * @static
  */
 App.Utils.anyIn = function(search, target) {
   for (var i = 0, l = search.length; i < l; i++) {
@@ -1338,10 +1733,15 @@ App.Utils.anyIn = function(search, target) {
     }
   }
   return false;
-}
+};
 
 /**
- * Determines whether a is within e of b, inclusive.
+ * Determine whether a is within e of b, inclusive.
+ *
+ * @param {Number} a
+ * @param {Number} b
+ * @param {Number} e
+ * @static
  */
 App.Utils.almostEqual = function(a, b, e) {
   // Another (slower) way to express this is Math.abs(a - b) < e
@@ -1349,9 +1749,68 @@ App.Utils.almostEqual = function(a, b, e) {
 };
 
 /**
+ * Generate a random URL-safe string of arbitrary length.
+ *
+ * Useful for generating unique IDs.
+ *
+ * @param {Number} [n=32]
+ *   The number of characters in the generated string.
+ *
+ * @return {String}
+ *   A random string n characters long.
+ *
+ * @static
+ */
+App.Utils.randomString = function(n) {
+  var c = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_',
+      s = '';
+  n = n || 32;
+  for (var i = 0; i < n; i++) {
+    s += c.charAt(Math.floor(Math.random() * c.length));
+  }
+  return s;
+};
+
+/**
+ * Position a DOM element at a specific location over the canvas.
+ *
+ * Useful for placing forms, text, menus, and other UI elements that are more
+ * easily handled in HTML.
+ *
+ * To place the DOM element at a specific location in the world, first subtract
+ * the {@link World#getOffsets world offsets} from the `x` and `y` positions.
+ * For example, to place an item at the player's x-position, you would use
+ * `player.x-world.getOffsets().x` to get the canvas position.
+ *
+ * @param {HTMLElement} elem
+ *   A DOM element or jQuery representation of a DOM element to position over
+ *   the canvas.
+ * @param {Number} x
+ *   The number of pixels to the right of the upper-left corner of the canvas
+ *   at which to locate the DOM element.
+ * @param {Number} y
+ *   The number of pixels below the upper-left corner of the canvas at which to
+ *   locate the DOM element.
+ *
+ * @static
+ */
+App.Utils.positionOverCanvas = function(elem, x, y) {
+  var o = $canvas.offset();
+  jQuery(elem).css({
+    left: (o.left + parseInt($canvas.css('border-left-width'), 10) + x) + 'px',
+    position: 'absolute',
+    top: (o.top + parseInt($canvas.css('border-top-width'), 10) + y) + 'px',
+    'z-index': 100,
+  });
+};
+
+/**
  * Ends the game, displays "GAME OVER," and allows clicking to restart.
  *
- * To disable clicking to restart, run $canvas.off('.gameover');
+ * To disable clicking to restart, run `$canvas.off('.gameover');`
+ *
+ * @member App
+ * @static
  */
 App.gameOver = function() {
   stopAnimating();
@@ -1384,8 +1843,18 @@ App.gameOver = function() {
   });
 };
 
+/** @class Array The built-in JavaScript Array class. */
+
 /**
  * Remove an item from an array by value.
+ *
+ * @param {Mixed} item
+ *   The item to remove from the array, if it exists.
+ *
+ * @return {Array}
+ *   An array containing the removed elements, if any.
+ *
+ * @member Array
  */
 Array.prototype.remove = function(item) {
   var i = this.indexOf(item);
@@ -1395,25 +1864,34 @@ Array.prototype.remove = function(item) {
   return this.splice(i, 1);
 };
 
+/** @class Number The built-in JavaScript Number class. */
+
 /**
  * Round a number to a specified precision.
  *
  * Usage:
- * 3.5.round(0) // 4
- * Math.random().round(4) // 0.8179
- * var a = 5532; a.round(-2) // 5500
- * Number.prototype.round(12345.6, -1) // 12350
  *
- * @param v
+ *     3.5.round(0) // 4
+ *     Math.random().round(4) // 0.8179
+ *     var a = 5532; a.round(-2) // 5500
+ *     Number.prototype.round(12345.6, -1) // 12350
+ *     32..round(-1) // 30 (two dots required since the first one is a decimal)
+ *
+ * @param {Number} v
  *   The number to round. (This parameter only applies if this function is
  *   called directly. If it is invoked on a Number instance, then that number
  *   is used instead, and only the precision parameter needs to be passed.)
- * @param a
+ * @param {Number} a
  *   The precision, i.e. the number of digits after the decimal point
  *   (including trailing zeroes, even though they're truncated in the returned
  *   result). If negative, precision indicates the number of zeroes before the
  *   decimal point, e.g. round(1234, -2) yields 1200. If non-integral, the
- *   floor of the precision is used. 
+ *   floor of the precision is used.
+ *
+ * @return {Number}
+ *   `v` rounded to `a` precision.
+ *
+ * @member Number
  */
 Number.prototype.round = function(v, a) {
   if (typeof a === 'undefined') {
@@ -1425,6 +1903,18 @@ Number.prototype.round = function(v, a) {
   return Math.round(v*m)/m;
 };
 
+/**
+ * Return the sign of a number.
+ *
+ * @param {Number} v
+ *   The number whose sign should be retrieved.
+ *
+ * @return {Number}
+ *   Returns 1 if the number is greater than zero, -1 if it is less than zero,
+ *   and 0 if it is equal to zero.
+ *
+ * @member Number
+ */
 Number.prototype.sign = function(v) {
   if (typeof v === 'undefined') {
     v = this;
@@ -1439,7 +1929,9 @@ Number.prototype.sign = function(v) {
    * This provides a unique ID to identify where each call originated.
    *
    * This function was written by Steven Wittens (unconed). MIT Licensed.
-   * More at https://github.com/unconed/console-extras.js.
+   * More at [console-extras.js](https://github.com/unconed/console-extras.js).
+   *
+   * @ignore
    */
   function getCallID() {
     var stack = new Error().stack;
@@ -1466,22 +1958,26 @@ Number.prototype.sign = function(v) {
    * This is useful for logging things in loops; it avoids being overwhelmed by
    * an unstoppable barrage of similar log messages. Example calls:
    *
-   * # Log "message" to the console no more than every 500ms.
-   * console.throttle('message', 500);
-   * # Log "message 1" and "message 2" as errors no more than every 500ms.
-   * console.throttle('message 1', 'message 2', 500, console.error);
+   *     # Log "message" to the console no more than every 500ms.
+   *     console.throttle('message', 500);
+   *     # Log "message 1" and "message 2" as errors no more than every 500ms.
+   *     console.throttle('message 1', 'message 2', 500, console.error);
    *
-   * @param ...
+   * @param {Arguments} ...
    *   An arbitrary number of arguments to pass to the loggging function.
-   * @param freq
+   * @param {Number} freq
    *   The minimum amount of time in milliseconds that must pass between the
    *   same call before logging the next one. To only log something once, pass
-   *   Infinity to this parameter.
-   * @param func
-   *   (Optional) The logging function to use. Defaults to console.log.
+   *   `Infinity` to this parameter.
+   * @param {Function} [func=console.log]
+   *   The logging function to use.
    *
    * @return
    *   The console object (this method is chainable).
+   *
+   * @member console
+   * @chainable
+   * @ignore
    */
   console.throttle = function() {
     if (arguments.length < 2) {

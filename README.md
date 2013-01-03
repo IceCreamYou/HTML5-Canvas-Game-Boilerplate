@@ -25,6 +25,7 @@ function. It's really that simple, and these functions already have comments
 and some useful code filled in to demonstrate what you can do.
 
 To learn how to use the different APIs and features available, check out the
+[tutorial](http://www.isaacsukin.com/node/188). Or, take a look at the
 "examples" folder to see how quickly and easily different games can be built.
 The default project (which you can view by visiting index.html) provides a
 player that can move around when a user presses the arrow keys on their
@@ -248,9 +249,6 @@ All custom events are triggered on the document:
   press a "start" button first) or for running some kind of intro graphics. 
 - resizeWorld: Triggered when the world object is resized. Useful for allowing
   objects to resize or reposition themselves.
-- mousescrollon, mousescrolloff: Triggered when the viewport starts and stops
-  scrolling, respectively. Useful for pausing animation or displaying something
-  while the viewport is moving.
 - canvasdragstart, canvasdragstop: Triggered when an Actor begins and ends
   being dragged by the mouse, respectively.
 - mousescrollon, mousescrolloff: Triggered when the viewport starts and stops
@@ -375,12 +373,16 @@ preloadables are defined in main.js; everything else is defined in utilities.js
   - App.Utils.getRandBetween(): Get an arbitrary random number between two
     other numbers.
   - App.Utils.getRandIntBetween(): Get a random integer between two numbers.
-  - App.Utils.keys(): Get the keys of an object as an array.
   - App.Utils.anyIn(): Check if any of the elements in an array are found in
     another array.
-  - App.Utils.almostEqual(): Determines whether two numbers are equal to each
+  - App.Utils.almostEqual(): Determine whether two numbers are equal to each
     other with an acceptable amount of error (i.e. if they are within a small
     delta of each other).
+  - App.Utils.randomString(): Get a random URL-safe string of arbitrary length.
+    Useful for generating unique IDs.
+  - App.Utils.positionOverCanvas(): Position a DOM element over the canvas.
+    Useful for placing forms, text, menus, and other UI elements that are more
+    easily handled in HTML.
   - App.gameOver(): End the game, display "GAME OVER," and allow clicking the
     canvas to restart the game.
   - App.setDefaultCanvasSize(): Resizes the canvas. This is called

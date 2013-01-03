@@ -1,22 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>The source code</title>
-  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
-  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
-  <style type="text/css">
-    .highlight { display: block; background-color: #ddd; }
-  </style>
-  <script type="text/javascript">
-    function highlight() {
-      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
-    }
-  </script>
-</head>
-<body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * A powerful, easy-to-use Sprite animation library for HTML5 Canvas.
+/**
+ * A powerful, easy-to-use Sprite animation library for HTML5 Canvas.
  *
  * MIT Licensed: http://opensource.org/licenses/mit-license.php
  *
@@ -28,8 +11,8 @@
 
 (function(undefined) {
 
-<span id='SpriteMap-method-constructor'><span id='SpriteMap'>/**
-</span></span> * Manage multiple sprite animations in the same sprite sheet.
+/**
+ * Manage multiple sprite animations in the same sprite sheet.
  *
  * All methods except SpriteMap#clone are chainable (they return the SpriteMap
  * instance).
@@ -59,7 +42,7 @@
  *     the next row in the Sprite until reaching the last frame in the loop.
  *     More details on how this work are documented in the {@link Sprite}
  *     constructor.
- *   - flipped: An object with &quot;horizontal&quot; and &quot;vertical&quot; properties
+ *   - flipped: An object with "horizontal" and "vertical" properties
  *     (both Booleans) indicating whether the Sprite should be drawn flipped
  *     along the horizontal or vertical axes.
  *
@@ -83,8 +66,8 @@ function SpriteMap(src, animations, options) {
   }
 }
 SpriteMap.prototype = {
-<span id='SpriteMap-method-set'>  /**
-</span>   * Add or modify an animation sequence.
+  /**
+   * Add or modify an animation sequence.
    *
    * @param {String} name
    *   The name of the sequence.
@@ -135,8 +118,8 @@ SpriteMap.prototype = {
     };
     return this;
   },
-<span id='SpriteMap-method-unset'>  /**
-</span>   * Remove an animation sequence.
+  /**
+   * Remove an animation sequence.
    *
    * @param {String} name
    *   The animation sequence to remove.
@@ -147,8 +130,8 @@ SpriteMap.prototype = {
     }
     return this;
   },
-<span id='SpriteMap-method-use'>  /**
-</span>   * Switch the active animation sequence.
+  /**
+   * Switch the active animation sequence.
    *
    * @param {String} name
    *   The name of the animation sequence to switch to.
@@ -157,7 +140,7 @@ SpriteMap.prototype = {
    *   specified sequence is already in use.
    */
   use: function(name, restartIfInUse) {
-    if (this.activeLoop == name &amp;&amp; !restartIfInUse) {
+    if (this.activeLoop == name && !restartIfInUse) {
       return this;
     }
     this.activeLoop = name;
@@ -165,8 +148,8 @@ SpriteMap.prototype = {
     this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze, m.flipped);
     return this;
   },
-<span id='SpriteMap-method-start'>  /**
-</span>   * Start the animation sequence.
+  /**
+   * Start the animation sequence.
    *
    * @param {String} [name]
    *   The name of the animation sequence to start. If not given, defaults to
@@ -180,15 +163,15 @@ SpriteMap.prototype = {
     this.sprite.startLoop();
     return this;
   },
-<span id='SpriteMap-method-stop'>  /**
-</span>   * Stop the currently running animation sequence.
+  /**
+   * Stop the currently running animation sequence.
    */
   stop: function() {
     this.sprite.stop();
     return this;
   },
-<span id='SpriteMap-method-reset'>  /**
-</span>   * Reset the active animation sequence to the first frame.
+  /**
+   * Reset the active animation sequence to the first frame.
    *
    * If the sequence is running when SpriteMap#reset() is called, it will still
    * be running afterwards, so usually SpriteMap#stop() is called first.
@@ -197,13 +180,13 @@ SpriteMap.prototype = {
     this.sprite.reset();
     return this;
   },
-<span id='SpriteMap-method-runOnce'>  /**
-</span>   * Run an animation sequence once.
+  /**
+   * Run an animation sequence once.
    *
    * @param {Function} [callback]
    *   A function to call after the animation sequence is done running.
    * @param {Sprite} [callback.sprite]
-   *   The Sprite that was animated. Its &quot;spriteMap&quot; property holds the parent
+   *   The Sprite that was animated. Its "spriteMap" property holds the parent
    *   SpriteMap.
    * @param {String} [name]
    *   The name of the animation sequence to start. If not given, defaults to
@@ -217,8 +200,8 @@ SpriteMap.prototype = {
     this.sprite.runLoop(callback);
     return this;
   },
-<span id='SpriteMap-method-draw'>  /**
-</span>   * Draw the sprite's current frame.
+  /**
+   * Draw the sprite's current frame.
    *
    * @param {CanvasRenderingContext2D} ctx
    *   The canvas graphics context onto which the sprite should be drawn.
@@ -241,8 +224,8 @@ SpriteMap.prototype = {
     this.sprite.draw(ctx, x, y, w, h);
     return this;
   },
-<span id='SpriteMap-method-clone'>  /**
-</span>   * Clone the SpriteMap.
+  /**
+   * Clone the SpriteMap.
    *
    * @return {SpriteMap}
    *   A SpriteMap instance that is identical to the current instance.
@@ -261,8 +244,8 @@ this.SpriteMap = SpriteMap;
 
 (function(undefined) {
 
-<span id='Sprite-method-constructor'><span id='Sprite'>/**
-</span></span> * Support sprite animation.
+/**
+ * Support sprite animation.
  *
  * - Animations are always run left-to-right, top-to-bottom.
  * - All frames in the loop are assumed to be the same size.
@@ -321,7 +304,7 @@ this.SpriteMap = SpriteMap;
  *       CCDD
  *       DDDD
  *
- *   In this example, the &quot;C&quot; loop starts at (2, 2) and ends at (3, 1).
+ *   In this example, the "C" loop starts at (2, 2) and ends at (3, 1).
  *   However, if the squeeze option is set to true, loops will be contained
  *   inside startCol and endCol. For example, a valid arrangement of loops in
  *   an image might look like this:
@@ -331,7 +314,7 @@ this.SpriteMap = SpriteMap;
  *       AACC
  *       DDCC
  *
- *   Now the &quot;C&quot; loop starts at (2, 2) and ends at (3, 3) and all its frames
+ *   Now the "C" loop starts at (2, 2) and ends at (3, 3) and all its frames
  *   occur within the box formed by those coordinates.
  * @param {Number} [options.interval=125]
  *   The delay in milliseconds before switching frames when running the
@@ -339,14 +322,14 @@ this.SpriteMap = SpriteMap;
  * @param {Boolean} [options.useTimer=true]
  *   If true, Sprite animation loops rely on setInterval() to update their
  *   frames regularly (this is the default). If false, the Sprite will rely on
- *   being drawn as the &quot;tick&quot; that lets it update its frames. This can be
+ *   being drawn as the "tick" that lets it update its frames. This can be
  *   slightly less accurate than using a timer (assuming the sprite gets drawn
  *   on every canvas repaint; otherwise it can be a lot less accurate, and in
  *   any case it can be up to 15ms off on Windows) but it is more
  *   performance-friendly and also ensures that frames will never skip if the
  *   sprite is not drawn.
  * @param {Object} [options.flipped={horizontal: false, vertical: false}]
- *   An object with &quot;horizontal&quot; and &quot;vertical&quot; properties (both Booleans)
+ *   An object with "horizontal" and "vertical" properties (both Booleans)
  *   indicating whether the Sprite should be drawn flipped along the horizontal
  *   or vertical axes.
  * @param {Function} [options.postInitCallback]
@@ -409,8 +392,8 @@ Sprite.prototype = {
       options.postInitCallback(this);
     }
   },
-<span id='Sprite-method-draw'>  /**
-</span>   * Draws the sprite.
+  /**
+   * Draws the sprite.
    *
    * @param {CanvasRenderingContext2D} ctx
    *   The canvas graphics context onto which the sprite should be drawn.
@@ -452,7 +435,7 @@ Sprite.prototype = {
       );
       ctx.restore();
     } catch(e) {
-      if (console &amp;&amp; console.error) {
+      if (console && console.error) {
         // Usually the reason you would get an error here is if you tried to
         // draw() an image before it was fully loaded. That's an ignore-able
         // error, because if you're animating, the image will just pop in when
@@ -460,13 +443,13 @@ Sprite.prototype = {
         console.error(e);
       }
     }
-    if (!this.useTimer &amp;&amp; Date.now() - this.lastFrameUpdateTime &gt; this.interval) {
+    if (!this.useTimer && Date.now() - this.lastFrameUpdateTime > this.interval) {
       this.nextFrame();
     }
     return this;
   },
-<span id='Sprite-method-reset'>  /**
-</span>   * Reset the animation to its first frame.
+  /**
+   * Reset the animation to its first frame.
    *
    * Usually you will want to call Sprite#stopLoop() immediately before
    * Sprite#reset(); otherwise the animation will keep running (if it was
@@ -477,8 +460,8 @@ Sprite.prototype = {
     this.lastFrameUpdateTime = 0;
     return this;
   },
-<span id='Sprite-method-changeFrame'>  /**
-</span>   * Move forward or backward a specified number of frames.
+  /**
+   * Move forward or backward a specified number of frames.
    *
    * @param {Number} delta
    *   The number of frames by which to move forward or backward (negative
@@ -489,8 +472,8 @@ Sprite.prototype = {
     this.setFrame(this.frame);
     return this;
   },
-<span id='Sprite-method-setFrame'>  /**
-</span>   * Moves to a specific frame in the animation loop.
+  /**
+   * Moves to a specific frame in the animation loop.
    *
    * This function supports passing either a frame number or row and column
    * coordinates as parameters. Frames outside of the accepted range will
@@ -524,8 +507,8 @@ Sprite.prototype = {
     this.lastFrameUpdateTime = Date.now();
     return this;
   },
-<span id='Sprite-method-setLoop'>  /**
-</span>   * Sets the range of frames over which the sprite should loop.
+  /**
+   * Sets the range of frames over which the sprite should loop.
    *
    * @param {Number} startRow
    *   The row of the frame at which animation should start.
@@ -544,7 +527,7 @@ Sprite.prototype = {
    *   endRow). For more information on how this works, see the documentation
    *   for the {@link Sprite} constructor.
    * @param {Object} [flipped={horizontal: false, vertical: false}]
-   *   An object with &quot;horizontal&quot; and &quot;vertical&quot; properties (both Booleans)
+   *   An object with "horizontal" and "vertical" properties (both Booleans)
    *   indicating whether the Sprite should be drawn flipped along the
    *   horizontal or vertical axes.
    */
@@ -568,8 +551,8 @@ Sprite.prototype = {
     this.numFrames = this.getNumFrames();
     return this;
   },
-<span id='Sprite-method-startLoop'>  /**
-</span>   * Starts running a new animation loop.
+  /**
+   * Starts running a new animation loop.
    *
    * Usually this function will be called without parameters since it defaults
    * to using the sprite's settings defined at instantiation time. In cases
@@ -602,25 +585,25 @@ Sprite.prototype = {
    *   the current animation sequence unless startRow and startCol are
    *   specified, in which case it defaults to false.
    * @param {Object} [flipped]
-   *   An object with &quot;horizontal&quot; and &quot;vertical&quot; properties (both Booleans)
+   *   An object with "horizontal" and "vertical" properties (both Booleans)
    *   indicating whether the Sprite should be drawn flipped along the
    *   horizontal or vertical axes. Defaults to the flipped setting for the
    *   current animation sequence unless startRow and startCol are specified,
    *   in which case it defaults to {horizontal: false, vertical: false}.
    */
   startLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
-    if (startRow !== undefined &amp;&amp; startCol !== undefined) {
+    if (startRow !== undefined && startCol !== undefined) {
       this.setLoop(startRow, startCol, endRow, endCol, squeeze, flipped);
     }
     this.lastFrameUpdateTime = Date.now();
-    if (this.interval &amp;&amp; this.useTimer) {
+    if (this.interval && this.useTimer) {
       var t = this;
       this.intervalID = setInterval(function() { t.nextFrame(); }, this.interval);
     }
     return this;
   },
-<span id='Sprite-method-stopLoop'>  /**
-</span>   * Stops running the animation loop.
+  /**
+   * Stops running the animation loop.
    */
   stopLoop: function() {
     this.lastFrameUpdateTime = 0;
@@ -629,8 +612,8 @@ Sprite.prototype = {
     }
     return this;
   },
-<span id='Sprite-method-runLoop'>  /**
-</span>   * Runs the animation loop once.
+  /**
+   * Runs the animation loop once.
    *
    * The loop concludes at the final frame and does not reset to the first
    * frame. Use the callback function to reset it if you need that behavior.
@@ -671,7 +654,7 @@ Sprite.prototype = {
    *   the current animation sequence unless startRow and startCol are
    *   specified, in which case it defaults to false.
    * @param {Object} [flipped]
-   *   An object with &quot;horizontal&quot; and &quot;vertical&quot; properties (both Booleans)
+   *   An object with "horizontal" and "vertical" properties (both Booleans)
    *   indicating whether the Sprite should be drawn flipped along the
    *   horizontal or vertical axes. Defaults to the flipped setting for the
    *   current animation sequence unless startRow and startCol are specified,
@@ -684,8 +667,8 @@ Sprite.prototype = {
     this.startLoop.apply(this, arguments);
     return this;
   },
-<span id='Sprite-method-prevFrame'>  /**
-</span>   * Goes back one frame in the animation loop.
+  /**
+   * Goes back one frame in the animation loop.
    *
    * This is equivalent to Sprite#changeFrame(-1). It is provided as a
    * convenience and to complement Sprite#nextFrame().
@@ -694,15 +677,15 @@ Sprite.prototype = {
     changeFrame(-1);
     return this;
   },
-<span id='Sprite-method-nextFrame'>  /**
-</span>   * Advances one frame in the animation loop.
+  /**
+   * Advances one frame in the animation loop.
    *
    * This is equivalent to (but more efficient than) Sprite#changeFrame(1).
    */
   nextFrame: function() {
     this.col++;
     this.frame++;
-    if (this.row == this.endRow &amp;&amp; this.col &gt; this.endCol) {
+    if (this.row == this.endRow && this.col > this.endCol) {
       if (this._runOnce) {
         this.stopLoop();
         this._runOnce = false;
@@ -712,27 +695,27 @@ Sprite.prototype = {
         this.reset();
       }
     }
-    else if (this.squeeze &amp;&amp; this.col &gt; this.endCol) {
+    else if (this.squeeze && this.col > this.endCol) {
       this.col = this.startCol;
       this.row++;
     }
-    else if (!this.squeeze &amp;&amp; this.col &gt;= this.cols) {
+    else if (!this.squeeze && this.col >= this.cols) {
       this.col = 0;
       this.row++;
     }
     this.lastFrameUpdateTime = Date.now();
     return this;
   },
-<span id='Sprite-method-getFrame'>  /**
-</span>   * Returns an object containing the current &quot;row,&quot; &quot;col,&quot; and &quot;frame&quot; number.
+  /**
+   * Returns an object containing the current "row," "col," and "frame" number.
    *
    * Row and Col are zero-indexed; frame is 1-indexed.
    */
   getFrame: function() {
     return {row: this.row, col: this.col, frame: this.frame};
   },
-<span id='Sprite-method-getNumFrames'>  /**
-</span>   * Returns the total number of frames in the current animation loop.
+  /**
+   * Returns the total number of frames in the current animation loop.
    */
   getNumFrames: function() {
     if (this.squeeze) {
@@ -740,8 +723,8 @@ Sprite.prototype = {
     }
     return (this.endRow - this.startRow) * this.cols - this.startCol + this.endCol + 1;
   },
-<span id='Sprite-method-frameNumberToRowCol'>  /**
-</span>   * Converts a frame number to row and column numbers.
+  /**
+   * Converts a frame number to row and column numbers.
    *
    * @param {Number} frame
    *   The frame number to convert.
@@ -763,8 +746,8 @@ Sprite.prototype = {
     }
     return {frame: frame, row: row, col: col};
   },
-<span id='Sprite-method-clone'>  /**
-</span>   * Clone the Sprite (return an identical copy).
+  /**
+   * Clone the Sprite (return an identical copy).
    */
   clone: function() {
     return new Sprite(this.sourceFile, this);
@@ -778,15 +761,15 @@ this.Sprite = Sprite;
 // END SPRITE ANIMATION LIBRARY ===============================================
 // BEGIN IMAGE CACHE HELPERS ==================================================
 
-<span id='global-property-'>/**
-</span> * Override these functions to provide alternative cache implementations.
+/**
+ * Override these functions to provide alternative cache implementations.
  * @ignore
  */
 (function() {
   var images = {}; // Image cache
 
-<span id='Sprite-static-method-getImageFromCache'>  /**
-</span>   * Get an image from the cache.
+  /**
+   * Get an image from the cache.
    *
    * @param {String} src
    *   The file path of the image.
@@ -801,8 +784,8 @@ this.Sprite = Sprite;
     return images[src] ? images[src] : null;
   };
 
-<span id='Sprite-static-method-saveImageToCache'>  /**
-</span>   * Save an image to the cache.
+  /**
+   * Save an image to the cache.
    * 
    * @param {String} src
    *   The file path of the image.
@@ -815,8 +798,8 @@ this.Sprite = Sprite;
     images[src] = image;
   };
 
-<span id='Sprite-static-method-preloadImages'>  /**
-</span>   * Preload a list of images asynchronously.
+  /**
+   * Preload a list of images asynchronously.
    * 
    * @param {String[]} files
    *   An Array of paths to images to preload.
@@ -845,7 +828,7 @@ this.Sprite = Sprite;
       if (typeof itemCallback == 'function') {
         itemCallback(src, m, l);
       }
-      if (m == l &amp;&amp; typeof options.finishCallback == 'function') {
+      if (m == l && typeof options.finishCallback == 'function') {
         options.finishCallback(l);
       }
     };
@@ -867,6 +850,3 @@ this.Sprite = Sprite;
 }).call(this);
 
 // END IMAGE CACHE HELPERS ====================================================
-</pre>
-</body>
-</html>
