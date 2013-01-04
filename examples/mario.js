@@ -146,8 +146,16 @@ jQuery(document).keyup(keys.shoot.join(' '), function() {
 
 /**
  * A magic-named function where all updates should occur.
+ *
+ * @param {Number} delta
+ *   The amount of time since the last update. Use this to smooth movement.
+ *   This has the same value as the global App.physicsDelta.
+ * @param {Number} timeElapsed
+ *   The amount of time elapsed while animating. This is useful for time-based
+ *   movement and limiting the frequency of events. This has the same value as
+ *   the global App.physicsTimeElapsed.
  */
-function update() {
+function update(delta, timeElapsed) {
   var moved = player.update();
   player.collideSolid(moved, solid);
 
@@ -201,12 +209,16 @@ function draw() {
 
 /**
  * A magic-named function for one-time setup.
+ *
+ * @param {Boolean} again
+ *   true if the app has been reset and is starting over; false the first time
+ *   it is being set up.
  */
 function setup(again) {
   // Change the size of the playable area. Do this before placing items!
-  if (!again) world.resize(world.width + 1200, world.height + 200);
+  world.resize(canvas.width + 1200, canvas.height + 200);
 
-  // Switch from side view to top-down.
+  // Switch from top-down to side view.
   Actor.prototype.GRAVITY = true;
 
   // Initialize the player.

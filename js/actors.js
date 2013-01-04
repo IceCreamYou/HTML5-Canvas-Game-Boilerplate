@@ -23,7 +23,7 @@
  * @param {Number} [h]
  *   The height of the Box. Defaults to
  *   {@link Box#DEFAULT_HEIGHT Box.prototype.DEFAULT_HEIGHT}.
- * @param {String} [fillStyle="black"]
+ * @param {Mixed} [fillStyle="black"]
  *   A default fillStyle to use when drawing the Box. Defaults to black.
  */
 var Box = Class.extend({
@@ -145,13 +145,14 @@ var Box = Class.extend({
    *   A canvas graphics context onto which the outline should be drawn. This
    *   is useful for drawing onto {@link Layer}s. If not specified, defaults to
    *   the {@link global#context global context} for the default canvas.
-   * @param {String} [fillStyle]
-   *   A fillStyle to use for the box outline. Defaults to ctx's current
-   *   fillStyle.
+   * @param {Mixed} [strokeStyle]
+   *   A style to use for the box outline.
    */
-  drawBoundingBox: function(ctx, fillStyle) {
+  drawBoundingBox: function(ctx, strokeStyle) {
     ctx = ctx || context;
-    ctx.fillStyle = fillStyle || this.fillStyle;
+    if (strokeStyle) {
+      ctx.strokeStyle = strokeStyle;
+    }
     ctx.strokeRect(this.x, this.y, this.width, this.height);
   },
   /**
@@ -999,12 +1000,11 @@ function World(w, h) {
      *   Broadcast that the world size changed so that objects already in the
      *   world or other things that depend on the world size can update their
      *   position or size accordingly.
-     * @param changed
-     *   An object with `x` and `y` properties representing how far the
-     *   viewport shifted on each axis, and a `world` property containing the
-     *   world object that changed size.
+     * @param {Number} x How far in pixels the viewport shifted horizontally.
+     * @param {Number} y How far in pixels the viewport shifted vertically.
+     * @param {World} resizedWorld The world that changed size.
      */
-    jQuery(document).trigger('resizeWorld', { 'x': deltaX, 'y': deltaY, 'world': this });
+    jQuery(document).trigger('resizeWorld', [deltaX, deltaY, this]);
   };
 
   /**
@@ -1133,22 +1133,26 @@ function Layer(options) {
   /**
    * @property {HTMLElement} canvas
    *   The canvas backing the Layer.
+   * @readonly
    */
   this.canvas = options.canvas || document.createElement('canvas');
   /**
    * @property {CanvasRenderingContext2D} context
    *   The Layer's graphics context. Use this to draw onto the Layer.
+   * @readonly
    */
   this.context = this.canvas.getContext('2d');
   this.context.__layer = this;
   /**
    * @property {Number} width
    *   The width of the Layer.
+   * @readonly
    */
   this.width = options.width || world.width || canvas.width;
   /**
    * @property {Number} height
    *   The height of the Layer.
+   * @readonly
    */
   this.height = options.height || world.height || canvas.height;
   /**
@@ -1249,7 +1253,7 @@ function Layer(options) {
   /**
    * Clear the layer, optionally by filling it with a given style.
    *
-   * @param {String} [fillStyle]
+   * @param {Mixed} [fillStyle]
    *   A canvas graphics context fill style. If not passed, the Layer will
    *   simply be cleared. If passed, the Layer will be filled with the given
    *   style.
@@ -1350,11 +1354,11 @@ var Actor = Box.extend({
   JUMP_VEL: 800,
 
   /**
-   * The minimum number of milliseconds required between jumps.
+   * The minimum number of seconds required between jumps.
    *
    * Has no effect if GRAVITY is false or JUMP_VEL is 0 (zero).
    */
-  JUMP_DELAY: 250,
+  JUMP_DELAY: 0.25,
 
   /**
    * Percent of normal horizontal velocity Actors can move while in the air.
@@ -1399,17 +1403,46 @@ var Actor = Box.extend({
    */
   STAY_IN_WORLD: true,
 
-  // Dynamic (mostly internal) variables
+  /**
+   * The last direction (key press) that resulted in looking in a direction.
+   *
+   * If GRAVITY is enabled, this Array will only contain left or right keys.
+   * This is because left/right+up/down is a valid direction but does not
+   * result in looking diagonally.
+   */
+  lastLooked: [],
+
+  /**
+   * Whether the Actor is being mouse-dragged.
+   * @readonly
+   */
+  isBeingDragged: false,
+
+  /**
+   * A {@link Collection} of target Boxes onto which this Actor can be dropped.
+   *
+   * You must call Actor#setDraggable(true) to enable dragging the Actor.
+   *
+   * Drop targets can change how they look when a draggable object is hovered
+   * over them by testing `this.isHovered() && App.isSomethingBeingDragged` in
+   * their {@link Box#draw draw()} methods. They can change how they look or
+   * perform some action when a draggable object is dropped onto them by
+   * listening for the {@link Box#event-canvasdrop canvasdrop event}.
+   */
+  dropTargets: new Collection(),
+
+  // Dynamic (internal) variables
   speed: 0, // Vertical velocity when gravity is on
   lastJump: 0, // Time when the last jump occurred in milliseconds since the epoch
   lastDirection: [], // The last direction (i.e. key press) passed to move()
-  lastLooked: [], // The last direction (i.e. key press) that resulted in looking in a direction
   jumpDirection: {right: false, left: false}, // Whether the Actor was moving horizontally before jumping
   jumpKeyDown: false, // Whether the jump key is currently pressed
   numJumps: 0, // Number of jumps since the last time the Actor was touching the ground
   inAir: false, // Whether the Actor is in the air
   fallLeft: null, // The direction the Actor was moving before falling
-  isBeingDragged: false, // Whether the Actor is being mouse-dragged
+  isDraggable: false, // Whether the Actor is draggable
+  dragStartX: 0, // Last position of the Actor before being dragged
+  dragStartY: 0, // Last position of the Actor before being dragged
   velocity: 0,
   radialDirection: 0,
   acceleration: 0,
@@ -1462,12 +1495,12 @@ var Actor = Box.extend({
       this.y = mcy;
       return {x: mcx - this.x, y: mcy - this.y};
     }
-    var moveAmount = this.MOVEAMOUNT * App.timer.lastDelta;
+    var moveAmount = this.MOVEAMOUNT * App.physicsDelta;
     var moved = this.move(direction);
     // Gravity.
     if (this.GRAVITY) {
-      var moveStep = this.speed * App.timer.lastDelta;
-      this.speed += this.G_CONST * App.timer.lastDelta;
+      var moveStep = this.speed * App.physicsDelta;
+      this.speed += this.G_CONST * App.physicsDelta;
       // Air movement (not air control) but make sure we stay inside the world.
       if (this.isInAir() &&
           (this.y + this.height + moveStep <= world.height || !this.STAY_IN_WORLD)) {
@@ -1510,7 +1543,7 @@ var Actor = Box.extend({
    *   the Actor has moved in the respective direction.
    */
   move: function(direction) {
-    var moveAmount = this.MOVEAMOUNT * App.timer.lastDelta,
+    var moveAmount = this.MOVEAMOUNT * App.physicsDelta,
         left = false,
         right = false,
         looked = false,
@@ -1585,7 +1618,7 @@ var Actor = Box.extend({
       else if (!this.isInAir() ||
           this.MULTI_JUMP > this.numJumps ||
           this.MULTI_JUMP == -1) {
-        var now = Date.now();
+        var now = App.physicsTimeElapsed;
         if (now - this.lastJump > this.JUMP_DELAY && // sufficient delay
             (!this.JUMP_RELEASE || !this.jumpKeyDown)) { // press jump again
           this.speed = -this.JUMP_VEL;
@@ -1743,7 +1776,7 @@ var Actor = Box.extend({
    * Actor#isFalling(), Actor#hasAirMomentum()
    */
   stopFalling: function() {
-    if (this.y + this.height + this.speed * App.timer.lastDelta > world.height &&
+    if (this.y + this.height + this.speed * App.physicsDelta > world.height &&
         this.STAY_IN_WORLD) {
       this.y = world.height - this.height;
     }
@@ -1917,8 +1950,11 @@ var Actor = Box.extend({
   /**
    * Check whether the movement made during this frame was allowed.
    *
-   * This is useful for making sure Actors can't walk through walls if the
-   * frame rate drops dramatically or they're going really fast.
+   * This is useful for making sure Actors can't move through walls if they're
+   * going really fast. (This function is rarely necessary because physics
+   * updates happen in small, discrete time steps, so Actors should never move
+   * so far during a single physics update that they pass through objects --
+   * but it could happen for things moving extremely quickly.)
    *
    * @param {Object} moved
    *   An object with `x` and `y` properties indicating the number of pixels
@@ -2151,32 +2187,68 @@ var Actor = Box.extend({
   /**
    * Toggle whether the Actor can be dragged around by the mouse.
    *
-   * Be careful with this. By default, Actors are still subject to all the same
-   * behavioral rules. If you try to drag an Actor that is restricted to one
-   * axis, it will still only move along that axis. Collision still applies,
-   * but you may find that collision doesn't quite work the way you think it
-   * does.
+   * Note that dragged Actors still follow collision rules. (It is possible to
+   * drag an Actor through a wall, but Actors cannot be dropped inside of
+   * something solid they collide with.)
    *
    * @param {Boolean} on Whether to enable or disable dragging.
    */
   setDraggable: function(on) {
-    if (!on) {
+    if (this.isDraggable && on) {
+      return;
+    }
+    else if (!on) {
+      this.isDraggable = false;
       this.unlisten('.drag');
-      $canvas.off('.drag');
       return;
     }
-    if (this.isBeingDragged) {
-      return;
-    }
+    this.isDraggable = true;
     this.listen('mousedown.drag touchstart.drag', function() {
+      App.isSomethingBeingDragged = true;
       this.isBeingDragged = true;
-      jQuery(document).trigger('canvasdragstart', this);
+      this.dragStartX = this.x;
+      this.dragStartY = this.y;
+      /**
+       * @event canvasdragstart
+       *   Fired on the document when the user begins dragging an object,
+       *   i.e. when the player clicks on or touches an object. Multiple
+       *   objects can be dragged at once if they overlap, and this event will
+       *   be triggered once for each of them.
+       * @param {Actor} obj The object being dragged.
+       * @member global
+       */
+      jQuery(document).trigger('canvasdragstart', [this]);
     });
-    var t = this;
-    $canvas.on('mouseup.drag touchend.drag', function() {
-      t.isBeingDragged = false;
-      jQuery(document).trigger('canvasdragstop', t);
+    this.listen('canvasdragstop.drag', function() {
+      this.isBeingDragged = false;
+      // If there are no drop targets, the Actor can be dropped anywhere.
+      // If there are drop targets and we're not over one, snap back to the
+      // starting point.
+      var target = this.collides(this.dropTargets);
+      if (this.dropTargets.count() && !target) {
+        this.x = this.dragStartX;
+        this.y = this.dragStartY;
+      }
+      else if (target) {
+        /**
+         * @event canvasdrop
+         *   Fired on the document when a draggable Actor is dropped onto a
+         *   target. This is used **internally** to trigger the event on the
+         *   target directly.
+         * @param {Box} target The drop target.
+         * @member global
+         * @ignore
+         */
+        jQuery(document).trigger('canvasdrop', [target]);
+      }
     });
+  },
+
+  /**
+   * Determine whether this Actor is draggable.
+   */
+  getDraggable: function() {
+    return this.isDraggable;
   },
 
   /**
@@ -2289,24 +2361,15 @@ var Player = Actor.extend({
    * @inheritdoc Actor#setDraggable
    */
   setDraggable: function(on) {
-    if (!on) {
-      this.unlisten('.drag');
-      $canvas.off('.drag');
-      return;
+    if (on && !this.isDraggable) {
+      this.listen('canvasdragstop.drag', function() {
+        if (this.isBeingDragged &&
+            (!this.dropTargets.count() || this.dropTargets.overlaps(this))) {
+          world.centerViewportAround(this.x, this.y);
+        }
+      }, -1);
     }
-    if (this.isBeingDragged) {
-      return;
-    }
-    this.listen('mousedown.drag touchstart.drag', function() {
-      this.isBeingDragged = true;
-      jQuery(document).trigger('canvasdragstart', this);
-    });
-    var t = this;
-    $canvas.on('mouseup.drag touchend.drag', function() {
-      t.isBeingDragged = false;
-      jQuery(document).trigger('canvasdragstop', t);
-      world.centerViewportAround(t.x, t.y);
-    });
+    this._super.apply(this, arguments);
   },
 
   /**
@@ -2353,5 +2416,13 @@ var Player = Actor.extend({
       changed.y = offsets.y - world.yOffset;
     }
     return changed;
+  },
+
+  /**
+   * Clean up after ourselves.
+   */
+  destroy: function() {
+    this._super.apply(this, arguments);
+    jQuery(document).off('.release');
   },
 });

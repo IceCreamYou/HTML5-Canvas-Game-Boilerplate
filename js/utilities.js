@@ -17,6 +17,85 @@ var App = {};
  * @static
  */
 App.debugMode = false;
+/**
+ * @property
+ *   The minimum number of physics updates each second.
+ *
+ * If the frame rate goes below this value, the app will appear to slow down;
+ * less simulated time will be processed per unit of actual time. Specifically,
+ * the simulator will never simulate more than `1 / App.MIN_FPS` seconds of
+ * physics during each physics step, even if the time between calculating
+ * physics steps is longer than that.
+ *
+ * Setting this to zero is allowed, but risks entering a "spiral of death"
+ * where the system attempts to calculate more and more simulated physics time
+ * each frame, which takes longer and longer, which means more simulation must
+ * be run...
+ *
+ * If the frame rate goes below this value, a
+ * {@link global#event-low_fps low_fps} event fires, which you can use to
+ * reduce display quality in order to improve performance.
+ *
+ * @member App
+ * @static
+ */
+App.MIN_FPS = 4;
+/**
+ * @property
+ *   The maximum number of physics updates each second.
+ *
+ * This determines the discrete time-step for physics updates. If the rendering
+ * frame rate is faster than the resulting time-step, physics changes are not
+ * updated every frame.
+ *
+ * Higher values cause physics to be updated more times per frame. This
+ * increases simulation accuracy, but each physics update takes some time to
+ * calculate that is not necessarily proportional to the amount of time being
+ * simulated, so ironically having a higher MAX_FPS can actually increase the
+ * time required to simulate physics and thereby slow down the frame rate. The
+ * recommended value is somewhere between 60 and 100, though if your updates
+ * are particularly computationally intensive and your simulation can handle
+ * larger time steps, you might consider going as low as 30. Most monitors are
+ * capped at 60.
+ *
+ * @member App
+ * @static
+ */
+App.MAX_FPS = 100;
+/**
+ * @property
+ *   The total amount of time simulated, in seconds.
+ *
+ * This is the amount of time for which physics has been calculated. Physics
+ * updates in discrete chunks of time that are not necessarily synced with the
+ * rendering speed, so this is potentially different than the amount of time
+ * elapsed since animation started as well as potentially different than the
+ * amount of time between when animation started and when the current frame was
+ * requested.
+ *
+ * This is useful for time-based motion like a wave or spring.
+ *
+ * `App.physicsTimeElapsed` is a useful alternative to `performance.now()` when
+ * attempting to measure only time elapsed while animation is running. See also
+ * {@link Timer}.
+ *
+ * @member App
+ * @static
+ */
+App.physicsTimeElapsed = 0;
+App.physicsDelta = 0;
+/**
+ * @property
+ *   Whether an {@link Actor} is being dragged.
+ *
+ * Drop targets can change how they look when a draggable object is hovered
+ * over them by testing `this.isHovered() && App.isSomethingBeingDragged` in
+ * their {@link Box#draw draw()} methods.
+ *
+ * @member App
+ * @static
+ */
+App.isSomethingBeingDragged = false;
 // App.Debug is used for tracking debugging information.
 App.Debug = {};
 App.Debug.updateTimeElapsed = 0;
@@ -102,15 +181,40 @@ jQuery(document).ready(function() {
     App.Events.trigger(e.type, e);
   });
 
+  // Track and delegate dragend events.
+  $canvas.on('mouseup.drag touchend.drag', function(e) {
+    App.Events.trigger('canvasdragstop', e);
+    App.isSomethingBeingDragged = false;
+    /**
+     * @event canvasdragstop
+     *   Fired on the document when the player stops dragging an object,
+     *   i.e. when the player releases the mouse or stops touching the canvas.
+     * @member global
+     */
+    jQuery(document).trigger('canvasdragstop');
+  });
+
+  // Track and delegate drop events.
+  jQuery(document).on('canvasdrop', function(e, target) {
+    App.Events.trigger('canvasdrop', e, target);
+  });
+
   /**
    * @property {Timer} timer
    *   Tracks time elapsed while the app is running and during each frame.
    *
-   * App.timer.lastDelta tracks the amount of time since the last frame was
-   * drawn. This value is useful to smooth animation.
+   * **Warning:** The {@link Timer#getDelta delta} is retrieved each frame and
+   * used to smooth animation. Tampering with this by calling Timer#getDelta()
+   * or Timer#getElapsedTime() while animation is running will cause the next
+   * frame to render less simulated time than expected. With animation stopped,
+   * `App.timer.getElapsedTime()` will return how long the app has actually
+   * been animating. You can also use `Timer.getTimeSince('app start')` to get
+   * the total time since animation began. Normally what you actually want is
+   * `App.physicsTimeElapsed`.
    * 
    * @member App
    * @static
+   * @ignore
    */
   App.timer = new Timer(false);
   App.timer.frames = 0; // The number of frames that have been painted.
@@ -141,6 +245,7 @@ jQuery(window).load(function() {
       var start = setup(false);
 
       // Start animating!
+      Timer.event('app start');
       if (start !== false) {
         startAnimating();
       }
@@ -502,12 +607,12 @@ App.Events = {
    * @static
    */
   trigger: function(eventName) {
-    Array.prototype.shift.call(arguments);
+    eventName = Array.prototype.shift.call(arguments);
     var e = App.Events._listeners[eventName]; // All listeners for this event
     if (e) {
-      // Sort listeners by weight (lowest first).
+      // Sort listeners by weight (lowest last, then we'll iterate in reverse).
       e.sort(function(a, b) {
-        return a.weight - b.weight;
+        return b.weight - a.weight;
       });
       // Execute the callback for each listener for the relevant event.
       for (var i = e.length-1; i >= 0; i--) {
@@ -580,6 +685,32 @@ App.Events = {
      * @member Box
      */
     touchend: App._handlePointerBehavior,
+    /**
+     * @event canvasdragstop
+     *   The canvasdragstop event is sent to an object when a click or touch
+     *   event ends and that object is being dragged. This should be used
+     *   instead of binding to mouseup and touchend because dragged Actors
+     *   still follow collision rules, so dragging an Actor into a solid wall
+     *   will let the mouse move off the Actor while it is over the wall. (It
+     *   is possible to drag an Actor through a wall, but Actors cannot be
+     *   dropped inside of something solid they collide with.)
+     * @param {Event} e The event object.
+     * @member Actor
+     */
+    canvasdragstop: function() {
+      return !!this.isBeingDragged;
+    },
+    /**
+     * @event canvasdrop
+     *   The canvasdrop event is sent to a drop target object when a draggable
+     *   {@link Actor} is dropped onto it.
+     * @param {Event} e The event object.
+     * @param {Box} target The drop target object. (You can use `this` instead.)
+     * @member Box
+     */
+    canvasdrop: function(e, target) {
+      return this === target;
+    },
   },
 };
 
@@ -600,14 +731,19 @@ window.requestAnimFrame = (function() {
 /**
  * Start animating the canvas.
  * 
- * See also {@link #stopAnimating}
+ * See also {@link global#method-stopAnimating stopAnimating()}.
  *
  * @member global
  */
 function startAnimating() {
   if (!App._animate) {
     App._animate = true;
-    App.timer.start();
+    /**
+     * @event startAnimating
+     *   Fires on the document when the animation loop is about to begin.
+     * @member global
+     */
+    jQuery(document).trigger('startAnimating');
     App.animate();
   }
 }
@@ -615,17 +751,31 @@ function startAnimating() {
 /**
  * Stop animating the canvas.
  * 
- * See also {@link #startAnimating}
+ * See also {@link global#method-startAnimating startAnimating()}.
  *
  * @member global
  */
 function stopAnimating() {
   App._animate = false;
+  // Although stopAnimating() can be called asynchronously from the game loop,
+  // this is effectively the same as stopping the timer immediately after the
+  // last call to App.timer.getDelta() (i.e. when the last frame was rendered)
+  // because nothing interesting happens after that, and when animation is
+  // started again the timer doesn't start until the first frame is requested
+  // so the delta is still correct.
   App.timer.stop();
+  /**
+   * @event stopAnimating
+   *   Fires on the document when the animation loop is ending.
+   * @member global
+   */
+  jQuery(document).trigger('stopAnimating');
 
   // Output performance statistics.
+  // This can be slightly inaccurate because this function can be called in the
+  // middle of updating a frame, rather than after the last frame is drawn.
   if (App.debugMode && console && console.log) {
-    var elapsed = App.timer.getElapsedTime(), frames = App.timer.frames, d = App.Debug;
+    var elapsed = App.physicsTimeElapsed, frames = App.timer.frames, d = App.Debug;
     var sum = d.updateTimeElapsed + d.clearTimeElapsed + d.drawTimeElapsed;
     console.log({
       'ms/frame': {
@@ -661,31 +811,70 @@ App.animate = function() {
   // This is the only place that App.timer.getDelta() should ever be called
   // because getDelta() returns the time since the last time it was called so
   // calling it elsewhere will skew the result here.
-  App.timer.lastDelta = App.timer.getDelta();
-  App.timer.frames++; // Count paints so we can calculate FPS
+  var frameDelta = App.timer.getDelta();
+  // Starts the timer in the first animation frame. Doing this here instead of
+  // in startAnimating() lets us get the delta right for the first frame.
+  if (!App.timer.running) {
+    App.timer.start();
+  }
+  // Cap the delta in order to avoid the spiral of death.
+  if (App.MIN_FPS && frameDelta > 1 / App.MIN_FPS) {
+    /**
+     * @event low_fps
+     *   Fires on the document when the frame rate drops below App.MIN_FPS.
+     *
+     * @param {Number} fps The frame-per-second rate.
+     *
+     * @member global
+     */
+    jQuery(document).trigger('low_fps', [1 / frameDelta]);
+    frameDelta = 1 / App.MIN_FPS;
+  }
+  // Count paints so we can calculate overall FPS
+  App.timer.frames++;
 
-  var t = new Timer();
+  if (App.debugMode) {
+    Timer.event('debug timer update', true);
+  }
 
   // update
   Mouse.Scroll._update();
-  update();
+  while (frameDelta > 0) {
+    // Break the physics updates down into discrete chunks of no more than
+    // 1 / App.MAX_FPS in order to keep them as small as possible for accuracy.
+    /**
+     * @property physicsDelta
+     *   The amount of simulated time in seconds since the last physics update.
+     *
+     * Use this to smooth animation.
+     *
+     * @member App
+     * @static
+     */
+    App.physicsDelta = Math.min(frameDelta, 1 / App.MAX_FPS);
+    update(App.physicsDelta, App.physicsTimeElapsed);
+    frameDelta -= App.physicsDelta;
+    App.physicsTimeElapsed += App.physicsDelta;
+  }
 
   if (App.debugMode) {
-    App.Debug.updateTimeElapsed += t.getDelta();
+    App.Debug.updateTimeElapsed += Timer.getTimeSince('debug timer update');
+    Timer.event('debug timer clear', true);
   }
 
   // clear
   context.clear();
 
   if (App.debugMode) {
-    App.Debug.clearTimeElapsed += t.getDelta();
+    App.Debug.clearTimeElapsed += Timer.getTimeSince('debug timer clear');
+    Timer.event('debug timer draw', true);
   }
 
   // draw
   draw();
 
   if (App.debugMode) {
-    App.Debug.drawTimeElapsed += t.getDelta();
+    App.Debug.drawTimeElapsed += Timer.getTimeSince('debug timer draw');
   }
 
   // request new frame
@@ -738,8 +927,8 @@ jQuery(window).on('blur.animFocus', function() {
  * canvas. This has the effect of clearing the visible area of the canvas, but
  * if the fillStyle is being used to draw something, it will not scroll with
  * the rest of the canvas.
- * 
- * @param {String} [fillStyle]
+ *
+ * @param {Mixed} [fillStyle]
  *   If this parameter is passed, the visible area of the canvas will be filled
  *   in with the specified style. Otherwise, the canvas is simply wiped.
  *
@@ -1239,10 +1428,10 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
  *   The y-coordinate of the center of the circle.
  * @param {Number} r
  *   The radius of the circle.
- * @param {String} [fillStyle]
+ * @param {Mixed} [fillStyle]
  *   A canvas fillStyle used to fill the circle. If not specified, the circle
  *   uses the current fillStyle. If null, the circle is not filled.
- * @param {String} [strokeStyle]
+ * @param {Mixed} [strokeStyle]
  *   A canvas strokeStyle used to draw the circle's border. If not specified,
  *   no border is drawn on the circle. If null, the border uses the current
  *   strokeStyle.
@@ -1279,7 +1468,7 @@ CanvasRenderingContext2D.prototype.circle = function(x, y, r, fillStyle, strokeS
  *   The y-coordinate of the center of the smiley face.
  * @param {Number} r
  *   The radius of the smiley face.
- * @param {String} [fillStyle]
+ * @param {Mixed} [fillStyle]
  *   The color of the smiley face.
  *
  * @member CanvasRenderingContext2D
@@ -1390,7 +1579,7 @@ Mouse.Scroll = (function() {
     // Left
     if (Mouse.coords.x < canvas.width * THRESHOLD) {
       if (doOffset) {
-        ma = Math.round(Math.min(world.xOffset, MOVEAMOUNT * App.timer.lastDelta));
+        ma = Math.round(Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
         world.xOffset -= ma;
         scrolled.x -= ma;
         context.translate(ma, 0);
@@ -1400,7 +1589,7 @@ Mouse.Scroll = (function() {
     // Right
     else if (Mouse.coords.x > canvas.width * (1-THRESHOLD)) {
       if (doOffset) {
-        ma = Math.round(Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.timer.lastDelta));
+        ma = Math.round(Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
         world.xOffset += ma;
         scrolled.x += ma;
         context.translate(-ma, 0);
@@ -1411,7 +1600,7 @@ Mouse.Scroll = (function() {
     // Up
     if (Mouse.coords.y < canvas.height * THRESHOLD) {
       if (doOffset) {
-        ma = Math.round(Math.min(world.yOffset, MOVEAMOUNT * App.timer.lastDelta));
+        ma = Math.round(Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
         world.yOffset -= ma;
         scrolled.y -= ma;
         context.translate(0, ma);
@@ -1421,7 +1610,7 @@ Mouse.Scroll = (function() {
     // Down
     else if (Mouse.coords.y > canvas.height * (1-THRESHOLD)) {
       if (doOffset) {
-        ma = Math.round(Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.timer.lastDelta));
+        ma = Math.round(Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
         world.yOffset += ma;
         scrolled.y += ma;
         context.translate(0, -ma);
@@ -1566,17 +1755,37 @@ Mouse.Scroll = (function() {
 
 // TIMER ----------------------------------------------------------------------
 
+// performance.now() shim
+window.performance = window.performance || {};
+performance.now = (function() {
+  return performance.now       ||
+         performance.mozNow    ||
+         performance.msNow     ||
+         performance.oNow      ||
+         performance.webkitNow ||
+         function() { return Date.now(); };
+})();
+
 /**
  * A timer.
  *
  * Adapted from the [three.js clock](https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js).
  *
- * @param {Boolean} autoStart
+ * If you only care about how long something takes (e.g. when testing
+ * performance) and you don't need to stop the timer, Timer#event() and
+ * Timer#getTimeSince() are more efficient than instantiating a new Timer
+ * object.
+ *
+ * @param {Boolean} [autoStart=true]
  *   Whether to start the timer immediately upon instantiation or wait until
  *   the Timer#start() method is called.
+ * @param {Boolean} [whileAnimating=false]
+ *   Indicates whether the amount of time measured should be the time elapsed
+ *   only while animation was running (true) or the total time elapsed (false).
  */
-function Timer(autoStart) {
-  this.autoStart = autoStart === undefined ? true : autoStart;
+function Timer(autoStart, whileAnimating) {
+  this.autoStart = typeof autoStart === 'undefined' ? true : autoStart;
+  this.whileAnimating = whileAnimating || false;
   this.lastStartTime = 0;
   this.lastDeltaTime = 0;
   this.elapsedTime = 0;
@@ -1592,11 +1801,8 @@ function Timer(autoStart) {
    */
   this.getDelta = function() {
     var diff = 0;
-    if (this.autoStart && !this.running) {
-      this.start();
-    }
     if (this.running) {
-      var now = Date.now();
+      var now = this.whileAnimating ? App.physicsTimeElapsed : performance.now();
       diff = (now - this.lastDeltaTime) / 1000; // ms to s
       this.lastDeltaTime = now;
       this.elapsedTime += diff;
@@ -1610,27 +1816,79 @@ function Timer(autoStart) {
     if (this.running) {
       return;
     }
-    this.lastStartTime = this.lastDeltaTime = Date.now();
+    this.lastStartTime = this.lastDeltaTime = this.whileAnimating
+      ? App.physicsTimeElapsed
+      : performance.now();
     this.running = true;
   };
   /**
    * Stop the timer.
    */
   this.stop = function () {
-    this.running = false;
     this.elapsedTime += this.getDelta();
+    this.running = false;
   };
   /**
    * Get the amount of time the timer has been running, in seconds.
    */
   this.getElapsedTime = function() {
-    this.elapsedTime += this.getDelta();
+    this.getDelta();
     return this.elapsedTime;
   };
   if (this.autoStart) {
     this.start();
   }
 }
+
+(function() {
+  var events = {}, noID = 0;
+  /**
+   * Registers the time at which an event occurred.
+   *
+   * If you only care about how long something takes (e.g. when testing
+   * performance) and you don't need to stop the timer, Timer#event() and
+   * Timer#getTimeSince() are more efficient than instantiating a new Timer
+   * object.
+   *
+   * @param {String} [id]
+   *   An identifier for the event.
+   * @param {Boolean} [whileAnimating=false]
+   *   Indicates whether the amount of time measured between when Timer#event()
+   *   is called and when Timer#getTimeSince() is called should be the time
+   *   elapsed only while animation was running (true) or the total time
+   *   elapsed (false).
+   * @static
+   */
+  Timer.event = function(id, whileAnimating) {
+    var result = {
+        whileAnimating: whileAnimating,
+        startTime: whileAnimating ? App.physicsTimeElapsed : performance.now(),
+    };
+    if (typeof id === 'undefined') {
+      noID = result;
+    }
+    else {
+      events[id] = result;
+    }
+  };
+  /**
+   * Returns the time since an event occurred.
+   *
+   * If you only care about how long something takes (e.g. when testing
+   * performance) and you don't need to stop the timer, Timer#event() and
+   * Timer#getTimeSince() are more efficient than instantiating a new Timer
+   * object.
+   *
+   * @param {String} [id] An identifier for the event.
+   * @return {Number} Seconds since the event, or 0 if the event is not found.
+   * @static
+   */
+  Timer.getTimeSince = function(id) {
+    var event = typeof events[id] === 'undefined' ? noID : events[id];
+    var now = event.whileAnimating ? App.physicsTimeElapsed : performance.now();
+    return event.startTime ? (now - event.startTime) / 1000 : 0;
+  };
+})();
 
 // UTILITIES ------------------------------------------------------------------
 
@@ -1815,6 +2073,7 @@ App.Utils.positionOverCanvas = function(elem, x, y) {
  */
 App.gameOver = function() {
   stopAnimating();
+  player.destroy();
   // This runs during update() before the final draw(), so we have to delay it.
   setTimeout(function() {
     context.save();
@@ -1998,7 +2257,7 @@ Number.prototype.sign = function(v) {
     if (typeof this.lastLogged[id] === 'undefined') {
       this.lastLogged[id] = 0;
     }
-    var now = Date.now();
+    var now = performance.now();
     if (now > this.lastLogged[id] + freq) {
       this.lastLogged[id] = now;
       func.apply(func, arguments);
