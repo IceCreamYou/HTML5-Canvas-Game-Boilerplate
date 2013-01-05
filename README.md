@@ -24,19 +24,20 @@ There are three functions there which are the backbone of your application:
    after images have been pre-loaded but immediately before animation starts.
 
 These functions are called automatically for you. Just fill in the logic! To
-see your project, open index.html in your browser. By default, it has a
-keyboard-controlled player who can wander around. 
+see your project, open index.html in your browser.
+[By default](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/), it
+has a keyboard-controlled player who can wander around. 
 
-At this point you can dive in and start building right away, or take a look at
-some of the utilities provided below:
+At this point you can dive in and start building right away, explore more
+features, or dig deeper into the documentation:
 
- - [API Overview (below)](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#api-overview)
- - [Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)
- - Walk-Through Guides (coming soon!)
- - Examples (coming soon!)
-     - Demo Applications: see what full-scale projects are possible and how
+ - **[API Overview (below)](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#api-overview)**
+ - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
+ - **Walk-Through Guides** (coming soon!)
+ - **Examples** (coming soon!): things you can build easily with this project
+     - **Demo Applications:** see what full-scale projects are possible and how
        intuitive it is to make them
-     - Feature Examples: see specific features in action and learn how to
+     - **Feature Examples:** see specific features in action and learn how to
        implement them
 
 
@@ -127,6 +128,7 @@ Box class provides the listen(), once(), and unlisten() methods to
    automatically via the "keys" object defined in main.js. You can also bind
    directly to key event combinations using natural descriptions of the keys:
    ```$(selector).keypress('ctrl+a down', function(event) { });```
+
    Other ways to handle keyboard input are described in the
    [documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/jQuery.hotkeys).
  - **Mouse Input:** Most mouse input can be handled by listening to mouse
@@ -142,6 +144,7 @@ Box class provides the listen(), once(), and unlisten() methods to
    your sanity if you are developing with the browser open in one window and
    your editor in another). If you don't want this behavior, just call
    ```$(window).off(".animFocus");```
+
  - **Automatic Canvas Resizing:** It is easy to make your canvas the size and
    shape you want by setting
    [various attributes](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App-static-method-setDefaultCanvasSize)
