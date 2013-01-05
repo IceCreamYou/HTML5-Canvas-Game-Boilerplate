@@ -142,8 +142,8 @@ Box class provides the listen(), once(), and unlisten() methods to
  - **Visibility:** By default, animation stops when the tab or window loses
    focus. This reduces CPU impact when the app is not in view (and preserves
    your sanity if you are developing with the browser open in one window and
-   your editor in another). If you don't want this behavior, just call
-   ```$(window).off(".animFocus");```
+   your editor in another). If you don't want this behavior,
+   ```$(window).off(".animFocus");``` will disable it.
 
  - **Automatic Canvas Resizing:** It is easy to make your canvas the size and
    shape you want by setting
