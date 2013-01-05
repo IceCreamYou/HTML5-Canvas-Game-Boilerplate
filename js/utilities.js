@@ -1,6 +1,12 @@
 /**
  * Provides helpful utilities for common Canvas operations.
  *
+ * Specifically, this file holds all the utilities in App and App.Utils,
+ * the event system in App.Events, most global variables, handlers for
+ * low-level canvas functionality and animation, the Timer class,
+ * console.throttle(), mouse handling, caching, and some extensions to default
+ * JavaScript classes (mostly to provide drawing helpers).
+ *
  * @ignore
  */
 

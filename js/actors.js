@@ -1,5 +1,9 @@
 /**
  * Defines useful classes for actors in the world.
+ *
+ * Specifically, this file holds the Box, Actor, Player, Collection, TileMap,
+ * Layer, and World classes.
+ *
  * @ignore
  */
 
