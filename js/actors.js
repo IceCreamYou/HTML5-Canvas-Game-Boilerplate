@@ -2,7 +2,9 @@
  * Defines useful classes for actors in the world.
  *
  * Specifically, this file holds the Box, Actor, Player, Collection, TileMap,
- * Layer, and World classes.
+ * Layer, and World classes. Though not strictly boilerplate, Layer and World
+ * are useful for any Canvas project, and the rest are are useful abstractions
+ * for practically any game-style environment.
  *
  * @ignore
  */
@@ -1435,10 +1437,40 @@ var Actor = Box.extend({
    */
   dropTargets: new Collection(),
 
+  /**
+   * The horizontal component of the velocity.
+   *
+   * Use Actor#getVelocityVector() if you want to get velocity as a vector.
+   */
+  xVelocity: 0,
+
+  /**
+   * The vertical component of the velocity.
+   *
+   * Use Actor#getVelocityVector() if you want to get velocity as a vector.
+   */
+  yVelocity: 0,
+
+  /**
+   * The horizontal component of the acceleration.
+   *
+   * Use Actor#getAccelerationVector() if you want to get acceleration as a
+   * vector.
+   */
+  xAcceleration: 0,
+
+  /**
+   * The vertical component of the acceleration.
+   *
+   * Use Actor#getAccelerationVector() if you want to get acceleration as a
+   * vector.
+   */
+  yAcceleration: 0,
+
   // Dynamic (internal) variables
   speed: 0, // Vertical velocity when gravity is on
   lastJump: 0, // Time when the last jump occurred in milliseconds since the epoch
-  lastDirection: [], // The last direction (i.e. key press) passed to move()
+  lastDirection: [], // The last direction (i.e. key press) passed to processInput()
   jumpDirection: {right: false, left: false}, // Whether the Actor was moving horizontally before jumping
   jumpKeyDown: false, // Whether the jump key is currently pressed
   numJumps: 0, // Number of jumps since the last time the Actor was touching the ground
@@ -1447,10 +1479,6 @@ var Actor = Box.extend({
   isDraggable: false, // Whether the Actor is draggable
   dragStartX: 0, // Last position of the Actor before being dragged
   dragStartY: 0, // Last position of the Actor before being dragged
-  velocity: 0,
-  radialDirection: 0,
-  acceleration: 0,
-  accelDirection: 0,
 
   /**
    * @constructor
@@ -1500,7 +1528,7 @@ var Actor = Box.extend({
       return {x: mcx - this.x, y: mcy - this.y};
     }
     var moveAmount = this.MOVEAMOUNT * App.physicsDelta;
-    var moved = this.move(direction);
+    var moved = this.processInput(direction);
     // Gravity.
     if (this.GRAVITY) {
       var moveStep = this.speed * App.physicsDelta;
@@ -1546,7 +1574,7 @@ var Actor = Box.extend({
    *   An object with `x` and `y` properties indicating the number of pixels
    *   the Actor has moved in the respective direction.
    */
-  move: function(direction) {
+  processInput: function(direction) {
     var moveAmount = this.MOVEAMOUNT * App.physicsDelta,
         left = false,
         right = false,
@@ -1659,6 +1687,90 @@ var Actor = Box.extend({
       }
     }
     return moved;
+  },
+
+  /**
+   * Add velocity as a vector.
+   *
+   * See also Actor#setVelocityVector() and Actor#getVelocityVector().
+   *
+   * @param {Number} radialDir The direction of the vector to add, in radians.
+   * @param {Number} magnitude The magnitude ot the vector to add, in pixels.
+   */
+  addVelocityVector: function(radialDir, magnitude) {
+    this.xVelocity += magnitude * Math.cos(radialDir);
+    this.yVelocity += magnitude * Math.sin(radialDir);
+  },
+
+  /**
+   * Set velocity as a vector.
+   *
+   * See also Actor#addVelocityVector() and Actor#getVelocityVector().
+   *
+   * @param {Number} radialDir The direction of the vector to set, in radians.
+   * @param {Number} magnitude The magnitude ot the vector to set, in pixels.
+   */
+  setVelocityVector: function(radialDir, magnitude) {
+    this.xVelocity = magnitude * Math.cos(radialDir);
+    this.yVelocity = magnitude * Math.sin(radialDir);
+  },
+
+  /**
+   * Get the velocity vector.
+   *
+   * See also Actor#addVelocityVector() and Actor#setVelocityVector().
+   *
+   * @return {Object}
+   *   An object with `magnitude` and `direction` attributes indicating the
+   *   velocity of the Actor.
+   */
+  getVelocityVector: function() {
+    return {
+      magnitude: Math.sqrt(this.xVelocity*this.xVelocity + this.yVelocity*this.yVelocity),
+      direction: Math.atan2(this.yVelocity, this.xVelocity),
+    };
+  },
+
+  /**
+   * Add acceleration as a vector.
+   *
+   * See also Actor#setAccelerationVector() and Actor#getAccelerationVector().
+   *
+   * @param {Number} radialDir The direction of the vector to add, in radians.
+   * @param {Number} magnitude The magnitude ot the vector to add, in pixels.
+   */
+  addAccelerationVector: function(radialDir, magnitude) {
+    this.xAcceleration += magnitude * Math.cos(radialDir);
+    this.yAcceleration += magnitude * Math.sin(radialDir);
+  },
+
+  /**
+   * Set acceleration as a vector.
+   *
+   * See also Actor#addAccelerationVector() and Actor#getAccelerationVector().
+   *
+   * @param {Number} radialDir The direction of the vector to set, in radians.
+   * @param {Number} magnitude The magnitude ot the vector to set, in pixels.
+   */
+  setAccelerationVector: function(radialDir, magnitude) {
+    this.xAcceleration = magnitude * Math.cos(radialDir);
+    this.yAcceleration = magnitude * Math.sin(radialDir);
+  },
+
+  /**
+   * Get the acceleration vector.
+   *
+   * See also Actor#addAccelerationVector() and Actor#setAccelerationVector().
+   *
+   * @return {Object}
+   *   An object with `magnitude` and `direction` attributes indicating the
+   *   acceleration of the Actor.
+   */
+  getAccelerationVector: function() {
+    return {
+      magnitude: Math.sqrt(this.xVelocity*this.xVelocity + this.yVelocity*this.yVelocity),
+      direction: Math.atan2(this.yVelocity, this.xVelocity), // yes, this order is correct
+    };
   },
 
   /**
@@ -2329,13 +2441,13 @@ var Player = Actor.extend({
   },
 
   /**
-   * Override Actor#move() to respond to keyboard input automatically.
+   * Override Actor#processInput() to respond to keyboard input automatically.
    *
    * **Inherited documentation:**
    *
-   * @inheritdoc Actor#move
+   * @inheritdoc Actor#processInput
    */
-  move: function(direction) {
+  processInput: function(direction) {
     if (direction === undefined) {
       direction = jQuery.hotkeys.keysDown;
     }

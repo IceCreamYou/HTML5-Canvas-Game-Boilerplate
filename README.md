@@ -159,6 +159,11 @@ Box class provides the listen(), once(), and unlisten() methods to
    If you need to, you can manipulate the
    [Caches](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Caches)
    manually.
+ - **HTML Integration:**
+   [App.Utils.positionOverCanvas()](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App.Utils-static-method-positionOverCanvas)
+   allows you to position any DOM element at a specific position over the
+   canvas. This allows you to place HTML forms, buttons, labels, or anything
+   else directly onto the canvas.
 
 ### Miscellany
 
