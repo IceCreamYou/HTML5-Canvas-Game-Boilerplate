@@ -22,6 +22,7 @@
  *
  * @param {String} src
  *   The image to draw, in the form of one of the following:
+ *
  *   - The file path of the base image
  *   - An Image
  *   - A Canvas
@@ -271,6 +272,7 @@ this.SpriteMap = SpriteMap;
  *
  * @param {String} src
  *   The image to draw, in the form of one of the following:
+ *
  *   - The file path of the base image
  *   - An Image
  *   - A Canvas
