@@ -1,47 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>The source code</title>
-  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
-  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
-  <style type="text/css">
-    .highlight { display: block; background-color: #ddd; }
-  </style>
-  <script type="text/javascript">
-    function highlight() {
-      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
-    }
-  </script>
-</head>
-<body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * Provides helpful utilities for common Canvas operations.
+/**
+ * Provides helpful utilities for common Canvas operations.
  *
- * Specifically, this file holds all the utilities in App and App.Utils,
- * the event system in App.Events, most global variables, handlers for
- * low-level canvas functionality and animation, the Timer class,
- * console.throttle(), mouse handling, caching, and some extensions to default
- * JavaScript classes (mostly to provide drawing helpers).
+ * This file is the core of the project. It contains all the abstractions that
+ * avoid low-level and boilerplate code. It addresses initializing the canvas
+ * and running the main animation loop (including physics timing issues). It
+ * also provides an event system for canvas objects as well as abstractions for
+ * drawing, caching, and mouse handling.
  *
  * @ignore
  */
 
-<span id='App'>/**
-</span> * The App object holds all the miscellaneous things that don't deserve to be
+/**
+ * The App object holds all the miscellaneous things that don't deserve to be
  * global.
  * @static
  */
 var App = {};
-<span id='App-static-property-debugMode'>/**
-</span> * @property
+/**
+ * @property
+ *   Whether the game is over. Set by calling App#gameOver().
+ * @member App
+ * @static
+ * @readonly
+ */
+App.isGameOver = false;
+/**
+ * @property
  *   Whether Debug Mode is on or off (shows or hides debugging information).
  * @member App
  * @static
  */
 App.debugMode = false;
-<span id='App-static-property-MIN_FPS'>/**
-</span> * @property
+/**
+ * @property
  *   The minimum number of physics updates each second.
  *
  * If the frame rate goes below this value, the app will appear to slow down;
@@ -50,7 +41,7 @@ App.debugMode = false;
  * physics during each physics step, even if the time between calculating
  * physics steps is longer than that.
  *
- * Setting this to zero is allowed, but risks entering a &quot;spiral of death&quot;
+ * Setting this to zero is allowed, but risks entering a "spiral of death"
  * where the system attempts to calculate more and more simulated physics time
  * each frame, which takes longer and longer, which means more simulation must
  * be run...
@@ -63,8 +54,8 @@ App.debugMode = false;
  * @static
  */
 App.MIN_FPS = 4;
-<span id='App-static-property-MAX_FPS'>/**
-</span> * @property
+/**
+ * @property
  *   The maximum number of physics updates each second.
  *
  * This determines the discrete time-step for physics updates. If the rendering
@@ -85,8 +76,8 @@ App.MIN_FPS = 4;
  * @static
  */
 App.MAX_FPS = 100;
-<span id='App-static-property-physicsTimeElapsed'>/**
-</span> * @property
+/**
+ * @property
  *   The total amount of time simulated, in seconds.
  *
  * This is the amount of time for which physics has been calculated. Physics
@@ -106,13 +97,14 @@ App.MAX_FPS = 100;
  * @static
  */
 App.physicsTimeElapsed = 0;
+// Defined later as the amount of simulated physics time since the last update.
 App.physicsDelta = 0;
-<span id='App-static-property-isSomethingBeingDragged'>/**
-</span> * @property
+/**
+ * @property
  *   Whether an {@link Actor} is being dragged.
  *
  * Drop targets can change how they look when a draggable object is hovered
- * over them by testing `this.isHovered() &amp;&amp; App.isSomethingBeingDragged` in
+ * over them by testing `this.isHovered() && App.isSomethingBeingDragged` in
  * their {@link Box#draw draw()} methods.
  *
  * @member App
@@ -127,34 +119,34 @@ App.Debug.drawTimeElapsed = 0;
 
 // SETUP ----------------------------------------------------------------------
 
-<span id='global-property-canvas'>/**
-</span> * The Canvas DOM element.
+/**
+ * The Canvas DOM element.
  * @member global
  */
 var canvas;
-<span id='global-property-S-canvas'>/**
-</span> * The jQuery representation of the Canvas element.
+/**
+ * The jQuery representation of the Canvas element.
  * @member global
  */
 var $canvas;
-<span id='global-property-context'>/**
-</span> * The main Canvas graphics context.
+/**
+ * The main Canvas graphics context.
  * @member global
  */
 var context;
-<span id='global-property-world'>/**
-</span> * The {@link World} object for the current environment.
+/**
+ * The {@link World} object for the current environment.
  * @member global
  */
 var world;
 
-<span id='Mouse'>/**
-</span> * Handles mouse motion and scrolling.
+/**
+ * Handles mouse motion and scrolling.
  * @static
  */
 var Mouse = {
-<span id='Mouse-static-property-coords'>    /**
-</span>     * @property
+    /**
+     * @property
      *   The coordinates of the mouse relative to the upper-left corner of the
      *   canvas.
      * @static
@@ -162,10 +154,7 @@ var Mouse = {
     coords: {x: 9999, y: 9999},
 };
 
-// Indicates whether the canvas is animating or focused.
-App._animate = false, App._blurred = false;
-
-// Set up important activities.
+// Set up things early that need to be available elsewhere.
 jQuery(document).ready(function() {
   // Set up the canvas.
   canvas = document.getElementById('canvas');
@@ -174,12 +163,6 @@ jQuery(document).ready(function() {
 
   // Set up the main graphics context.
   context = canvas.getContext('2d');
-
-  // Set up the world.
-  // Lots of drawing depends on the world size, so set this before anything
-  // else and try not to change it.
-  world = new World();
-  context.__layer = world;
 
   // Track the mouse.
   $canvas.hover(function() {
@@ -201,16 +184,18 @@ jQuery(document).ready(function() {
 
   // Track and delegate click events.
   $canvas.on('mousedown mouseup click touchstart touchend', function(e) {
-    App.Events.trigger(e.type, e);
+    if (isAnimating()) {
+      App.Events.trigger(e.type, e);
+    }
   });
 
   // Track and delegate dragend events.
   $canvas.on('mouseup.drag touchend.drag', function(e) {
     App.Events.trigger('canvasdragstop', e);
     App.isSomethingBeingDragged = false;
-<span id='global-event-canvasdragstop'>    /**
-</span>     * @event canvasdragstop
-     *   Fired on the document when the player stops dragging an object,
+    /**
+     * @event canvasdragstop
+     *   Fires on the document when the player stops dragging an object,
      *   i.e. when the player releases the mouse or stops touching the canvas.
      * @member global
      */
@@ -221,9 +206,70 @@ jQuery(document).ready(function() {
   jQuery(document).on('canvasdrop', function(e, target) {
     App.Events.trigger('canvasdrop', e, target);
   });
+});
 
-<span id='App-static-property-timer'>  /**
-</span>   * @property {Timer} timer
+// Set up the app itself. This runs after main.js loads.
+jQuery(window).load(function() {
+  // Prevent default behavior of these keys because we'll be using them and
+  // they can cause other page behavior (like scrolling).
+  if (typeof keys !== 'undefined') {
+    for (var dir in keys) {
+      if (keys.hasOwnProperty(dir)) {
+        App.preventDefaultKeyEvents(keys[dir].join(' '));
+      }
+    }
+  }
+
+  // Pre-load images and start the animation.
+  Caches.preloadImages(typeof preloadables === 'undefined' ? [] : preloadables, {
+    finishCallback: function() {
+      // Expose utilities globally if they are not already defined.
+      if (typeof Events === 'undefined') {
+        Events = App.Events;
+      }
+      if (typeof Utils === 'undefined') {
+        Utils = App.Utils;
+      }
+
+      // Set up global stuff and start.
+      App.reset(true);
+    },
+  });
+});
+
+/**
+ * Reset the environment.
+ *
+ * @param {Boolean} first
+ *   Whether this is the first time App.reset() is being called (i.e. whether
+ *   the game is being set up for the first time or not).
+ * @member App
+ * @static
+ */
+App.reset = function(first) {
+  // Don't animate while we're resetting things.
+  stopAnimating();
+
+  // Stop dragging something if we were dragging when the game stopped...
+  if (App.isSomethingBeingDragged) {
+    App.isSomethingBeingDragged = false;
+    jQuery(document).trigger('canvasdragstop');
+  }
+
+  // If the world already exists, reset it to the origin.
+  if (typeof world !== 'undefined') {
+    context.translate(world.xOffset, world.yOffset);
+    world.scaleResolution(1/world.scale);
+  }
+
+  // Set up the world.
+  // Lots of drawing depends on the world size, so set this before anything
+  // else and try not to change it.
+  world = new World();
+  context.__layer = world;
+
+  /**
+   * @property {Timer} timer
    *   Tracks time elapsed while the app is running and during each frame.
    *
    * **Warning:** The {@link Timer#getDelta delta} is retrieved each frame and
@@ -241,56 +287,42 @@ jQuery(document).ready(function() {
    */
   App.timer = new Timer(false);
   App.timer.frames = 0; // The number of frames that have been painted.
-});
 
-// Set up the app itself. This runs after main.js loads.
-jQuery(window).load(function() {
-  // Prevent default behavior of these keys because we'll be using them and
-  // they can cause other page behavior (like scrolling).
-  for (var dir in keys) {
-    if (keys.hasOwnProperty(dir)) {
-      App.preventDefaultKeyEvents(keys[dir].join(' '));
-    }
+  // Reset global flags
+  App.isGameOver = false;
+  App.physicsTimeElapsed = 0;
+  App.Debug.updateTimeElapsed = 0;
+  App.Debug.clearTimeElapsed = 0;
+  App.Debug.drawTimeElapsed = 0;
+
+  // Run the developer's setup code.
+  var start = setup(!!first);
+
+  // Start animating!
+  Timer.event('app start');
+  if (start !== false) {
+    startAnimating();
   }
 
-  // Pre-load images and start the animation.
-  Caches.preloadImages(typeof preloadables === 'undefined' ? [] : preloadables, {
-    finishCallback: function() {
-      // Expose utilities globally if they are not already defined.
-      if (typeof Events === 'undefined') {
-        Events = App.Events;
-      }
-      if (typeof Utils === 'undefined') {
-        Utils = App.Utils;
-      }
+  /**
+   * @event start
+   *   Fires on the document when all setup is complete.
+   *
+   * Unless specified otherwise by the return value of setup(), animation
+   * will have started by this point.
+   *
+   * Useful for running intro graphics.
+   *
+   * @param {Boolean} again
+   *   true if the app has been reset and is starting over; false the first
+   *   time it is being set up.
+   * @member global
+   */
+  jQuery(document).trigger('start', [!!first]);
+};
 
-      // Run the developer's setup code.
-      var start = setup(false);
-
-      // Start animating!
-      Timer.event('app start');
-      if (start !== false) {
-        startAnimating();
-      }
-
-<span id='global-event-start'>      /**
-</span>       * @event start
-       *   Fires on the document when all setup is complete.
-       *
-       * Unless specified otherwise by the return value of setup(), animation
-       * will have started by this point.
-       *
-       * Useful for running intro graphics.
-       *
-       * @member global
-       */
-      jQuery(document).trigger('start');
-    },
-  });
-});
-
-<span id='App-static-method-setDefaultCanvasSize'>/**
-</span> * Sets the default size of the canvas as early as possible.
+/**
+ * Set the default size of the canvas as early as possible.
  *
  * The canvas is resized according to the following rules, in order of
  * precedence:
@@ -309,17 +341,17 @@ jQuery(window).load(function() {
  *   dimensions.
  * - The canvas will scale to the largest size that fits within both the window
  *   and the max attributes (if they are present).
- * - In all cases except when `data-resize=&quot;false&quot;`, the `data-aspectratio`
+ * - In all cases except when `data-resize="false"`, the `data-aspectratio`
  *   attribute takes effect if present. This causes the canvas to resize to the
  *   largest possible size within the boundaries of the size calculated from
  *   the other rules, while still maintaining the specified aspect ratio. The
  *   value of this attribute can be any floating point number or one of the
- *   common ratios &quot;4:3&quot;, &quot;16:9&quot;, &quot;16:10&quot;, or &quot;8:5&quot;. For example, with an
+ *   common ratios "4:3", "16:9", "16:10", or "8:5". For example, with an
  *   aspect ratio of 4:3, if the width was calculated to be 1024 and the height
  *   was calculated to be 800, the height would be adjusted to 768.
  *
  * Note that using CSS to resize the canvas causes it to scale the graphics as
- * well; it changes the size of each virtual &quot;pixel&quot; on the canvas rather than
+ * well; it changes the size of each virtual "pixel" on the canvas rather than
  * changing the number of pixels inside the canvas. Unless you want to stretch
  * the canvas display, using CSS to resize the canvas is not recommended.
  *
@@ -364,10 +396,10 @@ App.setDefaultCanvasSize = function() {
       else if (aspectRatio == '16:9') aspectRatio = 16/9;
       else if (aspectRatio == '16:10' || aspectRatio == '8:5') aspectRatio = 1.6;
     }
-    if (canvas.width &lt; canvas.height * aspectRatio) {
+    if (canvas.width < canvas.height * aspectRatio) {
       canvas.height = Math.floor(canvas.width / aspectRatio);
     }
-    else if (canvas.width &gt; canvas.height * aspectRatio) {
+    else if (canvas.width > canvas.height * aspectRatio) {
       canvas.width = Math.floor(canvas.height * aspectRatio);
     }
   }
@@ -375,23 +407,23 @@ App.setDefaultCanvasSize = function() {
 
 // CACHES ---------------------------------------------------------------------
 
-<span id='Caches'>/**
-</span> * Tracks cached items.
+/**
+ * Tracks cached items.
  * @static
  */
 var Caches = {
-<span id='Caches-static-property-images'>    /**
-</span>     * A map from image file paths to Image objects.
+    /**
+     * A map from image file paths to Image objects.
      * @static
      */
     images: {},
-<span id='Caches-static-property-imagePatterns'>    /**
-</span>     * A map from image file paths to CanvasPattern objects.
+    /**
+     * A map from image file paths to CanvasPattern objects.
      * @static
      */
     imagePatterns: {},
-<span id='Caches-static-method-preloadImages'>    /**
-</span>     * Preload a list of images asynchronously.
+    /**
+     * Preload a list of images asynchronously.
      * 
      * @param {String[]} files
      *   An Array of paths to images to preload.
@@ -420,7 +452,7 @@ var Caches = {
         if (typeof itemCallback == 'function') {
           itemCallback(src, m, l);
         }
-        if (m == l &amp;&amp; typeof options.finishCallback == 'function') {
+        if (m == l && typeof options.finishCallback == 'function') {
           options.finishCallback(l);
         }
       };
@@ -441,22 +473,28 @@ var Caches = {
 };
 
 // Override the Sprite caching mechanisms.
-Sprite.getImageFromCache = function(src) {
-  return Caches.images[src];
-};
-Sprite.saveImageToCache = function(src, image) {
-  Caches.images[src] = image;
-};
-Sprite.preloadImages = Caches.preloadImages;
+if (Sprite) {
+  Sprite.getImageFromCache = function(src) {
+    return Caches.images[src];
+  };
+  Sprite.saveImageToCache = function(src, image) {
+    Caches.images[src] = image;
+  };
+  Sprite.preloadImages = Caches.preloadImages;
+}
 
 // EVENTS ---------------------------------------------------------------------
 
-App._handlePointerBehavior = function() {
-  return App.isHovered(this);
-};
+(function() {
 
-<span id='App-Events'>/**
-</span> * An event system for canvas objects.
+function _handlePointerBehavior() {
+  return App.isHovered(this);
+}
+
+var _listeners = {};
+
+/**
+ * An event system for canvas objects.
  *
  * The browser has no way to distinguish between different objects being
  * displayed on the canvas; as far as it is concerned, the canvas is just a
@@ -467,9 +505,8 @@ App._handlePointerBehavior = function() {
  * @static
  */
 App.Events = {
-<span id='App-Events-property-_listeners'>  _listeners: {},
-</span><span id='App-Events-static-method-listen'>  /**
-</span>   * Listen for a specific event.
+  /**
+   * Listen for a specific event.
    *
    * {@link Box} objects can listen for events by calling Box#listen() rather
    * than calling this method directly.
@@ -477,9 +514,9 @@ App.Events = {
    * @param {Object} obj
    *   The object which should listen for the event being called on it.
    * @param {String} eventName
-   *   The name of the event for which to listen, e.g. &quot;click.&quot; The event can
-   *   have a namespace using a dot, e.g. &quot;click.custom&quot; will bind to the
-   *   &quot;click&quot; event with the &quot;custom&quot; namespace. Namespaces are useful for
+   *   The name of the event for which to listen, e.g. "click." The event can
+   *   have a namespace using a dot, e.g. "click.custom" will bind to the
+   *   "click" event with the "custom" namespace. Namespaces are useful for
    *   unlisten()ing to specific callbacks assigned to that namespace or for
    *   unlisten()ing to callbacks bound to a namespace across multiple events.
    * @param {Function} callback
@@ -502,8 +539,8 @@ App.Events = {
     var once = arguments[4];
     // Allow specifying multiple space-separated event names.
     var events = eventName.split(' ');
-    if (events.length &gt; 1) {
-      for (var j = 0, l = events.length; j &lt; l; j++) {
+    if (events.length > 1) {
+      for (var j = 0, l = events.length; j < l; j++) {
         App.Events.listen(obj, events[j], callback, weight, once);
       }
       return;
@@ -515,10 +552,10 @@ App.Events = {
       eventName = eventName.substring(0, i);
     }
     // Add a listener for the relevant event.
-    if (!App.Events._listeners[eventName]) {
-      App.Events._listeners[eventName] = [];
+    if (!_listeners[eventName]) {
+      _listeners[eventName] = [];
     }
-    App.Events._listeners[eventName].push({
+    _listeners[eventName].push({
       object: obj,
       callback: function() {
         callback.apply(obj, arguments);
@@ -530,17 +567,17 @@ App.Events = {
     // Return the listening object so that this function is chainable.
     return obj;
   },
-<span id='App-Events-static-method-once'>  /**
-</span>   * Listen for a specific event and only react the first time it is triggered.
+  /**
+   * Listen for a specific event and only react the first time it is triggered.
    *
    * {@link Box} objects have a corresponding Box#once() method.
    *
    * @param {Object} obj
    *   The object which should listen for the event being called on it.
    * @param {String} eventName
-   *   The name of the event for which to listen, e.g. &quot;click.&quot; The event can
-   *   have a namespace using a dot, e.g. &quot;click.custom&quot; will bind to the
-   *   &quot;click&quot; event with the &quot;custom&quot; namespace. Namespaces are useful for
+   *   The name of the event for which to listen, e.g. "click." The event can
+   *   have a namespace using a dot, e.g. "click.custom" will bind to the
+   *   "click" event with the "custom" namespace. Namespaces are useful for
    *   unlisten()ing to specific callbacks assigned to that namespace or for
    *   unlisten()ing to callbacks bound to a namespace across multiple events.
    * @param {Function} callback
@@ -562,19 +599,19 @@ App.Events = {
   once: function(obj, eventName, callback, weight) {
     return App.Events.listen(obj, eventName, callback, weight, true);
   },
-<span id='App-Events-static-method-unlisten'>  /**
-</span>   * Stop listening for a specific event.
+  /**
+   * Stop listening for a specific event.
    *
    * {@link Box} objects have a corresponding Box#unlisten() method.
    *
    * @param {Object} obj
    *   The object which should unlisten for the specified event.
    * @param {String} eventName
-   *   The name of the event for which to listen, e.g. &quot;click.&quot; The event can
-   *   have a namespace using a dot, e.g. &quot;click.custom&quot; will unbind obj's
-   *   listeners for the &quot;click&quot; that are using the &quot;custom&quot; namespace. You can
+   *   The name of the event for which to listen, e.g. "click." The event can
+   *   have a namespace using a dot, e.g. "click.custom" will unbind obj's
+   *   listeners for the "click" that are using the "custom" namespace. You can
    *   also unlisten to multiple events using the same namespace, e.g.
-   *   &quot;.custom&quot; could unlisten to &quot;mousemove.custom&quot; and &quot;touchmove.custom.&quot;
+   *   ".custom" could unlisten to "mousemove.custom" and "touchmove.custom."
    *   If the event specified does not have a namespace, all callbacks will be
    *   unbound regardless of their namespace.
    *
@@ -583,8 +620,8 @@ App.Events = {
   unlisten: function(obj, eventName) {
     // Allow specifying multiple space-separated event names.
     var events = eventName.split(' ');
-    if (events.length &gt; 1) {
-      for (var j = 0, l = events.length; j &lt; l; j++) {
+    if (events.length > 1) {
+      for (var j = 0, l = events.length; j < l; j++) {
         App.Events.unlisten(obj, events[j]);
       }
       return;
@@ -596,19 +633,19 @@ App.Events = {
       eventName = eventName.substring(0, i);
     }
     // Remove all relevant listeners.
-    if (eventName &amp;&amp; App.Events._listeners[eventName]) {
-      for (e = App.Events._listeners[eventName], i = e.length-1; i &gt;= 0; i--) {
-        if (e[i].object == obj &amp;&amp; (!namespace || e[i].namespace == namespace)) {
-          App.Events._listeners[eventName].splice(i, 1);
+    if (eventName && _listeners[eventName]) {
+      for (e = _listeners[eventName], i = e.length-1; i >= 0; i--) {
+        if (e[i].object == obj && (!namespace || e[i].namespace == namespace)) {
+          _listeners[eventName].splice(i, 1);
         }
       }
     }
-    else if (!eventName &amp;&amp; namespace) {
-      for (eventName in App.Events._listeners) {
-        if (App.Events._listeners.hasOwnProperty(eventName)) {
-          for (e = App.Events._listeners[eventName], i = e.length-1; i &gt;= 0; i--) {
-            if (e[i].object == obj &amp;&amp; e[i].namespace == namespace) {
-              App.Events._listeners[eventName].splice(i, 1);
+    else if (!eventName && namespace) {
+      for (eventName in _listeners) {
+        if (_listeners.hasOwnProperty(eventName)) {
+          for (e = _listeners[eventName], i = e.length-1; i >= 0; i--) {
+            if (e[i].object == obj && e[i].namespace == namespace) {
+              _listeners[eventName].splice(i, 1);
             }
           }
         }
@@ -617,13 +654,13 @@ App.Events = {
     // Return the listening object so that this function is chainable.
     return obj;
   },
-<span id='App-Events-static-method-trigger'>  /**
-</span>   * Trigger an event.
+  /**
+   * Trigger an event.
    *
    * {@link Box} objects have a corresponding Box#trigger() method.
    *
    * @param {String} eventName
-   *   The name of the event to trigger, e.g. &quot;click.&quot;
+   *   The name of the event to trigger, e.g. "click."
    * @param {Arguments} ...
    *   Additional arguments to pass to the relevant callbacks.
    *
@@ -631,14 +668,14 @@ App.Events = {
    */
   trigger: function(eventName) {
     eventName = Array.prototype.shift.call(arguments);
-    var e = App.Events._listeners[eventName]; // All listeners for this event
+    var e = _listeners[eventName]; // All listeners for this event
     if (e) {
       // Sort listeners by weight (lowest last, then we'll iterate in reverse).
       e.sort(function(a, b) {
         return b.weight - a.weight;
       });
       // Execute the callback for each listener for the relevant event.
-      for (var i = e.length-1; i &gt;= 0; i--) {
+      for (var i = e.length-1; i >= 0; i--) {
         if (!App.Events.Behaviors[eventName] ||
             App.Events.Behaviors[eventName].apply(e[i].object, arguments)) {
           e[i].callback.apply(e[i].object, arguments);
@@ -648,15 +685,15 @@ App.Events = {
           }
           // Stop processing overlapping objects if propagation is stopped.
           var event = Array.prototype.shift.call(arguments);
-          if (event &amp;&amp; event.isPropagationStopped &amp;&amp; event.isPropagationStopped()) {
+          if (event && event.isPropagationStopped && event.isPropagationStopped()) {
             break;
           }
         }
       }
     }
   },
-<span id='App-Events-static-property-Behaviors'>  /**
-</span>   * Determine whether an object should be triggered for a specific event.
+  /**
+   * Determine whether an object should be triggered for a specific event.
    *
    * The Behaviors object has event names as keys and functions as values. The
    * functions evaluate whether the relevant event has been triggered on a
@@ -669,47 +706,47 @@ App.Events = {
    * @static
    */
   Behaviors: {
-<span id='Box-event-mousedown'>    /**
-</span>     * @event mousedown
+    /**
+     * @event mousedown
      *   The mousedown event is sent to an object when the mouse pointer is
      *   over the object and the mouse button is pressed.
      * @param {Event} e The event object.
      * @member Box
      */
-    mousedown: App._handlePointerBehavior,
-<span id='Box-event-mouseup'>    /**
-</span>     * @event mouseup
+    mousedown: _handlePointerBehavior,
+    /**
+     * @event mouseup
      *   The mouseup event is sent to an object when the mouse pointer is over
      *   the object and the mouse button is released.
      * @param {Event} e The event object.
      * @member Box
      */
-    mouseup: App._handlePointerBehavior,
-<span id='Box-event-click'>    /**
-</span>     * @event click
+    mouseup: _handlePointerBehavior,
+    /**
+     * @event click
      *   The mouseup event is sent to an object when the mouse pointer is over
      *   the object and the mouse button is pressed and released.
      * @param {Event} e The event object.
      * @member Box
      */
-    click: App._handlePointerBehavior,
-<span id='Box-event-touchstart'>    /**
-</span>     * @event touchstart
+    click: _handlePointerBehavior,
+    /**
+     * @event touchstart
      *   The touchstart event is sent to an object when the object is touched.
      * @param {Event} e The event object.
      * @member Box
      */
-    touchstart: App._handlePointerBehavior,
-<span id='Box-event-touchend'>    /**
-</span>     * @event touchend
+    touchstart: _handlePointerBehavior,
+    /**
+     * @event touchend
      *   The touchend event is sent to an object when a touch is released over
      *   the object.
      * @param {Event} e The event object.
      * @member Box
      */
-    touchend: App._handlePointerBehavior,
-<span id='Actor-event-canvasdragstop'>    /**
-</span>     * @event canvasdragstop
+    touchend: _handlePointerBehavior,
+    /**
+     * @event canvasdragstop
      *   The canvasdragstop event is sent to an object when a click or touch
      *   event ends and that object is being dragged. This should be used
      *   instead of binding to mouseup and touchend because dragged Actors
@@ -723,8 +760,8 @@ App.Events = {
     canvasdragstop: function() {
       return !!this.isBeingDragged;
     },
-<span id='Box-event-canvasdrop'>    /**
-</span>     * @event canvasdrop
+    /**
+     * @event canvasdrop
      *   The canvasdrop event is sent to a drop target object when a draggable
      *   {@link Actor} is dropped onto it.
      * @param {Event} e The event object.
@@ -736,6 +773,8 @@ App.Events = {
     },
   },
 };
+
+})();
 
 // ANIMATION ------------------------------------------------------------------
 
@@ -751,35 +790,44 @@ window.requestAnimFrame = (function() {
     };
 })();
 
-<span id='global-method-startAnimating'>/**
-</span> * Start animating the canvas.
+(function() {
+  // Indicates whether the canvas is animating or focused.
+  var _animate = false, _blurred = false;
+
+/**
+ * Start animating the canvas.
  * 
- * See also {@link global#method-stopAnimating stopAnimating()}.
+ * See also {@link global#method-stopAnimating stopAnimating()} and
+ * {@link global#method-isAnimating isAnimating()}.
  *
  * @member global
  */
-function startAnimating() {
-  if (!App._animate) {
-    App._animate = true;
-<span id='global-event-startAnimating'>    /**
-</span>     * @event startAnimating
+window.startAnimating = function() {
+  if (!_animate) {
+    _animate = true;
+    /**
+     * @event startAnimating
      *   Fires on the document when the animation loop is about to begin.
      * @member global
      */
     jQuery(document).trigger('startAnimating');
-    App.animate();
+    animate();
   }
-}
+};
 
-<span id='global-method-stopAnimating'>/**
-</span> * Stop animating the canvas.
+/**
+ * Stop animating the canvas.
  * 
- * See also {@link global#method-startAnimating startAnimating()}.
+ * See also {@link global#method-startAnimating startAnimating()} and
+ * {@link global#method-isAnimating isAnimating()}.
  *
  * @member global
  */
-function stopAnimating() {
-  App._animate = false;
+window.stopAnimating = function() {
+  if (!_animate) {
+    return;
+  }
+  _animate = false;
   // Although stopAnimating() can be called asynchronously from the game loop,
   // this is effectively the same as stopping the timer immediately after the
   // last call to App.timer.getDelta() (i.e. when the last frame was rendered)
@@ -787,8 +835,8 @@ function stopAnimating() {
   // started again the timer doesn't start until the first frame is requested
   // so the delta is still correct.
   App.timer.stop();
-<span id='global-event-stopAnimating'>  /**
-</span>   * @event stopAnimating
+  /**
+   * @event stopAnimating
    *   Fires on the document when the animation loop is ending.
    * @member global
    */
@@ -797,7 +845,7 @@ function stopAnimating() {
   // Output performance statistics.
   // This can be slightly inaccurate because this function can be called in the
   // middle of updating a frame, rather than after the last frame is drawn.
-  if (App.debugMode &amp;&amp; console &amp;&amp; console.log) {
+  if (App.debugMode && console && console.log) {
     var elapsed = App.physicsTimeElapsed, frames = App.timer.frames, d = App.Debug;
     var sum = d.updateTimeElapsed + d.clearTimeElapsed + d.drawTimeElapsed;
     console.log({
@@ -819,17 +867,29 @@ function stopAnimating() {
       fps: frames / elapsed,
     });
   }
-}
+};
 
-<span id='App-method-animate'>/**
-</span> * Animates the canvas. This is intended for private use and should not be
+/**
+ * Determine whether the canvas is currently animating.
+ * 
+ * See also {@link global#method-startAnimating startAnimating()} and
+ * {@link global#method-stopAnimating stopAnimating()}.
+ *
+ * @member global
+ */
+window.isAnimating = function() {
+  return _animate;
+};
+
+/**
+ * Animate the canvas. This is intended for private use and should not be
  * called directly. Instead see {@link #startAnimating} and
  * {@link #stopAnimating}.
  *
  * @member App
  * @ignore
  */
-App.animate = function() {
+function animate() {
   // Record the amount of time since the last tick. Used to smooth animation.
   // This is the only place that App.timer.getDelta() should ever be called
   // because getDelta() returns the time since the last time it was called so
@@ -841,9 +901,9 @@ App.animate = function() {
     App.timer.start();
   }
   // Cap the delta in order to avoid the spiral of death.
-  if (App.MIN_FPS &amp;&amp; frameDelta &gt; 1 / App.MIN_FPS) {
-<span id='global-event-low_fps'>    /**
-</span>     * @event low_fps
+  if (App.MIN_FPS && frameDelta > 1 / App.MIN_FPS) {
+    /**
+     * @event low_fps
      *   Fires on the document when the frame rate drops below App.MIN_FPS.
      *
      * @param {Number} fps The frame-per-second rate.
@@ -862,11 +922,11 @@ App.animate = function() {
 
   // update
   Mouse.Scroll._update();
-  while (frameDelta &gt; 0) {
+  while (frameDelta > 0 && !App.isGameOver) {
     // Break the physics updates down into discrete chunks of no more than
     // 1 / App.MAX_FPS in order to keep them as small as possible for accuracy.
-<span id='App-static-property-physicsDelta'>    /**
-</span>     * @property physicsDelta
+    /**
+     * @property physicsDelta
      *   The amount of simulated time in seconds since the last physics update.
      *
      * Use this to smooth animation.
@@ -901,13 +961,13 @@ App.animate = function() {
   }
 
   // request new frame
-  if (App._animate) {
-    window.requestAnimFrame(App.animate);
+  if (_animate) {
+    window.requestAnimFrame(animate);
   }
-};
+}
 
-<span id='global-property-'>/**
-</span> * Stops animating when the window (tab) goes out of focus.
+/**
+ * Stops animating when the window (tab) goes out of focus.
  *
  * This stops running the CPU when we don't need it, but it can cause
  * unexpected behavior if you expect something to be running in the background
@@ -917,20 +977,22 @@ App.animate = function() {
  * @ignore
  */
 jQuery(window).on('focus.animFocus', function() {
-  if (App._blurred) {
-    App._blurred = false;
+  if (_blurred) {
+    _blurred = false;
     startAnimating();
   }
 });
 jQuery(window).on('blur.animFocus', function() {
   stopAnimating();
-  App._blurred = true;
+  _blurred = true;
 });
+
+})();
 
 // RENDERING ------------------------------------------------------------------
 
-<span id='CanvasRenderingContext2D'>/**
-</span> * @class CanvasRenderingContext2D
+/**
+ * @class CanvasRenderingContext2D
  *   The native JavaScript canvas graphics context class.
  *
  * This class has been extended with custom methods (and one overridden
@@ -940,8 +1002,8 @@ jQuery(window).on('blur.animFocus', function() {
  * {@link global#context context} global variable.
  */
 
-<span id='CanvasRenderingContext2D-method-clear'>/**
-</span> * Clear the canvas.
+/**
+ * Clear the canvas.
  *
  * If the rendering context is the {@link global#context global context} for
  * the main canvas or if it belongs to a {@link Layer}, the visible area of the
@@ -979,8 +1041,8 @@ CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
 
 // Store the original drawImage function so we can actually use it.
 CanvasRenderingContext2D.prototype.__drawImage = CanvasRenderingContext2D.prototype.drawImage;
-<span id='CanvasRenderingContext2D-method-drawImage'>/**
-</span> * Draws an image onto the canvas.
+/**
+ * Draw an image onto the canvas.
  *
  * This method is better than the original `drawImage()` for several reasons:
  *
@@ -989,7 +1051,7 @@ CanvasRenderingContext2D.prototype.__drawImage = CanvasRenderingContext2D.protot
  *   be drawn immediately later.
  * - It can draw {@link Sprite}, {@link SpriteMap}, and {@link Layer} objects
  *   as well as the usual images, videos, and canvases. (Note that when Layers
- *   are drawn using this method, their &quot;relative&quot; property IS taken into
+ *   are drawn using this method, their "relative" property IS taken into
  *   account.)
  * - It allows drawing an image by passing in the file path instead of an
  *   Image object.
@@ -1040,7 +1102,7 @@ CanvasRenderingContext2D.prototype.__drawImage = CanvasRenderingContext2D.protot
  * Sprite or SpriteMap. The W3C provides a helpful image to understand these
  * parameters:
  *
- * &lt;img src=&quot;http://www.w3.org/TR/2dcontext/images/drawImage.png&quot; alt=&quot;drawImage&quot; /&gt;
+ * <img src="http://www.w3.org/TR/2dcontext/images/drawImage.png" alt="drawImage" />
  *
  * See also {@link CanvasRenderingContext2D#drawPattern}() and
  * Caches.preloadImages().
@@ -1080,18 +1142,18 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   // Keep the stupid order of parameters specified by the W3C.
   // It doesn't matter that we're not providing the correct default values;
   // those will be implemented by the original __drawImage() later.
-  if (typeof x != 'number' &amp;&amp; typeof y === 'undefined' &amp;&amp;
-      typeof w != 'number' &amp;&amp; typeof h === 'undefined') {
+  if (typeof x != 'number' && typeof y === 'undefined' &&
+      typeof w != 'number' && typeof h === 'undefined') {
     x = sx, y = sy;
-    if (typeof sw == 'number' &amp;&amp; typeof sh !== 'undefined') {
+    if (typeof sw == 'number' && typeof sh !== 'undefined') {
       w = sw, h = sh;
     }
     sx = undefined, sy = undefined, sw = undefined, sh = undefined;
   }
   // Wrapper function for doing the actual drawing
   var _drawImage = function(image, x, y, w, h, sx, sy, sw, sh) {
-    if (w &amp;&amp; h) {
-      if (sw &amp;&amp; sh) {
+    if (w && h) {
+      if (sw && sh) {
         t.__drawImage(image, sx, sy, sw, sh, x, y, w, h);
       }
       else {
@@ -1105,7 +1167,8 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       finished.call(t, a, true);
     }
   };
-  if (src instanceof Sprite || src instanceof SpriteMap) { // draw a sprite
+  if ((typeof Sprite !== 'undefined' && src instanceof Sprite) ||
+      (typeof SpriteMap !== 'undefined' && src instanceof SpriteMap)) { // draw a sprite
     src.draw(this, x, y, w, h);
     if (finished instanceof Function) {
       finished.call(t, a, true); // Sprite images are loaded on instantiation
@@ -1143,7 +1206,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     if (!Caches.images[src]) { // cache the image by source
       Caches.images[src] = image;
     }
-    if (image.complete || (image.width &amp;&amp; image.height)) { // draw loaded images
+    if (image.complete || (image.width && image.height)) { // draw loaded images
       _drawImage(image, x, y, w, h, sx, sy, sw, sh);
     }
     else { // if the image is not loaded, don't draw it
@@ -1162,9 +1225,9 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       };
     }
   }
-  else if (typeof src == 'string' &amp;&amp; Caches.images[src]) { // cached image path
+  else if (typeof src == 'string' && Caches.images[src]) { // cached image path
     var image = Caches.images[src];
-    if (image.complete || (image.width &amp;&amp; image.height)) { // Cached image is loaded
+    if (image.complete || (image.width && image.height)) { // Cached image is loaded
       _drawImage(image, x, y, w, h, sx, sy, sw, sh);
     }
     // If cached image is not loaded, bail; the finished callback will run
@@ -1186,8 +1249,8 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   }
 };
 
-<span id='CanvasRenderingContext2D-method-drawPattern'>/**
-</span> * Draws a pattern onto the canvas.
+/**
+ * Draw a pattern onto the canvas.
  *
  * This function is preferred over createPattern() with fillRect() for drawing
  * patterns for several reasons:
@@ -1197,7 +1260,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
  *   be drawn immediately later.
  * - It can draw {@link Layer} objects as well as the usual images, videos, and
  *   canvases. (Note that when Layers are drawn using this method, their
- *   &quot;relative&quot; property IS taken into account.)
+ *   "relative" property IS taken into account.)
  * - It allows drawing an image by passing in the file path instead of an
  *   Image object.
  *
@@ -1226,12 +1289,12 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
  *   The width of the pattern. Defaults to the canvas width.
  * @param {Number} [h]
  *   The height of the pattern. Defaults to the canvas height.
- * @param {&quot;repeat&quot;/&quot;repeat-x&quot;/&quot;repeat-y&quot;/&quot;no-repeat&quot;} [rpt=&quot;repeat&quot;]
+ * @param {"repeat"/"repeat-x"/"repeat-y"/"no-repeat"} [rpt="repeat"]
  *   The repeat pattern type. This parameter can be omitted even if a finished
  *   callback is passed, so the call `drawPattern(src, x, y, w, h, finished)`
  *   is legal.
  * @param {Function} [finished]
- *   A callback that runs when the image passed in the &quot;src&quot; parameter is
+ *   A callback that runs when the image passed in the "src" parameter is
  *   finished loading (or immediately if the image is already loaded or is a
  *   video). The callback's context (its `this` object) is the canvas graphics
  *   object. Having this callback is useful because if you do not pre-load
@@ -1320,7 +1383,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
     if (!Caches.images[src]) { // cache the image by source
       Caches.images[src] = image;
     }
-    if (image.complete || (image.width &amp;&amp; image.height)) { // draw loaded images
+    if (image.complete || (image.width && image.height)) { // draw loaded images
       this.fillStyle = this.createPattern(image, rpt);
       this.fillRect(x, y, w, h);
       Caches.imagePatterns[src] = this.fillStyle;
@@ -1355,7 +1418,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
     }
     else if (Caches.images[src]) { // Image is cached, but no pattern
       var image = Caches.images[src];
-      if (image.complete || (image.width &amp;&amp; image.height)) { // Cached image is loaded
+      if (image.complete || (image.width && image.height)) { // Cached image is loaded
         this.fillStyle = this.createPattern(image, rpt);
         this.fillRect(x, y, w, h);
         Caches.imagePatterns[src] = this.fillStyle;
@@ -1384,8 +1447,8 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   }
 };
 
-<span id='CanvasRenderingContext2D-method-drawCheckered'>/**
-</span> * Draw a checkerboard pattern.
+/**
+ * Draw a checkerboard pattern.
  *
  * This method can be invoked in two ways:
  *
@@ -1407,9 +1470,9 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
  *   The width of the pattern to draw onto the canvas.
  * @param {Number} [h=squareSize*2]
  *   The height of the pattern to draw onto the canvas.
- * @param {String} [color1=&quot;silver&quot;]
+ * @param {String} [color1="silver"]
  *   The color of one set of squares in the checkerboard.
- * @param {String} [color2=&quot;lightGray&quot;]
+ * @param {String} [color2="lightGray"]
  *   The color of the other set of squares in the checkerboard.
  *
  * @return {CanvasPattern}
@@ -1423,7 +1486,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
  */
 CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w, h, color1, color2) {
   if (typeof squareSize === 'undefined') squareSize = 80;
-  if (typeof squareSize == 'string' &amp;&amp; typeof x == 'string') {
+  if (typeof squareSize == 'string' && typeof x == 'string') {
     var c1 = squareSize, c2 = x;
     squareSize = y, x = w, y = h, w = color1, h = color2;
     color1 = c1, color2 = c2;
@@ -1442,8 +1505,8 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
 
 // DRAW SHAPES ----------------------------------------------------------------
 
-<span id='CanvasRenderingContext2D-method-circle'>/**
-</span> * Draw a circle.
+/**
+ * Draw a circle.
  *
  * @param {Number} x
  *   The x-coordinate of the center of the circle.
@@ -1480,8 +1543,8 @@ CanvasRenderingContext2D.prototype.circle = function(x, y, r, fillStyle, strokeS
   }
 };
 
-<span id='CanvasRenderingContext2D-method-drawSmiley'>/**
-</span> * Draw a smiley face.
+/**
+ * Draw a smiley face.
  *
  * The {@link Actor} class uses this as a placeholder image.
  *
@@ -1519,8 +1582,8 @@ CanvasRenderingContext2D.prototype.drawSmiley = function(x, y, r, fillStyle) {
   this.fill();
 };
 
-<span id='CanvasRenderingContext2D-method-drawBkgdRadialGradient'>/**
-</span> * Draws a blue-and-yellow radial gradient across the entire background of the
+/**
+ * Draw a blue-and-yellow radial gradient across the entire background of the
  * world. This is mainly useful to demonstrate that scrolling works if the
  * world is bigger than the canvas.
  *
@@ -1540,8 +1603,8 @@ CanvasRenderingContext2D.prototype.drawBkgdRadialGradient = function() {
 
 // INPUT ----------------------------------------------------------------------
 
-<span id='App-static-method-preventDefaultKeyEvents'>/**
-</span> * Prevent the default behavior from occurring when hitting keys.
+/**
+ * Prevent the default behavior from occurring when hitting keys.
  *
  * This won't prevent everything -- for example it won't prevent combinations
  * of multiple non-control-character keys -- and if you want to do something
@@ -1563,8 +1626,8 @@ App.preventDefaultKeyEvents = function(combinations) {
   jQuery(document).keydown(combinations, function() { return false; });
 };
 
-<span id='App-static-method-isHovered'>/**
-</span> * Determines whether the mouse is hovering over an object.
+/**
+ * Determine whether the mouse is hovering over an object.
  *
  * The object in question must have these properties: `x`, `y`, `width`,
  * `height`. (All {@link Box}es have these properties.)
@@ -1582,12 +1645,12 @@ App.isHovered = function(obj) {
   var offsets = world.getOffsets(),
       xPos = obj.x - offsets.x,
       yPos = obj.y - offsets.y;
-  return Mouse.coords.x &gt; xPos &amp;&amp; Mouse.coords.x &lt; xPos + obj.width &amp;&amp;
-      Mouse.coords.y &gt; yPos &amp;&amp; Mouse.coords.y &lt; yPos + obj.height;
+  return Mouse.coords.x > xPos && Mouse.coords.x < xPos + obj.width &&
+      Mouse.coords.y > yPos && Mouse.coords.y < yPos + obj.height;
 };
 
-<span id='Mouse-Scroll'>/**
-</span> * @class Mouse.Scroll
+/**
+ * @class Mouse.Scroll
  *   Encapsulates mouse position scrolling.
  *
  * @static
@@ -1600,7 +1663,7 @@ Mouse.Scroll = (function() {
     if (doOffset === undefined) doOffset = true;
 
     // Left
-    if (Mouse.coords.x &lt; canvas.width * THRESHOLD) {
+    if (Mouse.coords.x < canvas.width * THRESHOLD) {
       if (doOffset) {
         ma = Math.round(Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
         world.xOffset -= ma;
@@ -1610,7 +1673,7 @@ Mouse.Scroll = (function() {
       t = true;
     }
     // Right
-    else if (Mouse.coords.x &gt; canvas.width * (1-THRESHOLD)) {
+    else if (Mouse.coords.x > canvas.width * (1-THRESHOLD)) {
       if (doOffset) {
         ma = Math.round(Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
         world.xOffset += ma;
@@ -1621,7 +1684,7 @@ Mouse.Scroll = (function() {
     }
 
     // Up
-    if (Mouse.coords.y &lt; canvas.height * THRESHOLD) {
+    if (Mouse.coords.y < canvas.height * THRESHOLD) {
       if (doOffset) {
         ma = Math.round(Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
         world.yOffset -= ma;
@@ -1631,7 +1694,7 @@ Mouse.Scroll = (function() {
       t = true;
     }
     // Down
-    else if (Mouse.coords.y &gt; canvas.height * (1-THRESHOLD)) {
+    else if (Mouse.coords.y > canvas.height * (1-THRESHOLD)) {
       if (doOffset) {
         ma = Math.round(Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
         world.yOffset += ma;
@@ -1642,14 +1705,14 @@ Mouse.Scroll = (function() {
     }
 
     // We're not translating if we're not moving.
-    if (doOffset &amp;&amp; scrolled.x === 0 &amp;&amp; scrolled.y === 0) {
+    if (doOffset && scrolled.x === 0 && scrolled.y === 0) {
       t = false;
     }
 
-    if (doOffset &amp;&amp; translating != t) {
+    if (doOffset && translating != t) {
       if (translating) { // We were scrolling. Now we're not.
-<span id='Mouse-Scroll-event-mousescrollon'>        /**
-</span>         * @event mousescrollon
+        /**
+         * @event mousescrollon
          *   Fires on the document when the viewport starts scrolling. Binding
          *   to this event may be useful if you want to pause animation or
          *   display something while the viewport is moving.
@@ -1657,8 +1720,8 @@ Mouse.Scroll = (function() {
         jQuery(document).trigger('mousescrollon');
       }
       else { // We weren't scrolling. Now we are.
-<span id='Mouse-Scroll-event-mousescrolloff'>        /**
-</span>         * @event mousescrolloff
+        /**
+         * @event mousescrolloff
          *   Fires on the document when the viewport stops scrolling. Binding
          *   to this event may be useful if you want to pause animation or
          *   display something while the viewport is moving.
@@ -1670,8 +1733,8 @@ Mouse.Scroll = (function() {
     return scrolled;
   }
   return {
-<span id='Mouse-Scroll-static-method-enable'>    /**
-</span>     * Enable mouse position scrolling.
+    /**
+     * Enable mouse position scrolling.
      * @static
      */
     enable: function() {
@@ -1689,8 +1752,8 @@ Mouse.Scroll = (function() {
         jQuery(this).off('.translate');
       });
     },
-<span id='Mouse-Scroll-static-method-disable'>    /**
-</span>     * Disable mouse position scrolling.
+    /**
+     * Disable mouse position scrolling.
      * @static
      */
     disable: function() {
@@ -1698,15 +1761,15 @@ Mouse.Scroll = (function() {
       translating = false;
       enabled = false;
     },
-<span id='Mouse-Scroll-static-method-isEnabled'>    /**
-</span>     * Test whether mouse position scrolling is enabled.
+    /**
+     * Test whether mouse position scrolling is enabled.
      * @static
      */
     isEnabled: function() {
       return enabled;
     },
-<span id='Mouse-Scroll-static-method-isScrolling'>    /**
-</span>     * Test whether the viewport is currently mouse-scrolling.
+    /**
+     * Test whether the viewport is currently mouse-scrolling.
      * @static
      */
     isScrolling: function() {
@@ -1717,8 +1780,8 @@ Mouse.Scroll = (function() {
         return translate();
       }
     },
-<span id='Mouse-Scroll-static-method-setThreshold'>    /**
-</span>     * Sets how close to the edge of the canvas the mouse triggers scrolling.
+    /**
+     * Set how close to the edge of the canvas the mouse triggers scrolling.
      *
      * The threshold is a fractional percentage [0.0-0.5) of the width of the
      * canvas. If the mouse is within this percent of the edge of the canvas,
@@ -1731,8 +1794,8 @@ Mouse.Scroll = (function() {
     setThreshold: function(t) {
       THRESHOLD = t;
     },
-<span id='Mouse-Scroll-static-method-getThreshold'>    /**
-</span>     * Gets how close to the edge of the canvas the mouse triggers scrolling.
+    /**
+     * Get how close to the edge of the canvas the mouse triggers scrolling.
      *
      * See also Mouse.Scroll.getThreshold().
      *
@@ -1747,8 +1810,8 @@ Mouse.Scroll = (function() {
     getThreshold: function() {
       return THRESHOLD;
     },
-<span id='Mouse-Scroll-static-method-setScrollDistance'>    /**
-</span>     * Sets how fast the mouse will cause the viewport to scroll.
+    /**
+     * Set how fast the mouse will cause the viewport to scroll.
      *
      * @param {Number} a
      *   The maximum distance in pixels that the viewport will move each second
@@ -1760,8 +1823,8 @@ Mouse.Scroll = (function() {
     setScrollDistance: function(a) {
       MOVEAMOUNT = a;
     },
-<span id='Mouse-Scroll-static-method-getScrollDistance'>    /**
-</span>     * Gets how fast the mouse will cause the viewport to scroll.
+    /**
+     * Get how fast the mouse will cause the viewport to scroll.
      *
      * @return {Number}
      *   The maximum distance in pixels that the viewport will move each second
@@ -1789,8 +1852,8 @@ performance.now = (function() {
          function() { return Date.now(); };
 })();
 
-<span id='Timer'>/**
-</span> * A timer.
+/**
+ * A timer.
  *
  * Adapted from the [three.js clock](https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js).
  *
@@ -1813,8 +1876,8 @@ function Timer(autoStart, whileAnimating) {
   this.lastDeltaTime = 0;
   this.elapsedTime = 0;
   this.running = false;
-<span id='Timer-method-getDelta'>  /**
-</span>   * Get the time elapsed in seconds since the last time a delta was measured.
+  /**
+   * Get the time elapsed in seconds since the last time a delta was measured.
    *
    * Deltas are taken when the timer starts or stops or elapsed time is
    * measured.
@@ -1832,8 +1895,8 @@ function Timer(autoStart, whileAnimating) {
     }
     return diff;
   };
-<span id='Timer-method-start'>  /**
-</span>   * Start the timer.
+  /**
+   * Start the timer.
    */
   this.start = function() {
     if (this.running) {
@@ -1844,15 +1907,15 @@ function Timer(autoStart, whileAnimating) {
       : performance.now();
     this.running = true;
   };
-<span id='Timer-method-stop'>  /**
-</span>   * Stop the timer.
+  /**
+   * Stop the timer.
    */
   this.stop = function () {
     this.elapsedTime += this.getDelta();
     this.running = false;
   };
-<span id='Timer-method-getElapsedTime'>  /**
-</span>   * Get the amount of time the timer has been running, in seconds.
+  /**
+   * Get the amount of time the timer has been running, in seconds.
    */
   this.getElapsedTime = function() {
     this.getDelta();
@@ -1865,8 +1928,8 @@ function Timer(autoStart, whileAnimating) {
 
 (function() {
   var events = {}, noID = 0;
-<span id='Timer-static-method-event'>  /**
-</span>   * Registers the time at which an event occurred.
+  /**
+   * Register the time at which an event occurred.
    *
    * If you only care about how long something takes (e.g. when testing
    * performance) and you don't need to stop the timer, Timer#event() and
@@ -1894,8 +1957,8 @@ function Timer(autoStart, whileAnimating) {
       events[id] = result;
     }
   };
-<span id='Timer-static-method-getTimeSince'>  /**
-</span>   * Returns the time since an event occurred.
+  /**
+   * Return the time since an event occurred.
    *
    * If you only care about how long something takes (e.g. when testing
    * performance) and you don't need to stop the timer, Timer#event() and
@@ -1915,16 +1978,16 @@ function Timer(autoStart, whileAnimating) {
 
 // UTILITIES ------------------------------------------------------------------
 
-<span id='App-Utils'>/**
-</span> * @class App.Utils
+/**
+ * @class App.Utils
  *   A miscellaneous collection of utilities.
  * @alternateClassName Utils
  * @static
  */
 App.Utils = {};
 
-<span id='App-Utils-static-method-percentToPixels'>/**
-</span> * Convert a percent to the corresponding pixel position in the world.
+/**
+ * Convert a percent to the corresponding pixel position in the world.
  *
  * This is useful for specifying the size of objects relative to the size of
  * the canvas or world.
@@ -1953,8 +2016,8 @@ App.Utils.percentToPixels = function(percent, relativeToCanvas) {
   };
 };
 
-<span id='App-Utils-static-method-getRandBetween'>/**
-</span> * Get a random number between two numbers.
+/**
+ * Get a random number between two numbers.
  *
  * @param {Number} lo The first number.
  * @param {Number} hi The second number.
@@ -1962,7 +2025,7 @@ App.Utils.percentToPixels = function(percent, relativeToCanvas) {
  * @static
  */
 App.Utils.getRandBetween = function(lo, hi) {
-  if (lo &gt; hi) {
+  if (lo > hi) {
     var t = lo;
     lo = hi;
     hi = t;
@@ -1970,8 +2033,8 @@ App.Utils.getRandBetween = function(lo, hi) {
   return Math.random() * (hi - lo) + lo;
 };
 
-<span id='App-Utils-static-method-getRandIntBetween'>/**
-</span> * Get a random integer between two numbers, inclusive.
+/**
+ * Get a random integer between two numbers, inclusive.
  *
  * This function makes no assumptions; despite the parameters being called lo
  * and hi, either one can be higher, and either or both can be integers or
@@ -1985,7 +2048,7 @@ App.Utils.getRandBetween = function(lo, hi) {
  * @static
  */
 App.Utils.getRandIntBetween = function(lo, hi) {
-  if (lo &gt; hi) {
+  if (lo > hi) {
     var t = lo;
     lo = hi;
     hi = t;
@@ -1995,8 +2058,8 @@ App.Utils.getRandIntBetween = function(lo, hi) {
   return Math.floor(Math.random()*(hi-lo+1)+lo);
 };
 
-<span id='App-Utils-static-method-anyIn'>/**
-</span> * Check if any of the elements in an Array are found in another Array.
+/**
+ * Check if any of the elements in an Array are found in another Array.
  *
  * @param {Array} search
  *   An Array of elements to search for in the target.
@@ -2009,7 +2072,7 @@ App.Utils.getRandIntBetween = function(lo, hi) {
  * @static
  */
 App.Utils.anyIn = function(search, target) {
-  for (var i = 0, l = search.length; i &lt; l; i++) {
+  for (var i = 0, l = search.length; i < l; i++) {
     if (target.indexOf(search[i]) != -1) {
       return true;
     }
@@ -2017,8 +2080,8 @@ App.Utils.anyIn = function(search, target) {
   return false;
 };
 
-<span id='App-Utils-static-method-almostEqual'>/**
-</span> * Determine whether a is within e of b, inclusive.
+/**
+ * Determine whether a is within e of b, inclusive.
  *
  * @param {Number} a
  * @param {Number} b
@@ -2026,12 +2089,12 @@ App.Utils.anyIn = function(search, target) {
  * @static
  */
 App.Utils.almostEqual = function(a, b, e) {
-  // Another (slower) way to express this is Math.abs(a - b) &lt; e
-  return a &gt;= b - e &amp;&amp; a &lt;= b + e;
+  // Another (slower) way to express this is Math.abs(a - b) < e
+  return a >= b - e && a <= b + e;
 };
 
-<span id='App-Utils-static-method-randomString'>/**
-</span> * Generate a random URL-safe string of arbitrary length.
+/**
+ * Generate a random URL-safe string of arbitrary length.
  *
  * Useful for generating unique IDs.
  *
@@ -2047,14 +2110,14 @@ App.Utils.randomString = function(n) {
   var c = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_',
       s = '';
   n = n || 32;
-  for (var i = 0; i &lt; n; i++) {
+  for (var i = 0; i < n; i++) {
     s += c.charAt(Math.floor(Math.random() * c.length));
   }
   return s;
 };
 
-<span id='App-Utils-static-method-positionOverCanvas'>/**
-</span> * Position a DOM element at a specific location over the canvas.
+/**
+ * Position a DOM element at a specific location over the canvas.
  *
  * Useful for placing forms, text, menus, and other UI elements that are more
  * easily handled in HTML.
@@ -2086,8 +2149,8 @@ App.Utils.positionOverCanvas = function(elem, x, y) {
   });
 };
 
-<span id='App-static-method-gameOver'>/**
-</span> * Ends the game, displays &quot;GAME OVER,&quot; and allows clicking to restart.
+/**
+ * End the game, display "GAME OVER," and allow clicking to restart.
  *
  * To disable clicking to restart, run `$canvas.off('.gameover');`
  *
@@ -2095,6 +2158,10 @@ App.Utils.positionOverCanvas = function(elem, x, y) {
  * @static
  */
 App.gameOver = function() {
+  if (App.isGameOver) {
+    return;
+  }
+  App.isGameOver = true;
   stopAnimating();
   player.destroy();
   // This runs during update() before the final draw(), so we have to delay it.
@@ -2110,26 +2177,22 @@ App.gameOver = function() {
     context.lineWidth = 5;
     var x = Math.round(world.xOffset+canvas.width/2);
     var y = Math.round(world.yOffset+canvas.height/2);
-    context.strokeText(&quot;GAME OVER&quot;, x, y);
-    context.fillText(&quot;GAME OVER&quot;, x, y);
+    context.strokeText("GAME OVER", x, y);
+    context.fillText("GAME OVER", x, y);
     context.restore();
   }, 100);
   $canvas.css('cursor', 'pointer');
   $canvas.one('click.gameover', function(e) {
     e.preventDefault();
     $canvas.css('cursor', 'auto');
-    var start = setup(true);
-    if (start !== false) {
-      startAnimating();
-    }
-    jQuery(document).trigger('start');
+    App.reset();
   });
 };
 
-<span id='Array'>/** @class Array The built-in JavaScript Array class. */
-</span>
-<span id='Array-method-remove'>/**
-</span> * Remove an item from an array by value.
+/** @class Array The built-in JavaScript Array class. */
+
+/**
+ * Remove an item from an array by value.
  *
  * @param {Mixed} item
  *   The item to remove from the array, if it exists.
@@ -2141,16 +2204,16 @@ App.gameOver = function() {
  */
 Array.prototype.remove = function(item) {
   var i = this.indexOf(item);
-  if (i === undefined || i &lt; 0) {
+  if (i === undefined || i < 0) {
     return undefined;
   }
   return this.splice(i, 1);
 };
 
-<span id='Number'>/** @class Number The built-in JavaScript Number class. */
-</span>
-<span id='Number-method-round'>/**
-</span> * Round a number to a specified precision.
+/** @class Number The built-in JavaScript Number class. */
+
+/**
+ * Round a number to a specified precision.
  *
  * Usage:
  *
@@ -2186,8 +2249,8 @@ Number.prototype.round = function(v, a) {
   return Math.round(v*m)/m;
 };
 
-<span id='Number-method-sign'>/**
-</span> * Return the sign of a number.
+/**
+ * Return the sign of a number.
  *
  * @param {Number} v
  *   The number whose sign should be retrieved.
@@ -2202,12 +2265,12 @@ Number.prototype.sign = function(v) {
   if (typeof v === 'undefined') {
     v = this;
   }
-  return v &gt; 0 ? 1 : (v &lt; 0 ? -1 : 0);
+  return v > 0 ? 1 : (v < 0 ? -1 : 0);
 };
 
 (function(console) {
-<span id='global-method-getCallID'>  /**
-</span>   * Get a string with the function, filename, and line number of the call.
+  /**
+   * Get a string with the function, filename, and line number of the call.
    *
    * This provides a unique ID to identify where each call originated.
    *
@@ -2225,7 +2288,7 @@ Number.prototype.sign = function(v) {
         if (offset == skip) {
           return lines[i];
         }
-        if (!found &amp;&amp; lines[i].match(/getCallID/)) {
+        if (!found && lines[i].match(/getCallID/)) {
           found = true;
         }
         if (found) {
@@ -2235,15 +2298,15 @@ Number.prototype.sign = function(v) {
     }
     return 'exception';
   }
-<span id='console-method-throttle'>  /**
-</span>   * Periodically log a message to the JavaScript console.
+  /**
+   * Periodically log a message to the JavaScript console.
    *
    * This is useful for logging things in loops; it avoids being overwhelmed by
    * an unstoppable barrage of similar log messages. Example calls:
    *
-   *     # Log &quot;message&quot; to the console no more than every 500ms.
+   *     # Log "message" to the console no more than every 500ms.
    *     console.throttle('message', 500);
-   *     # Log &quot;message 1&quot; and &quot;message 2&quot; as errors no more than every 500ms.
+   *     # Log "message 1" and "message 2" as errors no more than every 500ms.
    *     console.throttle('message 1', 'message 2', 500, console.error);
    *
    * @param {Arguments} ...
@@ -2263,7 +2326,7 @@ Number.prototype.sign = function(v) {
    * @ignore
    */
   console.throttle = function() {
-    if (arguments.length &lt; 2) {
+    if (arguments.length < 2) {
       return console;
     }
     var freq = 0, id = getCallID(), func = Array.prototype.pop.call(arguments);
@@ -2281,13 +2344,10 @@ Number.prototype.sign = function(v) {
       this.lastLogged[id] = 0;
     }
     var now = performance.now();
-    if (now &gt; this.lastLogged[id] + freq) {
+    if (now > this.lastLogged[id] + freq) {
       this.lastLogged[id] = now;
       func.apply(func, arguments);
     }
     return console;
   };
 })(console);
-</pre>
-</body>
-</html>

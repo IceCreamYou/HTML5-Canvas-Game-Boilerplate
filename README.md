@@ -26,7 +26,7 @@ There are three functions there which are the backbone of your application:
 These functions are called automatically for you. Just fill in the logic! To
 see your project, open index.html in your browser.
 [By default](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/), it
-has a keyboard-controlled player who can wander around. 
+has a keyboard-controlled player who can wander around.
 
 At this point you can dive in and start building right away, explore more
 features, or dig deeper into the documentation:
@@ -61,6 +61,12 @@ so you can extend them to create new classes with modified functionality.
    A box shape. This is the basic building block for most interactive entities.
    It has a size, position, orientation, and display, and it supports collision
    and various events.
+ - **[Actor](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor):**
+   Actors inherit from Boxes and add sophisticated built-in support for various
+   kinds of movement. They also support mouse-draggability.
+ - **[Player](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Player):**
+   Players inherit from Actors and add support for control via user input
+   (using the keyboard by default).
  - **[Collection](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Collection):**
    A container to keep track of multiple Boxes. It has various helper methods
    to easily work with all the Boxes in the Collection, including batch
@@ -83,12 +89,6 @@ so you can extend them to create new classes with modified functionality.
    parallax scrolling.
  - **[Timer](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Timer):**
    A timer for all your timing needs.
- - **[Actor](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor):**
-   Actors inherit from Boxes and add sophisticated built-in support for various
-   kinds of movement. They also support mouse-draggability.
- - **[Player](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Player):**
-   Players inherit from Actors and add support for control via user input
-   (using the keyboard by default).
 
 ### Drawing
 
@@ -210,6 +210,12 @@ New functionality:
  - [History.js](https://github.com/balupton/history.js): Handle refreshless URL
    updates. This can allow storing information in the URL, which could allow
    e.g. linking directly to in-game content.
+ - [Particle.js](https://github.com/city41/particle.js) A particle emitter
+   (useful for things like fires and waterfalls).
+ - [Gamepad.js](https://github.com/sgraham/gamepad.js) Provides support for
+   console game controller input.
+ - [jQuery Mousewheel](https://github.com/brandonaaron/jquery-mousewheel)
+   Provides cross-browser mousewheel support which could be useful for zooming.
 
 Enhanced functionality:
 
@@ -234,7 +240,7 @@ Notes
 Before deploying to production, there are a few things you may want to do:
 
  - Set the title and meta description in the document head.
- - Put a favicon.ico and apple-touch-icon.png file in the root directory.
+ - Replace favicon.ico and apple-touch-icon.png in the root directory.
  - Modify [robots.txt](http://www.robotstxt.org/) to fit your site's
    requirements.
  - Create custom error pages (404, 500, etc.) and modify .htaccess to use them

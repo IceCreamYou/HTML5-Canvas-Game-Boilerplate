@@ -828,7 +828,8 @@ function TileMap(grid, map, options) {
    *   TileMap#getCell() if it needs to check surrounding cells.
    * @param {Boolean} f.return
    *   If the return value is truthy, the object being processed will be
-   *   removed from the TileMap.
+   *   removed from the TileMap. If it has a destroy() method, that method will
+   *   be called.
    * @param {Boolean} [includeNull=false]
    *   Indicates whether to execute the function on null (blank) tiles.
    */
@@ -849,7 +850,7 @@ function TileMap(grid, map, options) {
     return this;
   };
   /**
-   * Gets the max and min array coordinates of cells that are in a rectangle.
+   * Get the max and min array coordinates of cells that are in a rectangle.
    *
    * wx and wy are the x- and y-coordinates in pixels of the upper-left corner
    * of the rectangle to retrieve, respectively. tw and th are the width and
@@ -944,6 +945,11 @@ function TileMap(grid, map, options) {
  */
 function World(w, h) {
   /**
+   * @property {Number} scale
+   *   The percent amount (as a fraction) the canvas resolution is scaled.
+   */
+  this.scale = 1;
+  /**
    * @property {Number} width
    *   The width of the world.
    */
@@ -969,7 +975,7 @@ function World(w, h) {
   context.translate(-this.xOffset, -this.yOffset);
 
   /**
-   * Returns an object with 'x' and 'y' properties indicating how far offset
+   * Return an object with 'x' and 'y' properties indicating how far offset
    * the viewport is from the world origin.
    */
   this.getOffsets = function() {
@@ -1014,6 +1020,54 @@ function World(w, h) {
   };
 
   /**
+   * Scale the canvas resolution.
+   *
+   * Passing a factor smaller than 1 allows reducing the resolution of the
+   * canvas, which should improve performance (since there is less to render in
+   * each frame). It does not actually change the size of the canvas on the
+   * page; it just scales how big each "pixel" is drawn on the canvas, much
+   * like changing the resolution of your monitor does not change its physical
+   * size. It is your responsibility to change the size of any fixed-size
+   * entities in the world after resizing, if applicable; if you don't do this,
+   * calling this function works much like zooming in or out.
+   *
+   * You may want to call this in a listener for the
+   * {@link global#low_fps Low FPS event}.
+   *
+   * @param {Number} factor
+   *   The percent amount to scale the resolution on each dimension as a
+   *   fraction of the <em>current</em> resolution (typically between zero and
+   *   one). In other words, if the original resolution is 1024*768, scaling
+   *   the resolution by a factor of 0.5 will result in a resolution of 512*384
+   *   (showing 25% as many pixels on the screen). If scaled again by a factor
+   *   of 2, the result is 1024*768 again. Use the `scale` property to detect
+   *   the factor by which the resolution is currently scaled.
+   * @param {Number} [x=0]
+   *   The x-coordinate of a location to center the viewport around after
+   *   resizing the canvas. A common use is `player.x`.
+   * @param {Number} [y=0]
+   *   The y-coordinate of a location to center the viewport around after
+   *   resizing the canvas. A common use is `player.y`.
+   */
+  this.scaleResolution = function(factor, x, y) {
+    $canvas.css({
+      width: (canvas.width/this.scale) + 'px',
+      height: (canvas.height/this.scale) + 'px',
+    });
+    canvas.width = (canvas.width*factor)|0;
+    canvas.height = (canvas.height*factor)|0;
+    x = x || 0;
+    y = y || 0;
+    this.xOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0;
+    this.yOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0;
+    context.translate(-this.xOffset, -this.yOffset);
+    this.scale = factor;
+    if (!isAnimating()) {
+      draw();
+    }
+  };
+
+  /**
    * Center the viewport around a specific location.
    *
    * @param {Number} x The x-coordinate around which to center the viewport.
@@ -1021,7 +1075,7 @@ function World(w, h) {
    */
   this.centerViewportAround = function(x, y) {
     var newXOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0,
-        newYOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height/ 2)) | 0,
+        newYOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0,
         deltaX = this.xOffset - newXOffset,
         deltaY = this.yOffset - newYOffset;
     this.xOffset = newXOffset;
@@ -1318,8 +1372,10 @@ function Layer(options) {
     });
     $d.append($c);
     jQuery('body').append($d);
-    $d.click(function() {
-      $d.remove();
+    $d.click(function(e) {
+      if (e.which != 3) { // Don't intercept right-click events
+        $d.remove();
+      }
     });
     return $d;
   };
@@ -1350,14 +1406,14 @@ var Actor = Box.extend({
    * Has no effect if GRAVITY is false. Setting to 0 (zero) has a similar
    * physical effect to disabling gravity.
    */
-  G_CONST: 1500,
+  G_CONST: 21,
 
   /**
-   * Jump velocity in pixels per second.
+   * Jump velocity (impulse) in pixels per second.
    *
    * Has no effect if GRAVITY is false. Set to 0 (zero) to disable jumping.
    */
-  JUMP_VEL: 800,
+  JUMP_VEL: 500,
 
   /**
    * The minimum number of seconds required between jumps.
@@ -1408,6 +1464,22 @@ var Actor = Box.extend({
    * Whether the Actor will be restricted to not move outside the world.
    */
   STAY_IN_WORLD: true,
+
+  /**
+   * The fractional velocity damping factor.
+   *
+   * If set, this affects whether the Actor can turn on a dime or how much it
+   * slides around. Higher means more movement control (less sliding).
+   *
+   * If you want specific surfaces to feel slippery, set this when the Actor
+   * moves onto and off of those surfaces.
+   *
+   * Numeric values are interpreted as damping factors. If this is null, full
+   * damping is applied (the Actor stops and turns on a dime).
+   *
+   * Damping does not affect vertical movement when gravity is enabled.
+   */
+  DAMPING_FACTOR: null,
 
   /**
    * The last direction (key press) that resulted in looking in a direction.
@@ -1468,7 +1540,6 @@ var Actor = Box.extend({
   yAcceleration: 0,
 
   // Dynamic (internal) variables
-  speed: 0, // Vertical velocity when gravity is on
   lastJump: 0, // Time when the last jump occurred in milliseconds since the epoch
   lastDirection: [], // The last direction (i.e. key press) passed to processInput()
   jumpDirection: {right: false, left: false}, // Whether the Actor was moving horizontally before jumping
@@ -1491,6 +1562,8 @@ var Actor = Box.extend({
    */
   init: function() {
     this._super.apply(this, arguments);
+    this.lastX = this.x;
+    this.lastY = this.y;
     this.lastDirection = [];
     this.lastLooked = [];
     this.jumpDirection = {right: false, left: false};
@@ -1504,7 +1577,7 @@ var Actor = Box.extend({
    * @inheritdoc Box#drawDefault
    */
   drawDefault: function(ctx, x, y, w, h) {
-    context.drawSmiley(x + w/2, y + h/2, (w+h)/4);
+    ctx.drawSmiley(x + w/2, y + h/2, (w+h)/4);
   },
 
   /**
@@ -1514,79 +1587,45 @@ var Actor = Box.extend({
    *   An Array of directions in which to move the Actor. Directions are
    *   expected to correspond to keys on the keyboard (as described by
    *   {@link jQuery.hotkeys}).
-   *
-   * @return {Object}
-   *   An object with `x` and `y` properties indicating the number of pixels
-   *   the Actor has moved in the respective direction.
    */
   update: function(direction) {
+    this.lastX = this.x;
+    this.lastY = this.y;
     if (this.isBeingDragged) {
-      var mcx = Mouse.coords.x + world.xOffset - this.width/2,
-          mcy = Mouse.coords.y + world.yOffset - this.height/2;
-      this.x = mcx;
-      this.y = mcy;
-      return {x: mcx - this.x, y: mcy - this.y};
+      this.x = Mouse.coords.x + world.xOffset - this.width/2;
+      this.y = Mouse.coords.y + world.yOffset - this.height/2;
     }
-    var moveAmount = this.MOVEAMOUNT * App.physicsDelta;
-    var moved = this.processInput(direction);
-    // Gravity.
-    if (this.GRAVITY) {
-      var moveStep = this.speed * App.physicsDelta;
-      this.speed += this.G_CONST * App.physicsDelta;
-      // Air movement (not air control) but make sure we stay inside the world.
-      if (this.isInAir() &&
-          (this.y + this.height + moveStep <= world.height || !this.STAY_IN_WORLD)) {
-        this.y += moveStep;
-        moved.y += moveStep;
-        if (this.jumpDirection.left &&
-            (this.x - moveAmount >= 0 || !this.STAY_IN_WORLD)) {
-          this.x -= moveAmount;
-          moved.x -= moveAmount;
-        }
-        else if (this.jumpDirection.right &&
-            (this.x + this.width + moveAmount <= world.width || !this.STAY_IN_WORLD)) {
-          this.x += moveAmount;
-          moved.x += moveAmount;
-        }
-      }
-      else {
-        this.stopFalling();
-      }
-      if (moved.x === 0) {
+    else {
+      this.processInput(direction);
+      this.ambientAcceleration();
+      this.move();
+      if (App.Utils.almostEqual(this.lastX, this.x, 0.000001)) {
         this.fallLeft = null;
       }
     }
-    this.updateAnimation(moved);
-    return moved;
+    this.updateAnimation();
+    this.dampVelocity();
   },
 
   /**
-   * Moves the Actor in a given direction.
+   * Process directions and adjust motion accordingly.
    *
    * Called from Actor#update().
    *
    * @param {String[]} direction
-   *   An Array of directions in which to move the Actor. Directions are
-   *   expected to correspond to keys on the keyboard (as described by
-   *   {@link jQuery.hotkeys}).
-   *
-   * @return {Object}
-   *   An object with `x` and `y` properties indicating the number of pixels
-   *   the Actor has moved in the respective direction.
+   *   An Array of directions in which to move the Actor. Valid directions are
+   *   expected to correspond to keys on the keyboard by default (as described
+   *   by {@link jQuery.hotkeys}) though for Actors that are not Players the
+   *   directions will not normally be sent from actual key presses.
    */
   processInput: function(direction) {
-    var moveAmount = this.MOVEAMOUNT * App.physicsDelta,
-        left = false,
+    var left = false,
         right = false,
         looked = false,
         anyIn = App.Utils.anyIn;
-    var moved = {
-      x: 0,
-      y: 0,
-    };
     // Bail if someone deleted the keys variable.
     if (typeof keys === 'undefined') {
-      return moved;
+      return;
     }
     if (typeof direction === 'undefined' || direction.length === 0) {
       // For continuous movement, if no direction is given, use the last one.
@@ -1595,56 +1634,48 @@ var Actor = Box.extend({
       }
       // No need to keep processing if no directions were given.
       else {
-        return moved;
+        return;
       }
     }
     this.lastDirection = direction.slice(); // shallow copy
 
     // Move left.
-    if (anyIn(keys.left, direction) &&
-        (this.x - moveAmount >= 0 || !this.STAY_IN_WORLD)) {
+    if (anyIn(keys.left, direction)) {
       left = true;
       looked = true;
       this.fallLeft = true;
       if (this.GRAVITY && this.isInAir()) {
         if (this.jumpDirection.right || !this.jumpDirection.left) {
-          this.x -= moveAmount * this.AIR_CONTROL;
-          moved.x -= moveAmount * this.AIR_CONTROL;
+          this.xVelocity = -this.MOVEAMOUNT * this.AIR_CONTROL;
           this.jumpDirection.right = false;
           this.jumpDirection.left = false;
         }
       }
       else {
-        this.x -= moveAmount;
-        moved.x -= moveAmount;
+        this.xVelocity = -this.MOVEAMOUNT;
       }
     }
     // Move right.
-    else if (anyIn(keys.right, direction) &&
-        (this.x + this.width + moveAmount <= world.width || !this.STAY_IN_WORLD)) {
+    else if (anyIn(keys.right, direction)) {
       right = true;
       looked = true;
       this.fallLeft = false;
       if (this.GRAVITY && this.isInAir()) {
         if (this.jumpDirection.left || !this.jumpDirection.right) {
-          this.x += moveAmount * this.AIR_CONTROL;
-          moved.x += moveAmount * this.AIR_CONTROL;
+          this.xVelocity = this.MOVEAMOUNT * this.AIR_CONTROL;
           this.jumpDirection.right = false;
           this.jumpDirection.left = false;
         }
       }
       else {
-        this.x += moveAmount;
-        moved.x += moveAmount;
+        this.xVelocity = this.MOVEAMOUNT;
       }
     }
 
     // Move up / jump.
-    if (anyIn(keys.up, direction) &&
-        (this.y - moveAmount >= 0 || !this.STAY_IN_WORLD)) {
+    if (anyIn(keys.up, direction)) {
       if (!this.GRAVITY) {
-        this.y -= moveAmount;
-        moved.y -= moveAmount;
+        this.yVelocity = -this.MOVEAMOUNT;
         looked = true;
       }
       else if (!this.isInAir() ||
@@ -1653,7 +1684,7 @@ var Actor = Box.extend({
         var now = App.physicsTimeElapsed;
         if (now - this.lastJump > this.JUMP_DELAY && // sufficient delay
             (!this.JUMP_RELEASE || !this.jumpKeyDown)) { // press jump again
-          this.speed = -this.JUMP_VEL;
+          this.yVelocity = -this.JUMP_VEL;
           this.lastJump = now;
           this.jumpDirection.right = right;
           this.jumpDirection.left = left;
@@ -1664,11 +1695,9 @@ var Actor = Box.extend({
       this.jumpKeyDown = true;
     }
     // Move down.
-    else if (anyIn(keys.down, direction) &&
-        (this.y + this.height + moveAmount <= world.height || !this.STAY_IN_WORLD)) {
+    else if (anyIn(keys.down, direction)) {
       if (!this.isInAir() || !this.GRAVITY) { // don't allow accelerating downward when falling
-        this.y += moveAmount;
-        moved.y += moveAmount;
+        this.yVelocity = this.MOVEAMOUNT;
         looked = true;
       }
     }
@@ -1686,7 +1715,100 @@ var Actor = Box.extend({
         }
       }
     }
-    return moved;
+  },
+
+  /**
+   * Calculate acceleration from the environment.
+   *
+   * Acceleration from user input is calculated in Actor#processInput().
+   */
+  ambientAcceleration: function() {
+    // Gravity.
+    if (this.GRAVITY) {
+      // Air movement (not initiated by user input).
+      if (this.isInAir()) {
+        this.yAcceleration += this.G_CONST;
+        if (this.jumpDirection.left) {
+          this.xVelocity = -this.MOVEAMOUNT;
+        }
+        else if (this.jumpDirection.right) {
+          this.xVelocity = this.MOVEAMOUNT;
+        }
+      }
+      else {
+        this.stopFalling();
+      }
+    }
+  },
+
+  /**
+   * Actually move the Actor.
+   */
+  move: function() {
+    var delta = App.physicsDelta, d2 = delta / 2;
+    // Apply half acceleration (first half of midpoint formula)
+    this.xVelocity += this.xAcceleration*d2;
+    this.yVelocity += this.yAcceleration*d2;
+    // Don't let diagonal movement be faster than axial movement
+    var xV = this.xVelocity, yV = this.yVelocity;
+    if (xV !== 0 && yV !== 0 && !this.GRAVITY) {
+      var magnitude = Math.max(Math.abs(xV), Math.abs(yV));
+      var origMag = Math.sqrt(xV*xV + yV*yV);
+      var scale = magnitude / origMag;
+      this.xVelocity *= scale;
+      this.yVelocity *= scale;
+    }
+    // Apply thrust
+    this.x += this.xVelocity*delta;
+    this.y += this.yVelocity*delta;
+    // Apply half acceleration (second half of midpoint formula)
+    this.xVelocity += this.xAcceleration*d2;
+    this.yVelocity += this.yAcceleration*d2;
+    // Clip
+    this.stayInWorld();
+  },
+
+  /**
+   * Force the Actor to stay inside the world.
+   */
+  stayInWorld: function() {
+    if (this.STAY_IN_WORLD) {
+      if (this.x < 0) {
+        this.x = 0;
+      }
+      else if (this.x + this.width > world.width) {
+        this.x = world.width - this.width;
+      }
+      if (this.y < 0) {
+        this.y = 0;
+      }
+      else if (this.y + this.height > world.height) {
+        this.y = world.height - this.height;
+        this.stopFalling();
+      }
+    }
+  },
+
+  /**
+   * Damp the Actor's velocity.
+   *
+   * This affects how much control the Actor has over its movement, i.e.
+   * whether the Actor can stop and turn on a dime or whether it slides around
+   * with momentum.
+   */
+  dampVelocity: function() {
+    if (this.DAMPING_FACTOR !== null &&
+        !App.Utils.almostEqual(this.xVelocity, 0, 0.0001)) {
+      this.xVelocity *= 1 - this.DAMPING_FACTOR * App.physicsDelta;
+      if (!this.GRAVITY && !App.Utils.almostEqual(this.yVelocity, 0, 0.0001)) {
+        this.yVelocity *= 1 - this.DAMPING_FACTOR * App.physicsDelta;
+      }
+      return;
+    }
+    this.xVelocity = 0;
+    if (!this.GRAVITY) {
+      this.yVelocity = 0;
+    }
   },
 
   /**
@@ -1774,7 +1896,7 @@ var Actor = Box.extend({
   },
 
   /**
-   * Moves this Actor outside of another Box so that it no longer overlaps.
+   * Move this Actor outside of another Box so that it no longer overlaps.
    *
    * This is called as part of Actor#collideSolid().
    *
@@ -1805,7 +1927,7 @@ var Actor = Box.extend({
   },
 
   /**
-   * Moves this Actor outside of another Box on the x-axis to avoid overlap.
+   * Move this Actor outside of another Box on the x-axis to avoid overlap.
    *
    * See also Actor#moveOutside().
    *
@@ -1836,7 +1958,7 @@ var Actor = Box.extend({
   },
 
   /**
-   * Moves this Actor outside of another Box on the y-axis to avoid overlap.
+   * Move this Actor outside of another Box on the y-axis to avoid overlap.
    *
    * See also Actor#moveOutside().
    *
@@ -1892,12 +2014,11 @@ var Actor = Box.extend({
    * Actor#isFalling(), Actor#hasAirMomentum()
    */
   stopFalling: function() {
-    if (this.y + this.height + this.speed * App.physicsDelta > world.height &&
-        this.STAY_IN_WORLD) {
-      this.y = world.height - this.height;
+    if (this.yAcceleration > 0) {
+      this.yAcceleration = 0;
     }
-    if (this.speed > 0) {
-      this.speed = 0;
+    if (this.yVelocity > 0) {
+      this.yVelocity = 0;
     }
     this.numJumps = 0;
     this.inAir = false;
@@ -1948,7 +2069,7 @@ var Actor = Box.extend({
   /**
    * Check whether this Actor is standing on top of a Box.
    *
-   * @param {Box} box The box to check.
+   * @param {Box} box The Box to check.
    */
   standingOn: function(box) {
     if (box instanceof Collection || box instanceof TileMap) {
@@ -1967,28 +2088,25 @@ var Actor = Box.extend({
   /**
    * Check collision with solids and adjust the Actor's position as necessary.
    *
-   * @param {Object} moved
-   *   An object with `x` and `y` properties indicating the distance in pixels
-   *   that the Actor moved since the last repaint.
    * @param {Box/Collection/TileMap} collideWith
    *   A Box, Collection, or TileMap of objects with which to check collision.
    *
    * @return {Boolean}
    *   true if the Actor collided with something; false otherwise.
    */
-  collideSolid: function(moved, collideWith) {
+  collideSolid: function(collideWith) {
     var falling = this.GRAVITY &&
         (this.y + this.height != world.height || !this.STAY_IN_WORLD);
     var result = {}, collided = false;
     if (collideWith instanceof Box) {
-      result = this._collideSolidBox(moved, collideWith);
+      result = this._collideSolidBox(collideWith);
       falling = result.falling;
       collided = result.collided;
     }
     else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
       var items = collideWith.getAll();
       for (var i = 0, l = items.length; i < l; i++) {
-        result = this._collideSolidBox(moved, items[i]);
+        result = this._collideSolidBox(items[i]);
         if (!result.falling) {
           falling = false;
         }
@@ -2009,9 +2127,6 @@ var Actor = Box.extend({
    *
    * See also Actor#collideSolid().
    *
-   * @param {Object} moved
-   *   An object with 'x' and 'y' properties indicating the distance in pixels
-   *   that the Actor moved since the last repaint.
    * @param {Box} collideWith
    *   A Box with which to check collision.
    *
@@ -2021,7 +2136,7 @@ var Actor = Box.extend({
    *
    * @ignore
    */
-  _collideSolidBox: function(moved, collideWith) {
+  _collideSolidBox: function(collideWith) {
     // "Falling" here really just means "not standing on top of this Box."
     var falling = true, collided = false;
     // If we moved a little too far and now intersect a solid, back out.
@@ -2038,106 +2153,32 @@ var Actor = Box.extend({
       // reach the top, which will stop their jump arc. If their x-position
       // from the last frame would have been standing, though, we can assume
       // they were already standing rather than jumping.
-      this.x -= moved.x;
+      var x = this.x;
+      this.x = this.lastX;
       if (this.standingOn(collideWith)) {
         this.stopFalling();
         falling = false;
       }
-      this.x += moved.x;
+      this.x = x;
       // If we're in the air and we hit something, stop the momentum.
       if (falling && collided) {
         // If we hit the bottom, stop rising.
         if (App.Utils.almostEqual(this.y, collideWith.y + collideWith.height, 1)) {
-          if (this.speed < 0) {
-            this.speed = 0;
+          if (this.yAcceleration < 0) {
+            this.yAcceleration = 0;
+          }
+          if (this.yVelocity < 0) {
+            this.yVelocity = 0;
           }
         }
         // If we hit a side, stop horizontal momentum.
         else {
-          this.fallLeft = null;
           this.jumpDirection.left = false;
           this.jumpDirection.right = false;
         }
       }
     }
     return {falling: falling, collided: collided};
-  },
-
-  /**
-   * Check whether the movement made during this frame was allowed.
-   *
-   * This is useful for making sure Actors can't move through walls if they're
-   * going really fast. (This function is rarely necessary because physics
-   * updates happen in small, discrete time steps, so Actors should never move
-   * so far during a single physics update that they pass through objects --
-   * but it could happen for things moving extremely quickly.)
-   *
-   * @param {Object} moved
-   *   An object with `x` and `y` properties indicating the number of pixels
-   *   the Actor has moved along each axis.
-   * @param {Box/Collection/TileMap} collideWith
-   *   A Box, Collection, or TileMap indicating the solid object(s) with which
-   *   to check for collision.
-   * @param {Boolean} [fix=false]
-   *   Indicates whether or not to correct the move if it is not allowed.
-   *
-   * @return {Boolean}
-   *   true if the move is allowed; false otherwise.
-   */
-  isMoveAllowed: function(moved, collideWith, fix) {
-    if (collideWith instanceof Box) {
-      if (moved.x) {
-        // Check whether we moved through the box horizontally
-        // (We were on one side of it, and now we're on the other side)
-        if (this.x - collideWith.x - collideWith.width >= Math.min(moved.x, 0) &&
-            this.x + this.width - collideWith.x <= Math.max(moved.x, 0)) {
-          // Check whether we are/were at the right vertical position to collide at all
-          if (this.y - collideWith.y - collideWith.height <= Math.min(moved.y, 0) &&
-              this.y + this.height - collideWith.y >= Math.max(moved.y, 0)) {
-            if (fix) {
-              // Interpolate y-position
-              moved.y /= 2;
-              this.y -= moved.y;
-              // Adjust x-position to flush with box
-              var x = this.x;
-              this.x = moved.x > 0 ? collideWith.x - this.width : collideWith.x + collideWith.width;
-              moved.x = this.x - x;
-            }
-            return false;
-          }
-        }
-      }
-      if (moved.y) {
-        // Check whether we moved through the box vertically
-        // (We were on one side of it, and now we're on the other side)
-        if (this.y - collideWith.y - collideWith.height >= Math.min(moved.y, 0) &&
-            this.y + this.height - collideWith.y <= Math.max(moved.y, 0)) {
-          // Check whether we are/were at the right horizontal position to collide at all
-          if (this.x - collideWith.x - collideWith.width <= Math.min(moved.x, 0) &&
-              this.x + this.width - collideWith.x >= Math.max(moved.x, 0)) {
-            if (fix) {
-              // Interpolate x-position
-              moved.x /= 2;
-              this.x -= moved.x;
-              // Adjust y-position to flush with box
-              var y = this.y;
-              this.y = moved.y > 0 ? collideWith.y - this.height : collideWith.y + collideWith.height;
-              moved.y = this.y - y;
-            }
-            return false;
-          }
-        }
-      }
-    }
-    else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
-      var items = collideWith.getAll();
-      for (var i = 0, l = items.length; i < l; i++) {
-        if (!this.isMoveAllowed(moved, items[i], fix)) {
-          return false;
-        }
-      }
-    }
-    return true;
   },
 
   /**
@@ -2179,28 +2220,27 @@ var Actor = Box.extend({
    * SpriteMap.
    *
    * See also Actor#useAnimation().
-   *
-   * @param {Object} moved
-   *   An object with `x` and `y` properties indicating the number of pixels
-   *   the Actor has moved along each axis.
    */
-  updateAnimation: function(moved) {
+  updateAnimation: function() {
     if (!(this.src instanceof SpriteMap)) {
       return;
     }
-    var lastDirection = this.lastDirection;
+    var lastDirection = this.lastDirection,
+        keysIsDefined = typeof keys !== 'undefined'; // Don't fail if "keys" was removed
     // Don't let shooting make us change where we're looking.
-    if (typeof keys.shoot != 'undefined' && App.Utils.anyIn(keys.shoot, lastDirection)) {
+    if (keysIsDefined &&
+        typeof keys.shoot !== 'undefined' &&
+        App.Utils.anyIn(keys.shoot, lastDirection)) {
       lastDirection = this.lastLooked;
     }
     if (this.isBeingDragged) {
       this.useAnimation('drag', 'stand');
     }
     else if (this.isInAir()) {
-      if (moved.x > 0) {
+      if (this.x > this.lastX) {
         this.useAnimation('jumpRight', 'lookRight', 'stand');
       }
-      else if (moved.x < 0) {
+      else if (this.x < this.lastX) {
         this.useAnimation('jumpLeft', 'lookLeft', 'stand');
       }
       else if (this.isJumping()) {
@@ -2210,35 +2250,35 @@ var Actor = Box.extend({
         this.useAnimation('fall', 'stand');
       }
     }
-    else if (moved.y > 0) {
-      if (moved.x > 0) {
+    else if (this.y > this.lastY) {
+      if (this.x > this.lastX) {
         this.useAnimation('downRight', 'stand');
       }
-      else if (moved.x < 0) {
+      else if (this.x < this.lastX) {
         this.useAnimation('downLeft', 'stand');
       }
       else {
         this.useAnimation('down', 'stand');
       }
     }
-    else if (moved.y < 0) {
-      if (moved.x > 0) {
+    else if (this.y < this.lastY) {
+      if (this.x > this.lastX) {
         this.useAnimation('upRight', 'stand');
       }
-      else if (moved.x < 0) {
+      else if (this.x < this.lastX) {
         this.useAnimation('upLeft', 'stand');
       }
       else {
         this.useAnimation('up', 'stand');
       }
     }
-    else if (moved.x > 0) {
+    else if (this.x > this.lastX) {
       this.useAnimation('right', 'stand');
     }
-    else if (moved.x < 0) {
+    else if (this.x < this.lastX) {
       this.useAnimation('left', 'stand');
     }
-    else if (App.Utils.anyIn(keys.up, lastDirection)) {
+    else if (keysIsDefined && App.Utils.anyIn(keys.up, lastDirection)) {
       if (App.Utils.anyIn(keys.right, lastDirection)) {
         this.useAnimation('lookUpRight', 'stand');
       }
@@ -2249,7 +2289,7 @@ var Actor = Box.extend({
         this.useAnimation('lookUp', 'stand');
       }
     }
-    else if (App.Utils.anyIn(keys.down, lastDirection)) {
+    else if (keysIsDefined && App.Utils.anyIn(keys.down, lastDirection)) {
       if (App.Utils.anyIn(keys.right, lastDirection)) {
         this.useAnimation('lookDownRight', 'stand');
       }
@@ -2260,10 +2300,10 @@ var Actor = Box.extend({
         this.useAnimation('lookDown', 'stand');
       }
     }
-    else if (App.Utils.anyIn(keys.right, lastDirection)) {
+    else if (keysIsDefined && App.Utils.anyIn(keys.right, lastDirection)) {
       this.useAnimation('lookRight', 'stand');
     }
-    else if (App.Utils.anyIn(keys.left, lastDirection)) {
+    else if (keysIsDefined && App.Utils.anyIn(keys.left, lastDirection)) {
       this.useAnimation('lookLeft', 'stand');
     }
     else {
@@ -2326,7 +2366,7 @@ var Actor = Box.extend({
       this.dragStartY = this.y;
       /**
        * @event canvasdragstart
-       *   Fired on the document when the user begins dragging an object,
+       *   Fires on the document when the user begins dragging an object,
        *   i.e. when the player clicks on or touches an object. Multiple
        *   objects can be dragged at once if they overlap, and this event will
        *   be triggered once for each of them.
@@ -2348,7 +2388,7 @@ var Actor = Box.extend({
       else if (target) {
         /**
          * @event canvasdrop
-         *   Fired on the document when a draggable Actor is dropped onto a
+         *   Fires on the document when a draggable Actor is dropped onto a
          *   target. This is used **internally** to trigger the event on the
          *   target directly.
          * @param {Box} target The drop target.
@@ -2378,7 +2418,7 @@ var Actor = Box.extend({
    *   An Array containing directions that are no longer being given.
    */
   release: function(releasedDirections) {
-    if (this.GRAVITY && typeof keys != 'undefined' &&
+    if (this.GRAVITY && typeof keys !== 'undefined' &&
         App.Utils.anyIn(keys.up, releasedDirections)) {
       this.jumpKeyDown = false;
     }
@@ -2434,10 +2474,14 @@ var Player = Actor.extend({
       world.centerViewportAround(this.x, this.y);
     }
     var t = this;
-    // Notify the Player object when keys are released.
-    jQuery(document).on('keyup.release', function() {
+    this.__keytracker = function() {
+      // lastKeyPressed() actually contains all keys that were pressed at the
+      // last key event, whereas event.keyPressed just holds the single key
+      // that triggered the event.
       t.release([jQuery.hotkeys.lastKeyPressed()]);
-    });
+    };
+    // Notify the Player object when keys are released.
+    jQuery(document).on('keyup.release', this.__keytracker);
   },
 
   /**
@@ -2462,11 +2506,10 @@ var Player = Actor.extend({
    * @inheritdoc Actor#update
    */
   update: function(direction) {
-    var moved = this._super(direction);
+    this._super(direction);
     if (!this.isBeingDragged) {
-      this.adjustViewport(moved);
+      this.adjustViewport();
     }
-    return moved;
   },
 
   /**
@@ -2491,15 +2534,11 @@ var Player = Actor.extend({
   /**
    * Move the viewport when the Player gets near the edge.
    *
-   * @param {Object} moved
-   *   An object with `x` and `y` properties indicating the number of pixels
-   *   the Player has moved along each axis.
-   *
    * @return {Object}
    *   An object with `x` and `y` properties indicating the number of pixels
    *   this method caused the viewport to shift along each axis.
    */
-  adjustViewport: function(moved) {
+  adjustViewport: function() {
     var offsets = world.getOffsets(), changed = {x: 0, y: 0};
     // We should only have mouse or player scrolling, but not both.
     if (Mouse.Scroll.isEnabled()) {
@@ -2507,27 +2546,27 @@ var Player = Actor.extend({
     }
     // left
     if (offsets.x > 0 && this.x + this.width/2 - offsets.x < canvas.width * this.MOVEWORLD) {
-      world.xOffset = Math.max(offsets.x + moved.x, 0);
+      world.xOffset = Math.max(offsets.x + (this.x - this.lastX), 0);
       context.translate(offsets.x - world.xOffset, 0);
       changed.x = offsets.x - world.xOffset;
     }
     // right
     else if (offsets.x < world.width - canvas.width &&
         this.x + this.width/2 - offsets.x > canvas.width * (1-this.MOVEWORLD)) {
-      world.xOffset = Math.min(offsets.x + moved.x, world.width - canvas.width);
+      world.xOffset = Math.min(offsets.x + (this.x - this.lastX), world.width - canvas.width);
       context.translate(offsets.x - world.xOffset, 0);
       changed.x = offsets.x - world.xOffset;
     }
     // up
     if (offsets.y > 0 && this.y + this.height/2 - offsets.y < canvas.height * this.MOVEWORLD) {
-      world.yOffset = Math.max(offsets.y + moved.y, 0);
+      world.yOffset = Math.max(offsets.y + (this.y - this.lastY), 0);
       context.translate(0, offsets.y - world.yOffset);
       changed.y = offsets.y - world.yOffset;
     }
     // down
     else if (offsets.y < world.height - canvas.height &&
         this.y + this.height/2 - offsets.y > canvas.height * (1-this.MOVEWORLD)) {
-      world.yOffset = Math.min(offsets.y + moved.y, world.height - canvas.height);
+      world.yOffset = Math.min(offsets.y + (this.y - this.lastY), world.height - canvas.height);
       context.translate(0, offsets.y - world.yOffset);
       changed.y = offsets.y - world.yOffset;
     }
@@ -2539,6 +2578,6 @@ var Player = Actor.extend({
    */
   destroy: function() {
     this._super.apply(this, arguments);
-    jQuery(document).off('.release');
+    jQuery(document).off('.release', this.__keytracker);
   },
 });

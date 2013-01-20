@@ -21,7 +21,10 @@
  *   Creates a new SpriteMap instance.
  *
  * @param {String} src
- *   The file path of the base image.
+ *   The image to draw, in the form of one of the following:
+ *   - The file path of the base image
+ *   - An Image
+ *   - A Canvas
  * @param {Object} animations
  *   A map (Object) where the keys are the names of animation sequences and the
  *   values are maps (Objects) specifying the starting and ending frames of the
@@ -267,7 +270,10 @@ this.SpriteMap = SpriteMap;
  *   Creates a new Sprite instance.
  *
  * @param {String} src
- *   The file path of the base image.
+ *   The image to draw, in the form of one of the following:
+ *   - The file path of the base image
+ *   - An Image
+ *   - A Canvas
  * @param {Object} [options]
  *   An object whose properties affect how the sprite is animated. Each of the
  *   properties will be attached to the Sprite object directly, along with
@@ -350,19 +356,50 @@ this.SpriteMap = SpriteMap;
  *   The Sprite that was loaded. 
  */
 function Sprite(src, options) {
-  this.sourceFile = src;
-  var cachedImage = Sprite.getImageFromCache(src);
-  if (cachedImage) {
-    this._init(cachedImage, options);
+  // String image file path
+  if (typeof src == 'string') {
+    this.sourceFile = src;
+    var cachedImage = Sprite.getImageFromCache(src);
+    if (cachedImage) { // cached
+      this._init(cachedImage, options);
+    }
+    else { // not cached
+      var image = new Image(), t = this;
+      image.onload = function() {
+        t._init(this, options);
+      };
+      image._src = src;
+      image.src = src;
+      Sprite.saveImageToCache(src, image);
+    }
   }
-  else {
-    var image = new Image(), t = this;
-    image.onload = function() {
-      t._init(this, options);
-    };
-    image._src = src;
-    image.src = src;
-    Sprite.saveImageToCache(src, image);
+  // Image
+  else if (src instanceof HTMLImageElement || src instanceof Image) {
+    if (!src.src) {
+      return;
+    }
+    this.sourceFile = src._src || src.src;
+    if (src.complete || (src.width && src.height)) { // loaded
+      Sprite.saveImageToCache(this.sourceFile, src);
+      this._init(src, options);
+    }
+    else { // not loaded
+      if (src._src) { // We've already tried to draw this one
+        return; // The onload callback will initialize the sprite when it runs
+      }
+      var o = src.onload, t = this;
+      src.onload = function() {
+        if (typeof o == 'function') { // don't overwrite any existing handler
+          o();
+        }
+        Sprite.saveImageToCache(t.sourceFile, src);
+        t._init(this, options);
+      };
+    }
+  }
+  // Canvas
+  else if (src instanceof HTMLCanvasElement) {
+    this._init(src, options);
   }
 }
 Sprite.prototype = {
@@ -400,6 +437,20 @@ Sprite.prototype = {
     if (options.postInitCallback) {
       options.postInitCallback(this);
     }
+    // Pre-render image (canvases draw faster, especially when flipped)
+    var tempCanvas = document.createElement('canvas');
+    tempCanvas.width = this.width;
+    tempCanvas.height = this.height;
+    var tempContext = tempCanvas.getContext('2d');
+    /*
+    if (this.flipped.horizontal || this.flipped.vertical) {
+      //tempContext.translate(this.flipped.horizontal ? tempCanvas.width : 0,
+      //    this.flipped.vertical ? tempCanvas.height : 0);
+      tempContext.scale(this.flipped.horizontal ? -1 : 1, this.flipped.vertical ? -1 : 1);
+    }
+    */
+    tempContext.drawImage(this.image, 0, 0);
+    this.image = tempCanvas;
   },
   /**
    * Draws the sprite.
@@ -428,8 +479,12 @@ Sprite.prototype = {
       h = h || this.projectedH;
       if (this.flipped.horizontal || this.flipped.vertical) {
         ctx.scale(this.flipped.horizontal ? -1 : 1, this.flipped.vertical ? -1 : 1);
-        if (this.flipped.horizontal) x = -x - w;
-        if (this.flipped.vertical) y = -y - h;
+        if (this.flipped.horizontal) {
+          x = -x - w;
+        }
+        if (this.flipped.vertical) {
+          y = -y - h;
+        }
       }
       ctx.drawImage(
           this.image,             // image

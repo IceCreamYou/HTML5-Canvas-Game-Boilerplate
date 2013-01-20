@@ -132,7 +132,7 @@ Bullet.fireRate = 250;
 jQuery(document).keyup(keys.shoot.join(' '), function() {
   var now = Date.now();
   // Throttle bullet firing.
-  if (now > (player._lastFired || 0) + Bullet.fireRate) {
+  if (now > (player._lastFired || 0) + Bullet.fireRate && isAnimating()) {
     player._lastFired = now;
     // Shoot in the direction the player looked last (default to right).
     var direction = player.lastLooked.length ? player.lastLooked : keys.right;
@@ -156,8 +156,8 @@ jQuery(document).keyup(keys.shoot.join(' '), function() {
  *   the global App.physicsTimeElapsed.
  */
 function update(delta, timeElapsed) {
-  var moved = player.update();
-  player.collideSolid(moved, solid);
+  player.update();
+  player.collideSolid(solid);
 
   enemies.forEach(function(enemy) {
     // Reverse if we get to the edge of a platform.
@@ -165,14 +165,14 @@ function update(delta, timeElapsed) {
         (!enemy.STAY_IN_WORLD || enemy.y != world.height - enemy.height)) {
       enemy.reverse();
     }
-    var moved = enemy.update();
+    enemy.update();
     // Reverse if we run into a wall.
-    if (enemy.collideSolid(moved, solid)) {
+    if (enemy.collideSolid(solid)) {
       enemy.reverse();
     }
     // Reverse if we run into the side of the world.
     else if (enemy.STAY_IN_WORLD &&
-        (enemy.x < 0 || enemy.x + enemy.width + moved.x > world.width)) {
+        (enemy.x < 0 || enemy.x + enemy.width >= world.width)) {
       enemy.reverse();
     }
     // The player dies if it touches an enemy.
@@ -190,8 +190,8 @@ function update(delta, timeElapsed) {
       enemies.remove(enemy);
       enemy.destroy();
     }
-    // Returning true removes the bullet from the collection.
-    // Destroy the bullet if it hits a solid or goes out of the world.
+    // Returning true removes the bullet from the Collection and destroy()s it.
+    // This destroys the bullet if it hits a solid or goes out of the world.
     return enemy || bullet.collides(solid) || !world.isInWorld(bullet, true);
   });
 }
