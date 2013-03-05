@@ -167,7 +167,7 @@ function update(delta, timeElapsed) {
     }
     enemy.update();
     // Reverse if we run into a wall.
-    if (enemy.collideSolid(solid)) {
+    if (enemy.collideSolid(solid).x) {
       enemy.reverse();
     }
     // Reverse if we run into the side of the world.

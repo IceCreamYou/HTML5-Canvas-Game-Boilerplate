@@ -187,20 +187,35 @@ var Box = Class.extend({
    *
    * @param {Box/Collection/TileMap} collideWith
    *   A Box, Collection of Boxes, or TileMap with which to check for overlap.
+   * @param {Boolean} [returnAll=false]
+   *   If this method is passed a Collection or TileMap, whether to return all
+   *   items in the group that collide (true) or just the first one (false).
+   * @param {Boolean} [collideWithSelf=false]
+   *   Whether the Box should be considered to collide with itself.
    *
-   * @return {Box/Boolean}
-   *   false if there is no overlap; otherwise, the first item to overlap.
+   * @return {Box/Box[]/Boolean}
+   *   false if there is no overlap; otherwise, the first item to overlap, or
+   *   an array of overlapping items if returnAll is true and collideWith is
+   *   a Collection or TileMap.
    */
-  collides: function(collideWith) {
-    if (collideWith instanceof Box) {
+  collides: function(collideWith, returnAll, collideWithSelf) {
+    if (collideWith instanceof Box && (collideWith !== this || !collideWithSelf)) {
       return this.overlaps(collideWith) ? collideWith : false;
     }
     else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
-      var items = collideWith.getAll();
+      var items = collideWith.getAll(), found = [];
       for (var i = 0, l = items.length; i < l; i++) {
-        if (this.overlaps(items[i])) {
-          return items[i];
+        if (this.overlaps(items[i]) && (items[i] !== this || !collideWithSelf)) {
+          if (returnAll) {
+            found.push(items[i]);
+          }
+          else {
+            return items[i];
+          }
         }
+      }
+      if (found.length) {
+        return found;
       }
     }
     return false;
@@ -363,23 +378,6 @@ Collection.prototype = {
     return this;
   },
   /**
-   * Determine whether any object in this Collection intersects with a Box.
-   *
-   * @param {Box} box
-   *   The Box with which to detect intersection.
-   *
-   * @return {Boolean} 
-   *   true if intersection is detected; false otherwise.
-   */
-  overlaps: function(box) {
-    for (var i = 0; i < this.items.length; i++) {
-      if (this.items[i].overlaps(box)) {
-        return true;
-      }
-    }
-    return false;
-  },
-  /**
    * Execute a function on every item in the Collection.
    *
    * @param {Function/String} f
@@ -423,6 +421,47 @@ Collection.prototype = {
       this.items[i][name].apply(this.items[i], arguments);
     }
     return this;
+  },
+  /**
+   * Check each pair of items in this Collection for collision.
+   *
+   * To check all items in a Collection against a single Box, use the
+   * Box#collides() method. To check all items in a Collection against all
+   * items in another Collection, use the following pattern:
+   *
+   *     collection1.foreach(function(item) {
+   *       if (item.collides(collection2)) {
+   *         // do something
+   *       }
+   *     });
+   *
+   * In the example above, to get the Boxes that collide with each item, simply
+   * pass `true` as the second parameter to `item.collides()` and note the
+   * return value.
+   *
+   * @param {Function} [callback]
+   *   A function to call when two items in this Collection collide.
+   * @param {Box} [callback.a]
+   *   A Box in the Collection that overlaps.
+   * @param {Box} [callback.b]
+   *   A Box in the Collection that overlaps.
+   */
+  collideAll: function(callback) {
+    var collision = false;
+    for (var i = 0, l = this.items.length; i < l; i++) {
+      for (var j = i+1; j < l; j++) {
+        if (this.items[i].overlaps(this.items[j])) {
+          if (typeof callback == 'function') {
+            callback.call(this, this.items[i], this.items[j]);
+            collision = true;
+          }
+          else {
+            return true;
+          }
+        }
+      }
+    }
+    return collision;
   },
   /**
    * Add an item to the Collection.
@@ -569,8 +608,8 @@ function ImageWrapper(src, x, y, w, h) {
  *     initialize instances of that class.
  *
  *   This value is irrelevant if `options.gridSize` is specified since the
- *   entire TileMap is then created as a blank grid. However, it must still be
- *   an Object or Array.
+ *   entire TileMap is then created as a blank grid. In this case,
+ *   `undefined`, `null`, or an empty array or object are acceptable values.
  * @param {Object} [options]
  *   A set of configuration settings for the TileMap.
  * @param {Number[]} [options.gridSize=null]
@@ -600,6 +639,9 @@ function TileMap(grid, map, options) {
   }
   if (options && options.gridSize instanceof Array && options.gridSize.length > 1) {
     this.options.gridSize = options.gridSize;
+  }
+  if (typeof map === 'undefined' || map === null) {
+    map = [];
   }
   // Place the TileMap in the lower-left corner of the world.
   if (typeof this.options.startCoords === 'undefined' ||
@@ -1550,6 +1592,7 @@ var Actor = Box.extend({
   isDraggable: false, // Whether the Actor is draggable
   dragStartX: 0, // Last position of the Actor before being dragged
   dragStartY: 0, // Last position of the Actor before being dragged
+  animLoop: '', // Current SpriteMap animation sequence
 
   /**
    * @constructor
@@ -1567,6 +1610,16 @@ var Actor = Box.extend({
     this.lastDirection = [];
     this.lastLooked = [];
     this.jumpDirection = {right: false, left: false};
+  },
+
+  /**
+   * @inheritdoc Box#draw
+   */
+  draw: function() {
+    if (this.src instanceof SpriteMap && this.animLoop) {
+      this.src.use(this.animLoop); // Switch to the active animation loop
+    }
+    return this._super.apply(this, arguments);
   },
 
   /**
@@ -1601,6 +1654,11 @@ var Actor = Box.extend({
       this.move();
       if (App.Utils.almostEqual(this.lastX, this.x, 0.000001)) {
         this.fallLeft = null;
+      }
+      // If we're not actually falling, collideSolid() will catch us.
+      if (this.GRAVITY &&
+          (this.y + this.height != world.height || !this.STAY_IN_WORLD)) {
+        this.startFalling();
       }
     }
     this.updateAnimation();
@@ -1685,6 +1743,7 @@ var Actor = Box.extend({
         if (now - this.lastJump > this.JUMP_DELAY && // sufficient delay
             (!this.JUMP_RELEASE || !this.jumpKeyDown)) { // press jump again
           this.yVelocity = -this.JUMP_VEL;
+          this.yAcceleration = 0; // Don't aggregate gravity
           this.lastJump = now;
           this.jumpDirection.right = right;
           this.jumpDirection.left = left;
@@ -1943,16 +2002,14 @@ var Actor = Box.extend({
     if (this.overlaps(other)) {
       // If our center is left of their center, move to the left side
       if (this.x + this.width / 2 < other.x + other.width / 2) {
-        movedTo = other.x - this.width - 1;
-        moved = movedTo - this.x;
-        this.x = movedTo;
+        movedTo = other.x - this.width - 0.01;
       }
       // If our center is right of their center, move to the right side
       else {
-        movedTo = other.x + other.width + 1;
-        moved = movedTo - this.x;
-        this.x = movedTo;
+        movedTo = other.x + other.width + 0.01;
       }
+      moved = movedTo - this.x;
+      this.x = movedTo;
     }
     return moved;
   },
@@ -1975,15 +2032,13 @@ var Actor = Box.extend({
       // If our center is above their center, move to the top
       if (this.y + this.height / 2 <= other.y + other.height / 2) {
         movedTo = other.y - this.height - 1;
-        moved = movedTo - this.y;
-        this.y = movedTo;
       }
       // If our center is below their center, move to the bottom
       else {
         movedTo = other.y + other.height + 1;
-        moved = movedTo - this.y;
-        this.y = movedTo;
       }
+      moved = movedTo - this.y;
+      this.y = movedTo;
     }
     return moved;
   },
@@ -2088,42 +2143,44 @@ var Actor = Box.extend({
   /**
    * Check collision with solids and adjust the Actor's position as necessary.
    *
+   * This method has the side-effect that it will stop the Actor from falling
+   * if it is standing on a Box.
+   *
    * @param {Box/Collection/TileMap} collideWith
    *   A Box, Collection, or TileMap of objects with which to check collision.
    *
-   * @return {Boolean}
-   *   true if the Actor collided with something; false otherwise.
+   * @return {Object}
+   *   An Object with `x` and `y` properties, both Booleans indicating whether
+   *   the Actor collided with something in the respective direction.
    */
   collideSolid: function(collideWith) {
-    var falling = this.GRAVITY &&
-        (this.y + this.height != world.height || !this.STAY_IN_WORLD);
-    var result = {}, collided = false;
+    var collided = {x: 0, y: 0};
     if (collideWith instanceof Box) {
-      result = this._collideSolidBox(collideWith);
-      falling = result.falling;
-      collided = result.collided;
+      collided = this._collideSolidBox(collideWith);
     }
     else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
       var items = collideWith.getAll();
       for (var i = 0, l = items.length; i < l; i++) {
-        result = this._collideSolidBox(items[i]);
-        if (!result.falling) {
-          falling = false;
+        var c = this._collideSolidBox(items[i]);
+        if (c.x) {
+          collided.x = c.x;
         }
-        if (result.collided) {
-          collided = true;
+        if (c.y) {
+          collided.y = c.y;
         }
       }
     }
-    // If the Actor isn't standing on a solid, it needs to start falling.
-    if (falling) {
-      this.startFalling();
-    }
+    collided.x = !!collided.x;
+    collided.y = !!collided.y;
+    this.updateAnimation(collided);
     return collided;
   },
 
   /**
    * Check collision with a single solid and adjust the Actor's position.
+   *
+   * This method has the side-effect that it will stop the Actor from falling if
+   * it is standing on the Box.
    *
    * See also Actor#collideSolid().
    *
@@ -2131,18 +2188,18 @@ var Actor = Box.extend({
    *   A Box with which to check collision.
    *
    * @return {Object}
-   *   An object with `falling` and `collided` properties (both Booleans
-   *   indicating whether the Actor is falling or has collided with a solid).
+   *   An object with `x` and `y` properties indicating how far this Actor
+   *   moved in order to be outside of the Box, in pixels. If both properties
+   *   are `0` then the Actor and Box do not overlap.
    *
    * @ignore
    */
   _collideSolidBox: function(collideWith) {
     // "Falling" here really just means "not standing on top of this Box."
-    var falling = true, collided = false;
+    var falling = true, collided = {x: 0, y: 0};
     // If we moved a little too far and now intersect a solid, back out.
     if (this.overlaps(collideWith)) {
-      this.moveOutside(collideWith);
-      collided = true;
+      collided = this.moveOutside(collideWith);
     }
     // If gravity is on, check standing/falling behavior.
     if (this.GRAVITY) {
@@ -2161,7 +2218,7 @@ var Actor = Box.extend({
       }
       this.x = x;
       // If we're in the air and we hit something, stop the momentum.
-      if (falling && collided) {
+      if (falling && (collided.x || collided.y)) {
         // If we hit the bottom, stop rising.
         if (App.Utils.almostEqual(this.y, collideWith.y + collideWith.height, 1)) {
           if (this.yAcceleration < 0) {
@@ -2178,7 +2235,7 @@ var Actor = Box.extend({
         }
       }
     }
-    return {falling: falling, collided: collided};
+    return collided;
   },
 
   /**
@@ -2220,8 +2277,12 @@ var Actor = Box.extend({
    * SpriteMap.
    *
    * See also Actor#useAnimation().
+   *
+   * @param {Object} [collided]
+   *   An Object with `x` and `y` properties, both Booleans indicating whether
+   *   the Actor collided with something in the respective direction.
    */
-  updateAnimation: function() {
+  updateAnimation: function(collided) {
     if (!(this.src instanceof SpriteMap)) {
       return;
     }
@@ -2301,10 +2362,10 @@ var Actor = Box.extend({
       }
     }
     else if (keysIsDefined && App.Utils.anyIn(keys.right, lastDirection)) {
-      this.useAnimation('lookRight', 'stand');
+      this.useAnimation(collided && collided.x ? 'right' : 'lookRight', 'stand');
     }
     else if (keysIsDefined && App.Utils.anyIn(keys.left, lastDirection)) {
-      this.useAnimation('lookLeft', 'stand');
+      this.useAnimation(collided && collided.x ? 'left' : 'lookLeft', 'stand');
     }
     else {
       this.useAnimation('stand');
@@ -2333,7 +2394,7 @@ var Actor = Box.extend({
     for (var i = 0; i < arguments.length; i++) {
       var a = arguments[i];
       if (this.src.maps[a]) {
-        this.src.use(a);
+        this.animLoop = a;
         return a;
       }
     }
@@ -2523,7 +2584,7 @@ var Player = Actor.extend({
     if (on && !this.isDraggable) {
       this.listen('canvasdragstop.drag', function() {
         if (this.isBeingDragged &&
-            (!this.dropTargets.count() || this.dropTargets.overlaps(this))) {
+            (!this.dropTargets.count() || this.collides(this.dropTargets))) {
           world.centerViewportAround(this.x, this.y);
         }
       }, -1);

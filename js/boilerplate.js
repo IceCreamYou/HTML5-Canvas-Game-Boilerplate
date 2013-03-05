@@ -164,6 +164,16 @@ jQuery(document).ready(function() {
   // Set up the main graphics context.
   context = canvas.getContext('2d');
 
+  // If we have the Stats widget, set it up.
+  if (typeof Stats !== 'undefined' && App.debugMode) {
+    App.stats = new Stats();
+    App.stats.setMode(0);
+    App.stats.domElement.style.position = 'absolute';
+    App.stats.domElement.style.left = $canvas.offset().left;
+    App.stats.domElement.style.top = $canvas.offset().top;
+    document.body.appendChild(App.stats.domElement);
+  }
+
   // Track the mouse.
   $canvas.hover(function() {
     var $this = jQuery(this);
@@ -890,6 +900,10 @@ window.isAnimating = function() {
  * @ignore
  */
 function animate() {
+  if (typeof App.stats !== 'undefined') {
+    App.stats.begin();
+  }
+
   // Record the amount of time since the last tick. Used to smooth animation.
   // This is the only place that App.timer.getDelta() should ever be called
   // because getDelta() returns the time since the last time it was called so
@@ -958,6 +972,10 @@ function animate() {
 
   if (App.debugMode) {
     App.Debug.drawTimeElapsed += Timer.getTimeSince('debug timer draw');
+  }
+
+  if (typeof App.stats !== 'undefined') {
+    App.stats.end();
   }
 
   // request new frame
