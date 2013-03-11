@@ -11,6 +11,14 @@
  */
 
 /**
+ * HTML5 Canvas Game Boilerplate
+ * Certain components copyright their respective authors.
+ * @author Isaac Sukin
+ * @license MIT License
+ * @ignore
+ */
+
+/**
  * The App object holds all the miscellaneous things that don't deserve to be
  * global.
  * @static
@@ -194,14 +202,16 @@ jQuery(document).ready(function() {
 
   // Track and delegate click events.
   $canvas.on('mousedown mouseup click touchstart touchend', function(e) {
-    if (isAnimating()) {
+    if (isAnimating() && typeof App.Events !== 'undefined') {
       App.Events.trigger(e.type, e);
     }
   });
 
   // Track and delegate dragend events.
   $canvas.on('mouseup.drag touchend.drag', function(e) {
-    App.Events.trigger('canvasdragstop', e);
+    if (typeof App.Events !== 'undefined') {
+      App.Events.trigger('canvasdragstop', e);
+    }
     App.isSomethingBeingDragged = false;
     /**
      * @event canvasdragstop
@@ -214,7 +224,9 @@ jQuery(document).ready(function() {
 
   // Track and delegate drop events.
   jQuery(document).on('canvasdrop', function(e, target) {
-    App.Events.trigger('canvasdrop', e, target);
+    if (typeof App.Events !== 'undefined') {
+      App.Events.trigger('canvasdrop', e, target);
+    }
   });
 });
 
@@ -234,10 +246,10 @@ jQuery(window).load(function() {
   Caches.preloadImages(typeof preloadables === 'undefined' ? [] : preloadables, {
     finishCallback: function() {
       // Expose utilities globally if they are not already defined.
-      if (typeof Events === 'undefined') {
+      if (typeof Events === 'undefined' && typeof App.Events !== 'undefined') {
         Events = App.Events;
       }
-      if (typeof Utils === 'undefined') {
+      if (typeof Utils === 'undefined' && typeof App.Utils !== 'undefined') {
         Utils = App.Utils;
       }
 
@@ -492,299 +504,6 @@ if (Sprite) {
   };
   Sprite.preloadImages = Caches.preloadImages;
 }
-
-// EVENTS ---------------------------------------------------------------------
-
-(function() {
-
-function _handlePointerBehavior() {
-  return App.isHovered(this);
-}
-
-var _listeners = {};
-
-/**
- * An event system for canvas objects.
- *
- * The browser has no way to distinguish between different objects being
- * displayed on the canvas; as far as it is concerned, the canvas is just a
- * single image. App.Events provides a way to listen for and trigger events on
- * non-DOM objects.
- *
- * @alternateClassName Events
- * @static
- */
-App.Events = {
-  /**
-   * Listen for a specific event.
-   *
-   * {@link Box} objects can listen for events by calling Box#listen() rather
-   * than calling this method directly.
-   *
-   * @param {Object} obj
-   *   The object which should listen for the event being called on it.
-   * @param {String} eventName
-   *   The name of the event for which to listen, e.g. "click." The event can
-   *   have a namespace using a dot, e.g. "click.custom" will bind to the
-   *   "click" event with the "custom" namespace. Namespaces are useful for
-   *   unlisten()ing to specific callbacks assigned to that namespace or for
-   *   unlisten()ing to callbacks bound to a namespace across multiple events.
-   * @param {Function} callback
-   *   A function to execute when the relevant event is triggered on the
-   *   listening object. The function's `this` object is the listening object
-   *   and it receives any other parameters passed by the trigger call. Usually
-   *   an event object is the first parameter, and propagation can be stopped
-   *   by calling the event's stopPropagation() method.
-   * @param {Number} [weight=0]
-   *   An integer indicating the order in which callbacks for the relevant
-   *   event should be triggered. Lower numbers cause the callback to get
-   *   triggered earlier than higher numbers. This can be useful for getting
-   *   around the fact that the canvas doesn't track display order so event
-   *   callbacks can't distinguish which object should be triggered first if
-   *   multiple listening objects are overlapping.
-   *
-   * @static
-   */
-  listen: function(obj, eventName, callback, weight) {
-    var once = arguments[4];
-    // Allow specifying multiple space-separated event names.
-    var events = eventName.split(' ');
-    if (events.length > 1) {
-      for (var j = 0, l = events.length; j < l; j++) {
-        App.Events.listen(obj, events[j], callback, weight, once);
-      }
-      return;
-    }
-    // Separate the event name from the namespace.
-    var namespace = '', i = eventName.indexOf('.');
-    if (i !== -1) {
-      namespace = eventName.substring(i+1);
-      eventName = eventName.substring(0, i);
-    }
-    // Add a listener for the relevant event.
-    if (!_listeners[eventName]) {
-      _listeners[eventName] = [];
-    }
-    _listeners[eventName].push({
-      object: obj,
-      callback: function() {
-        callback.apply(obj, arguments);
-      },
-      namespace: namespace,
-      weight: weight || 0,
-      once: once || false,
-    });
-    // Return the listening object so that this function is chainable.
-    return obj;
-  },
-  /**
-   * Listen for a specific event and only react the first time it is triggered.
-   *
-   * {@link Box} objects have a corresponding Box#once() method.
-   *
-   * @param {Object} obj
-   *   The object which should listen for the event being called on it.
-   * @param {String} eventName
-   *   The name of the event for which to listen, e.g. "click." The event can
-   *   have a namespace using a dot, e.g. "click.custom" will bind to the
-   *   "click" event with the "custom" namespace. Namespaces are useful for
-   *   unlisten()ing to specific callbacks assigned to that namespace or for
-   *   unlisten()ing to callbacks bound to a namespace across multiple events.
-   * @param {Function} callback
-   *   A function to execute when the relevant event is triggered on the
-   *   listening object. The function's `this` object is the listening object
-   *   and it receives any other parameters passed by the trigger call. Usually
-   *   an event object is the first parameter, and propagation can be stopped
-   *   by calling the event's stopPropagation() method.
-   * @param {Number} [weight=0]
-   *   An integer indicating the order in which callbacks for the relevant
-   *   event should be triggered. Lower numbers cause the callback to get
-   *   triggered earlier than higher numbers. This can be useful for getting
-   *   around the fact that the canvas doesn't track display order so event
-   *   callbacks can't distinguish which object should be triggered first if
-   *   multiple listening objects are overlapping.
-   *
-   * @static
-   */
-  once: function(obj, eventName, callback, weight) {
-    return App.Events.listen(obj, eventName, callback, weight, true);
-  },
-  /**
-   * Stop listening for a specific event.
-   *
-   * {@link Box} objects have a corresponding Box#unlisten() method.
-   *
-   * @param {Object} obj
-   *   The object which should unlisten for the specified event.
-   * @param {String} eventName
-   *   The name of the event for which to listen, e.g. "click." The event can
-   *   have a namespace using a dot, e.g. "click.custom" will unbind obj's
-   *   listeners for the "click" that are using the "custom" namespace. You can
-   *   also unlisten to multiple events using the same namespace, e.g.
-   *   ".custom" could unlisten to "mousemove.custom" and "touchmove.custom."
-   *   If the event specified does not have a namespace, all callbacks will be
-   *   unbound regardless of their namespace.
-   *
-   * @static
-   */
-  unlisten: function(obj, eventName) {
-    // Allow specifying multiple space-separated event names.
-    var events = eventName.split(' ');
-    if (events.length > 1) {
-      for (var j = 0, l = events.length; j < l; j++) {
-        App.Events.unlisten(obj, events[j]);
-      }
-      return;
-    }
-    // Separate the event name from the namespace.
-    var namespace = '', i = eventName.indexOf('.'), e;
-    if (i !== -1) {
-      namespace = eventName.substring(i+1);
-      eventName = eventName.substring(0, i);
-    }
-    // Remove all relevant listeners.
-    if (eventName && _listeners[eventName]) {
-      for (e = _listeners[eventName], i = e.length-1; i >= 0; i--) {
-        if (e[i].object == obj && (!namespace || e[i].namespace == namespace)) {
-          _listeners[eventName].splice(i, 1);
-        }
-      }
-    }
-    else if (!eventName && namespace) {
-      for (eventName in _listeners) {
-        if (_listeners.hasOwnProperty(eventName)) {
-          for (e = _listeners[eventName], i = e.length-1; i >= 0; i--) {
-            if (e[i].object == obj && e[i].namespace == namespace) {
-              _listeners[eventName].splice(i, 1);
-            }
-          }
-        }
-      }
-    }
-    // Return the listening object so that this function is chainable.
-    return obj;
-  },
-  /**
-   * Trigger an event.
-   *
-   * {@link Box} objects have a corresponding Box#trigger() method.
-   *
-   * @param {String} eventName
-   *   The name of the event to trigger, e.g. "click."
-   * @param {Arguments} ...
-   *   Additional arguments to pass to the relevant callbacks.
-   *
-   * @static
-   */
-  trigger: function(eventName) {
-    eventName = Array.prototype.shift.call(arguments);
-    var e = _listeners[eventName]; // All listeners for this event
-    if (e) {
-      // Sort listeners by weight (lowest last, then we'll iterate in reverse).
-      e.sort(function(a, b) {
-        return b.weight - a.weight;
-      });
-      // Execute the callback for each listener for the relevant event.
-      for (var i = e.length-1; i >= 0; i--) {
-        if (!App.Events.Behaviors[eventName] ||
-            App.Events.Behaviors[eventName].apply(e[i].object, arguments)) {
-          e[i].callback.apply(e[i].object, arguments);
-          // Remove listeners that should only be called once.
-          if (e[i].once) {
-            App.Events.unlisten(e[i].object, eventName + '.' + e[i].namespace);
-          }
-          // Stop processing overlapping objects if propagation is stopped.
-          var event = Array.prototype.shift.call(arguments);
-          if (event && event.isPropagationStopped && event.isPropagationStopped()) {
-            break;
-          }
-        }
-      }
-    }
-  },
-  /**
-   * Determine whether an object should be triggered for a specific event.
-   *
-   * The Behaviors object has event names as keys and functions as values. The
-   * functions evaluate whether the relevant event has been triggered on a
-   * given listening object. The listening object is the functions' `this`
-   * object, and the functions receive all the same parameters passed to the
-   * App.Events.trigger() method (usually starting with an Event object). Add
-   * elements to App.Events.Behaviors if you want to support new event types
-   * with conditional filters.
-   *
-   * @static
-   */
-  Behaviors: {
-    /**
-     * @event mousedown
-     *   The mousedown event is sent to an object when the mouse pointer is
-     *   over the object and the mouse button is pressed.
-     * @param {Event} e The event object.
-     * @member Box
-     */
-    mousedown: _handlePointerBehavior,
-    /**
-     * @event mouseup
-     *   The mouseup event is sent to an object when the mouse pointer is over
-     *   the object and the mouse button is released.
-     * @param {Event} e The event object.
-     * @member Box
-     */
-    mouseup: _handlePointerBehavior,
-    /**
-     * @event click
-     *   The mouseup event is sent to an object when the mouse pointer is over
-     *   the object and the mouse button is pressed and released.
-     * @param {Event} e The event object.
-     * @member Box
-     */
-    click: _handlePointerBehavior,
-    /**
-     * @event touchstart
-     *   The touchstart event is sent to an object when the object is touched.
-     * @param {Event} e The event object.
-     * @member Box
-     */
-    touchstart: _handlePointerBehavior,
-    /**
-     * @event touchend
-     *   The touchend event is sent to an object when a touch is released over
-     *   the object.
-     * @param {Event} e The event object.
-     * @member Box
-     */
-    touchend: _handlePointerBehavior,
-    /**
-     * @event canvasdragstop
-     *   The canvasdragstop event is sent to an object when a click or touch
-     *   event ends and that object is being dragged. This should be used
-     *   instead of binding to mouseup and touchend because dragged Actors
-     *   still follow collision rules, so dragging an Actor into a solid wall
-     *   will let the mouse move off the Actor while it is over the wall. (It
-     *   is possible to drag an Actor through a wall, but Actors cannot be
-     *   dropped inside of something solid they collide with.)
-     * @param {Event} e The event object.
-     * @member Actor
-     */
-    canvasdragstop: function() {
-      return !!this.isBeingDragged;
-    },
-    /**
-     * @event canvasdrop
-     *   The canvasdrop event is sent to a drop target object when a draggable
-     *   {@link Actor} is dropped onto it.
-     * @param {Event} e The event object.
-     * @param {Box} target The drop target object. (You can use `this` instead.)
-     * @member Box
-     */
-    canvasdrop: function(e, target) {
-      return this === target;
-    },
-  },
-};
-
-})();
 
 // ANIMATION ------------------------------------------------------------------
 
@@ -1192,7 +911,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       finished.call(t, a, true); // Sprite images are loaded on instantiation
     }
   }
-  else if (src instanceof Layer) { // Draw the Layer's canvas
+  else if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
     t.save();
     t.globalAlpha = src.opacity;
     if (src.relative == 'canvas') {
@@ -1349,7 +1068,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   else if (!rpt) {
     rpt = 'repeat';
   }
-  if (src instanceof Layer) { // Draw the Layer's canvas
+  if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
     src = src.canvas;
   }
   if (src instanceof CanvasPattern) { // draw an already-created pattern
@@ -1359,7 +1078,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       finished.call(this, arguments, true);
     }
   }
-  else if (src instanceof Layer) { // Draw the Layer's canvas
+  else if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
     this.save();
     this.globalAlpha = src.opacity;
     if (src.relative == 'canvas') {
@@ -1993,6 +1712,218 @@ function Timer(autoStart, whileAnimating) {
     return event.startTime ? (now - event.startTime) / 1000 : 0;
   };
 })();
+
+// WORLD ----------------------------------------------------------------------
+
+/**
+ * The World object.
+ * 
+ * The World represents the complete playable game area. Its size can be set
+ * explicitly or is automatically determined by the "data-worldwidth" and
+ * "data-worldheight" attributes set on the HTML canvas element (with a
+ * fallback to the canvas width and height). If the size of the world is larger
+ * than the canvas then by default the view of the world will scroll when the
+ * {@link global#player player} approaches a side of the canvas.
+ * 
+ * @param {Number} [w]
+ *   The width of the world. Defaults to the value of the "data-worldwidth"
+ *   attribute on the HTML canvas element, or (if that attribute is not
+ *   present) the width of the canvas element.
+ * @param {Number} [h]
+ *   The height of the world. Defaults to the value of the "data-worldheight"
+ *   attribute on the HTML canvas element, or (if that attribute is not
+ *   present) the height of the canvas element.
+ */
+function World(w, h) {
+  /**
+   * @property {Number} scale
+   *   The percent amount (as a fraction) the canvas resolution is scaled.
+   */
+  this.scale = 1;
+  /**
+   * @property {Number} width
+   *   The width of the world.
+   */
+  this.width = w || parseInt($canvas.attr('data-worldwidth'), 10) || canvas.width;
+  /**
+   * @property {Number} height
+   *   The height of the world.
+   */
+  this.height = h || parseInt($canvas.attr('data-worldheight'), 10) || canvas.height;
+
+  /**
+   * @property {Number} xOffset
+   *   The pixel-offset of what's being displayed in the canvas compared to the
+   *   world origin.
+   */
+  this.xOffset = (this.width - canvas.width)/2;
+  /**
+   * @property {Number} yOffset
+   *   The pixel-offset of what's being displayed in the canvas compared to the
+   *   world origin.
+   */
+  this.yOffset = (this.height - canvas.height)/2;
+  context.translate(-this.xOffset, -this.yOffset);
+
+  /**
+   * Return an object with 'x' and 'y' properties indicating how far offset
+   * the viewport is from the world origin.
+   */
+  this.getOffsets = function() {
+    return {
+      'x': this.xOffset,
+      'y': this.yOffset,
+    };
+  };
+
+  /**
+   * Resize the world to new dimensions.
+   *
+   * Careful! This will shift the viewport regardless of where the player is.
+   * Objects already in the world will retain their coordinates and so may
+   * appear in unexpected locations on the screen.
+   *
+   * @param {Number} newWidth The new width to which to resize the world.
+   * @param {Number} newHeight The new height to which to resize the world.
+   */
+  this.resize = function(newWidth, newHeight) {
+    // Try to re-center the offset of the part of the world in the canvas
+    // so we're still looking at approximately the same thing.
+    var deltaX = (newWidth - this.width) / 2, deltaY = (newHeight - this.height) / 2;
+    this.xOffset += deltaX;
+    this.yOffset += deltaY;
+    context.translate(-deltaX, -deltaY);
+    
+    // Change the world dimensions.
+    this.width = newWidth;
+    this.height = newHeight;
+    
+    /**
+     * @event resizeWorld
+     *   Broadcast that the world size changed so that objects already in the
+     *   world or other things that depend on the world size can update their
+     *   position or size accordingly.
+     * @param {Number} x How far in pixels the viewport shifted horizontally.
+     * @param {Number} y How far in pixels the viewport shifted vertically.
+     * @param {World} resizedWorld The world that changed size.
+     */
+    jQuery(document).trigger('resizeWorld', [deltaX, deltaY, this]);
+  };
+
+  /**
+   * Scale the canvas resolution.
+   *
+   * Passing a factor smaller than 1 allows reducing the resolution of the
+   * canvas, which should improve performance (since there is less to render in
+   * each frame). It does not actually change the size of the canvas on the
+   * page; it just scales how big each "pixel" is drawn on the canvas, much
+   * like changing the resolution of your monitor does not change its physical
+   * size. It is your responsibility to change the size of any fixed-size
+   * entities in the world after resizing, if applicable; if you don't do this,
+   * calling this function works much like zooming in or out.
+   *
+   * You may want to call this in a listener for the
+   * {@link global#low_fps Low FPS event}.
+   *
+   * @param {Number} factor
+   *   The percent amount to scale the resolution on each dimension as a
+   *   fraction of the <em>current</em> resolution (typically between zero and
+   *   one). In other words, if the original resolution is 1024*768, scaling
+   *   the resolution by a factor of 0.5 will result in a resolution of 512*384
+   *   (showing 25% as many pixels on the screen). If scaled again by a factor
+   *   of 2, the result is 1024*768 again. Use the `scale` property to detect
+   *   the factor by which the resolution is currently scaled.
+   * @param {Number} [x=0]
+   *   The x-coordinate of a location to center the viewport around after
+   *   resizing the canvas. A common use is `player.x`.
+   * @param {Number} [y=0]
+   *   The y-coordinate of a location to center the viewport around after
+   *   resizing the canvas. A common use is `player.y`.
+   */
+  this.scaleResolution = function(factor, x, y) {
+    $canvas.css({
+      width: (canvas.width/this.scale) + 'px',
+      height: (canvas.height/this.scale) + 'px',
+    });
+    canvas.width = (canvas.width*factor)|0;
+    canvas.height = (canvas.height*factor)|0;
+    x = x || 0;
+    y = y || 0;
+    this.xOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0;
+    this.yOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0;
+    context.translate(-this.xOffset, -this.yOffset);
+    this.scale = factor;
+    if (!isAnimating()) {
+      draw();
+    }
+  };
+
+  /**
+   * Center the viewport around a specific location.
+   *
+   * @param {Number} x The x-coordinate around which to center the viewport.
+   * @param {Number} y The y-coordinate around which to center the viewport.
+   */
+  this.centerViewportAround = function(x, y) {
+    var newXOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0,
+        newYOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0,
+        deltaX = this.xOffset - newXOffset,
+        deltaY = this.yOffset - newYOffset;
+    this.xOffset = newXOffset;
+    this.yOffset = newYOffset;
+    context.translate(deltaX, deltaY);
+  };
+
+  /**
+   * Determine whether a Box is inside the viewport.
+   *
+   * To test whether a Box is inside the World, see World#isInWorld().
+   *
+   * @param {Box} box
+   *   The Box object to check for visibility.
+   * @param {Boolean} [partial=false]
+   *   Indicates whether to consider the Box inside the viewport if it is only
+   *   partially inside (true) or fully inside (false).
+   *
+   * @return {Boolean}
+   *   true if the Box is inside the viewport; false otherwise.
+   */
+  this.isInView = function(box, partial) {
+    if (partial) {
+      return box.x + box.width > this.xOffset &&
+        box.x < this.xOffset + canvas.width &&
+        box.y + box.height > this.yOffset &&
+        box.y < this.yOffset + canvas.height;
+    }
+    return box.x > this.xOffset &&
+      box.x + box.width < this.xOffset + canvas.width &&
+      box.y > this.yOffset &&
+      box.y + box.height < this.yOffset + canvas.height;
+  };
+
+  /**
+   * Determine whether a Box is inside the world.
+   *
+   * To test whether a Box is inside the viewport, see World#isInView().
+   *
+   * @param {Box} box
+   *   The Box object to check.
+   * @param {Boolean} [partial=false]
+   *   Indicates whether to consider the box inside the world if it is only
+   *   partially inside (true) or fully inside (false).
+   *
+   * @return {Boolean}
+   *   true if the Box is inside the world; false otherwise.
+   */
+  this.isInWorld = function(box, partial) {
+    if (partial) {
+      return box.x + box.width >= 0 && box.x <= world.width &&
+        box.y + box.height >= 0 && box.y <= world.height;
+    }
+    return box.x >= 0 && box.x + box.width <= world.width &&
+      box.y >= 0 && box.y + box.height <= world.height;
+  };
+}
 
 // UTILITIES ------------------------------------------------------------------
 
