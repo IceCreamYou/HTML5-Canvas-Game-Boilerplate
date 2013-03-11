@@ -14,7 +14,7 @@ Getting Started
 ---------------
 
 To get started building, open up
-[main.js](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/main.js).
+[main.js](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/app/main.js).
 There are three functions there which are the backbone of your application:
 
  - **update():** Update the objects in your world -- move them, calculate

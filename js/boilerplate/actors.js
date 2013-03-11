@@ -356,10 +356,10 @@ var Box = Class.extend({
    * Invoked on solids every frame when an Actor is standing on them and
    * Actor#GRAVITY is enabled. This is useful for changing Actor behavior
    * depending on the surface. Example applications include making a surface
-   * slippery (by changing Actor#DAMPING_FACTOR), making it bouncy (by adding
-   * upward velocity), or changing the Actor's speed. This can also be used for
-   * special actions like making the Box move only when a Player is standing on
-   * it.
+   * slippery (by changing {@link Actor#DAMPING_FACTOR}), making it bouncy (by
+   * adding upward velocity), or changing the Actor's speed. This can also be
+   * used for special actions like making the Box move only when a Player is
+   * standing on it.
    *
    * @param {Actor} stander
    *   The Actor that is standing on this Box.
@@ -1604,7 +1604,8 @@ var Actor = Box.extend({
   /**
    * Keys specific to this actor.
    *
-   * Defaults to global#keys if not set (and uses the same structure).
+   * Defaults to the global {@link global#keys keys} if not set (and uses the
+   * same structure).
    *
    * See also Actor#processInput().
    */
