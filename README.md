@@ -125,8 +125,11 @@ Box class provides the listen(), once(), and unlisten() methods to
 ### Wrappers and Automatic Handlers
 
  - **Keyboard Input:** For many use cases, keyboard input is handled
-   automatically via the "keys" object defined in main.js. You can also bind
-   directly to key event combinations using natural descriptions of the keys:
+   automatically via the "keys" object defined in main.js. Additionally, Actors
+   can use a "keys" property structured the same way as the global "keys"
+   object; use this to assign different keys to different Actors (useful for
+   multiplayer on the same keyboard, for example). You can also bind directly
+   to key event combinations using natural descriptions of the keys:
    ```$(selector).keypress('ctrl+a down', function(event) { });```
 
    Other ways to handle keyboard input are described in the

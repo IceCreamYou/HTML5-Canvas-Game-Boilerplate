@@ -2181,7 +2181,9 @@ App.gameOver = function() {
   }
   App.isGameOver = true;
   stopAnimating();
-  player.destroy();
+  if (player) {
+    player.destroy();
+  }
   // This runs during update() before the final draw(), so we have to delay it.
   setTimeout(function() {
     context.save();

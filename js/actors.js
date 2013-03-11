@@ -340,11 +340,31 @@ var Box = Class.extend({
   /**
    * Destroy the Box.
    *
-   * Override this method to trigger an event when the object is destroyed. For
-   * example, this would allow displaying an explosion when a bullet hit a
-   * target.
+   * By default, this method does nothing. Override this method to trigger an
+   * event when the object is destroyed. For example, this could allow
+   * displaying an explosion when a bullet hits a target.
+   *
+   * This method can also be used to release memory allocated when the Box is
+   * initialized, though by default, only Players need to be destroy()ed to
+   * release memory (specifically this releases keyboard control).
    */
   destroy: function() {},
+
+  /**
+   * @method stoodOn
+   *
+   * Invoked on solids every frame when an Actor is standing on them and
+   * Actor#GRAVITY is enabled. This is useful for changing Actor behavior
+   * depending on the surface. Example applications include making a surface
+   * slippery (by changing Actor#DAMPING_FACTOR), making it bouncy (by adding
+   * upward velocity), or changing the Actor's speed. This can also be used for
+   * special actions like making the Box move only when a Player is standing on
+   * it.
+   *
+   * @param {Actor} stander
+   *   The Actor that is standing on this Box.
+   */
+  stoodOn: null,
 });
 
 /**
@@ -1581,6 +1601,15 @@ var Actor = Box.extend({
    */
   yAcceleration: 0,
 
+  /**
+   * Keys specific to this actor.
+   *
+   * Defaults to global#keys if not set (and uses the same structure).
+   *
+   * See also Actor#processInput().
+   */
+  keys: undefined,
+
   // Dynamic (internal) variables
   lastJump: 0, // Time when the last jump occurred in milliseconds since the epoch
   lastDirection: [], // The last direction (i.e. key press) passed to processInput()
@@ -1680,7 +1709,8 @@ var Actor = Box.extend({
     var left = false,
         right = false,
         looked = false,
-        anyIn = App.Utils.anyIn;
+        anyIn = App.Utils.anyIn,
+        keys = this.keys || window.keys;
     // Bail if someone deleted the keys variable.
     if (typeof keys === 'undefined') {
       return;
@@ -2215,6 +2245,9 @@ var Actor = Box.extend({
       if (this.standingOn(collideWith)) {
         this.stopFalling();
         falling = false;
+        if (typeof collideWith.stoodOn == 'function') {
+          collideWith.stoodOn(this);
+        }
       }
       this.x = x;
       // If we're in the air and we hit something, stop the momentum.
@@ -2286,7 +2319,8 @@ var Actor = Box.extend({
     if (!(this.src instanceof SpriteMap)) {
       return;
     }
-    var lastDirection = this.lastDirection,
+    var keys = this.keys || window.keys,
+        lastDirection = this.lastDirection,
         keysIsDefined = typeof keys !== 'undefined'; // Don't fail if "keys" was removed
     // Don't let shooting make us change where we're looking.
     if (keysIsDefined &&
@@ -2479,6 +2513,7 @@ var Actor = Box.extend({
    *   An Array containing directions that are no longer being given.
    */
   release: function(releasedDirections) {
+    var keys = this.keys || window.keys;
     if (this.GRAVITY && typeof keys !== 'undefined' &&
         App.Utils.anyIn(keys.up, releasedDirections)) {
       this.jumpKeyDown = false;
