@@ -61,16 +61,17 @@
 function SpriteMap(src, animations, options) {
   var origPIC = typeof options.postInitCallback == 'function' ? options.postInitCallback : null;
   var t = this;
-  options.postInitCallback = function() {
-    if (origPIC) {
-      t.baseImage = t.sprite.image;
-      t.cachedImages = {'00': t.baseImage};
-      t.maps = {};
-      for (var name in animations) {
-        if (animations.hasOwnProperty(name)) {
-          t.set(name, animations[name]);
-        }
+  options.postInitCallback = function(sprite) {
+    t.sprite = sprite;
+    t.baseImage = sprite.image;
+    t.cachedImages = {'00': t.baseImage};
+    t.maps = {};
+    for (var name in animations) {
+      if (animations.hasOwnProperty(name)) {
+        t.set(name, animations[name]);
       }
+    }
+    if (origPIC) {
       origPIC.apply(this, arguments);
     }
   };
