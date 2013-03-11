@@ -9,7 +9,7 @@
 
 // BEGIN SPRITE MAP LIBRARY ===================================================
 
-(function(undefined) {
+(function() {
 
 /**
  * Manage multiple sprite animations in the same sprite sheet.
@@ -59,16 +59,23 @@
  *   class.
  */
 function SpriteMap(src, animations, options) {
-  this.sprite = new Sprite(src, options);
-  this.baseImage = this.sprite.image;
-  this.cachedImages = {'00': this.baseImage};
-  this.sprite.spriteMap = this;
-  this.maps = {};
-  for (var name in animations) {
-    if (animations.hasOwnProperty(name)) {
-      this.set(name, animations[name]);
+  var origPIC = typeof options.postInitCallback == 'function' ? options.postInitCallback : null;
+  var t = this;
+  options.postInitCallback = function() {
+    if (origPIC) {
+      t.baseImage = t.sprite.image;
+      t.cachedImages = {'00': t.baseImage};
+      t.maps = {};
+      for (var name in animations) {
+        if (animations.hasOwnProperty(name)) {
+          t.set(name, animations[name]);
+        }
+      }
+      origPIC.apply(this, arguments);
     }
-  }
+  };
+  this.sprite = new Sprite(src, options);
+  this.sprite.spriteMap = this;
 }
 SpriteMap.prototype = {
   /**
@@ -262,7 +269,7 @@ this.SpriteMap = SpriteMap;
 // END SPRITE MAP LIBRARY =====================================================
 // BEGIN SPRITE ANIMATION LIBRARY =============================================
 
-(function(undefined) {
+(function() {
 
 /**
  * Support sprite animation.
@@ -430,14 +437,14 @@ Sprite.prototype = {
     this.cols = Math.floor(this.width / this.frameW);
     this.startRow = options.startRow || 0;
     this.startCol = options.startCol || 0;
-    this.endRow = (options.endRow === undefined ? this.rows-1 : options.endRow);
-    this.endCol = (options.endCol === undefined ? this.cols-1 : options.endCol);
+    this.endRow = (typeof options.endRow === 'undefined' ? this.rows-1 : options.endRow);
+    this.endCol = (typeof options.endCol === 'undefined' ? this.cols-1 : options.endCol);
     this.row = this.startRow;
     this.col = this.startCol;
     this.frame = 1;
     this.squeeze = options.squeeze || false;
-    this.interval = (options.interval === undefined ? 125 : options.interval);
-    this.useTimer = (options.useTimer === undefined ? true : options.useTimer);
+    this.interval = (typeof options.interval === 'undefined' ? 125 : options.interval);
+    this.useTimer = (typeof options.useTimer === 'undefined' ? true : options.useTimer);
     this.advanceFramesManually = options.advanceFramesManually || false;
     this.lastFrameUpdateTime = 0;
     this.flipped = options.flipped || {horizontal: false, vertical: false};
@@ -575,7 +582,7 @@ Sprite.prototype = {
    *   The column of the frame to which to switch.
    */
   setFrame: function(row, col) {
-    if (col !== undefined) {
+    if (typeof col !== 'undefined') {
       this.row = row, this.col = col;
       if (this.squeeze) {
         this.frame = this.cols * (this.row - this.startRow + 1) -
@@ -619,16 +626,16 @@ Sprite.prototype = {
    */
   setLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.stopLoop();
-    if (endRow === null || endRow === undefined) {
+    if (endRow === null || typeof endRow === 'undefined') {
       endRow = this.rows-1;
     }
-    if (endCol === null || endCol === undefined) {
+    if (endCol === null || typeof endCol === 'undefined') {
       endCol = this.cols-1;
     }
-    if (squeeze !== undefined) {
+    if (typeof squeeze !== 'undefined') {
       this.squeeze = squeeze;
     }
-    if (flipped !== undefined) {
+    if (typeof flipped !== 'undefined') {
       this.flipped = flipped;
     }
     this.startRow = startRow, this.startCol = startCol,
@@ -678,7 +685,7 @@ Sprite.prototype = {
    *   in which case it defaults to {horizontal: false, vertical: false}.
    */
   startLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
-    if (startRow !== undefined && startCol !== undefined) {
+    if (typeof startRow !== 'undefined' && typeof startCol !== 'undefined') {
       this.setLoop(startRow, startCol, endRow, endCol, squeeze, flipped);
     }
     this.lastFrameUpdateTime = Date.now();
