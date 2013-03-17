@@ -40,6 +40,60 @@ features, or dig deeper into the documentation:
      - **Feature Examples:** see specific features in action and learn how to
        implement them
 
+### Modularity and Drop-In Library
+
+Though this framework is designed as a complete boilerplate project -- that is,
+you can download the whole thing and start building on top of it immediately --
+you can also drop the JavaScript into an existing project, or choose to use
+only various components.
+
+To drop in the JavaScript canvas handling, include the
+[combined.min.js](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/combined.min.js)
+file.
+[Source maps](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/)
+are also supported with combined.js and combined.min.map. jQuery is required,
+and you'll still want to use
+[main.js](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/app/main.js)
+to write your application.
+
+Note that by default, the canvas will be
+[automatically detected](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App-static-method-setCanvas).
+You can designate a different canvas to use by calling ```App.setCanvas()```.
+Currently the app can only manage one canvas at a time.
+
+You can also choose to use only specific components. Here are the available JS
+files and their dependencies:
+
+ - **libraries/console-extras:** Debugging tools. Not included in the combined
+   script.
+ - **libraries/stats:** Allows showing a graph of frame rate or memory usage.
+   Not included in the combined script.
+ - **libraries/jQuery:** Required.
+ - **libraries/jquery.hotkeys.js:** Provides support for keyboard input.
+ - **libraries/classes.js:** Provides support for object hierarchy. Required by
+   actors.js.
+ - **libraries/sprite.js:** Provides support for animated sprite images.
+ - **boilerplate/core.js:** Required. Initializes the canvas, runs the
+   animation loop, and provides some utilities.
+ - **boilerplate/drawing.js:** Provides utilities to make drawing onto the
+   canvas easier. Required by actors.js.
+ - **boilerplate/mouse.js:** Handles mouse tracking, scrolling, dragging, and
+   events.
+ - **boilerplate/events.js:** Provides an event system for entities on the
+   canvas. Not very useful without mouse.js. Events work well with the entities
+   provided by actors.js.
+ - **boilerplate/storage.js:** Provides a wrapper around localStorage to
+   support storing non-string objects.
+ - **boilerplate/collections.js:** Provides useful containers for other
+   entities. Though it does not depend on actors.js, the containers work best
+   with items that have certain properties like those of the Box class provided
+   by actors.js.
+ - **boilerplate/actors.js:** Provides entities that are useful abstractions
+   for placing objects onto the canvas that support any kind of interaction
+   with the user or with other objects. Depends on drawing.js and classes.js
+   and works well with jquery.hotkeys.js, sprite.js, mouse.js, events.js, and
+   collections.js.
+
 
 API Overview
 ------------
@@ -173,12 +227,10 @@ Box class provides the listen(), once(), and unlisten() methods to
  - **[Global Variables](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/global):**
    Some frequently used variables, like player, canvas, context, and world, are
    provided globally for ease of reference.
- - **console.throttle(..., frequency[, logFunction]):** Log a message to the
-   JavaScript console no more often than a specified rate. This is useful for
-   logging things in loops since it avoids being overwhelmed by an unstoppable
-   barrage of similar log messages. If you want more helpers like this, check
-   out Steven Wittens'
-   [console-extras.js](https://github.com/unconed/console-extras.js).
+ - **Debugging:** Steven Wittens'
+   [console-extras.js](https://github.com/unconed/console-extras.js) is
+   included in the "js/libraries" folder for convenient debugging within the
+   main loop. It provides utilities to limit and analyze console output.
  - **Other Utilities:** A number of helper methods are available in
    [App](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App) and
    [App.Utils](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App.Utils),

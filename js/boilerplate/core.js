@@ -2,10 +2,9 @@
  * Provides helpful utilities for common Canvas operations.
  *
  * This file is the core of the project. It contains all the abstractions that
- * avoid low-level and boilerplate code. It addresses initializing the canvas
- * and running the main animation loop (including physics timing issues). It
- * also provides an event system for canvas objects as well as abstractions for
- * drawing, caching, and mouse handling.
+ * avoid low-level and boilerplate code, namely initializing / manipulating the
+ * canvas and running the main animation loop (including physics timing
+ * issues) as well as a few utilities.
  *
  * @ignore
  */
@@ -107,18 +106,6 @@ App.MAX_FPS = 100;
 App.physicsTimeElapsed = 0;
 // Defined later as the amount of simulated physics time since the last update.
 App.physicsDelta = 0;
-/**
- * @property
- *   Whether an {@link Actor} is being dragged.
- *
- * Drop targets can change how they look when a draggable object is hovered
- * over them by testing `this.isHovered() && App.isSomethingBeingDragged` in
- * their {@link Box#draw draw()} methods.
- *
- * @member App
- * @static
- */
-App.isSomethingBeingDragged = false;
 // App.Debug is used for tracking debugging information.
 App.Debug = {};
 App.Debug.updateTimeElapsed = 0;
@@ -149,27 +136,96 @@ var context;
 var world;
 
 /**
- * Handles mouse motion and scrolling.
+ * Set the canvas that the app should use.
+ *
+ * The canvas will be automatically detected if possible, using the following
+ * rules in order:
+ *
+ * - Look for a canvas with the DOM ID "canvas"
+ * - Look for the first canvas on the page without a data-takeover attribute
+ *   that has the value "false"
+ * - Create a new canvas
+ *
+ * However, you can force a specific canvas to be used by calling this
+ * function. Currently the app can only manage one canvas at a time.
+ *
+ * @param c
+ *   An HTMLCanvasElement (&lt;canvas&gt; object) or a DOM ID belonging to a
+ *   canvas. This is the canvas to which the app should switch.
+ * @member App
  * @static
  */
-var Mouse = {
-    /**
-     * @property
-     *   The coordinates of the mouse relative to the upper-left corner of the
-     *   canvas.
-     * @static
-     */
-    coords: {x: 9999, y: 9999},
+App.setCanvas = function(c) {
+  // Allow passing a DOM ID
+  if (typeof c == 'string') {
+    var oc = c;
+    c = document.getElementById(c);
+    if (!(c instanceof HTMLCanvasElement) && window.console && console.warn) {
+      console.warn('No canvas with ID ' + oc + ' found.');
+    }
+  }
+  if (!(c instanceof HTMLCanvasElement)) {
+    // If no canvas was specified and we already have one set up, don't switch.
+    if (canvas instanceof HTMLCanvasElement) {
+      return;
+    }
+    // Try to use the canvas with the ID "canvas"
+    canvas = document.getElementById('canvas');
+    // Automatically use the first canvas on the page without data-takeover="false"
+    if (!(canvas instanceof HTMLCanvasElement)) {
+      for (var i = 0, n = document.getElementsByTagName('canvas'), l = n.length; i < l; i++) {
+        if (n[i].getAttribute('data-takeover') != 'false') {
+          canvas = n[i];
+          break;
+        }
+      }
+    }
+    // If there is no available canvas on the page, create one
+    if (!(canvas instanceof HTMLCanvasElement)) {
+      canvas = document.createElement('canvas');
+    }
+    $canvas = jQuery(canvas);
+    // We've run setup before, we just decided to auto-detect again
+    if (App.isSetup) {
+      App.beforeSetup();
+    }
+    // We found the canvas automatically, so run the setup automatically
+    else {
+      jQuery(window).load(App.beforeSetup);
+    }
+  }
+  else {
+    // Reset the existing canvas if there is one.
+    if (typeof world !== 'undefined') {
+      context.translate(world.xOffset, world.yOffset);
+      world.scaleResolution(1/world.scale);
+    }
+    canvas = c;
+    $canvas = jQuery(canvas);
+    // We were passed a specific canvas, so set it up.
+    App.beforeSetup();
+  }
 };
 
-// Set up things early that need to be available elsewhere.
-jQuery(document).ready(function() {
-  // Set up the canvas.
-  canvas = document.getElementById('canvas');
-  $canvas = jQuery(canvas);
-  App.setDefaultCanvasSize();
+// Set up things that need to be available before setup()
+jQuery(document).ready(App.setCanvas);
 
-  // Set up the main graphics context.
+// Set up the app itself. This runs after main.js loads.
+App.beforeSetup = function() {
+  App.isSetup = true;
+
+  // Prevent default behavior of these keys because we'll be using them and
+  // they can cause other page behavior (like scrolling).
+  if (typeof keys !== 'undefined') {
+    for (var dir in keys) {
+      if (keys.hasOwnProperty(dir)) {
+        App.preventDefaultKeyEvents(keys[dir].join(' '));
+      }
+    }
+  }
+
+  // Resize the canvas and get the graphics context
+  App.setDefaultCanvasSize();
   context = canvas.getContext('2d');
 
   // If we have the Stats widget, set it up.
@@ -180,66 +236,6 @@ jQuery(document).ready(function() {
     App.stats.domElement.style.left = $canvas.offset().left;
     App.stats.domElement.style.top = $canvas.offset().top;
     document.body.appendChild(App.stats.domElement);
-  }
-
-  // Track the mouse.
-  $canvas.hover(function() {
-    var $this = jQuery(this);
-    $this.on('mousemove.coords, touchmove.coords', function(e) {
-      if (e.type == 'touchmove') {
-        // Prevent window scrolling on iPhone and display freeze on Android
-        e.preventDefault();
-      }
-      Mouse.coords = {
-          x: e.pageX - $this.offset().left,
-          y: e.pageY - $this.offset().top,
-      };
-    });
-  }, function() {
-    jQuery(this).off('.coords');
-    Mouse.coords = {x: -9999, y: -9999};
-  });
-
-  // Track and delegate click events.
-  $canvas.on('mousedown mouseup click touchstart touchend', function(e) {
-    if (isAnimating() && typeof App.Events !== 'undefined') {
-      App.Events.trigger(e.type, e);
-    }
-  });
-
-  // Track and delegate dragend events.
-  $canvas.on('mouseup.drag touchend.drag', function(e) {
-    if (typeof App.Events !== 'undefined') {
-      App.Events.trigger('canvasdragstop', e);
-    }
-    App.isSomethingBeingDragged = false;
-    /**
-     * @event canvasdragstop
-     *   Fires on the document when the player stops dragging an object,
-     *   i.e. when the player releases the mouse or stops touching the canvas.
-     * @member global
-     */
-    jQuery(document).trigger('canvasdragstop');
-  });
-
-  // Track and delegate drop events.
-  jQuery(document).on('canvasdrop', function(e, target) {
-    if (typeof App.Events !== 'undefined') {
-      App.Events.trigger('canvasdrop', e, target);
-    }
-  });
-});
-
-// Set up the app itself. This runs after main.js loads.
-jQuery(window).load(function() {
-  // Prevent default behavior of these keys because we'll be using them and
-  // they can cause other page behavior (like scrolling).
-  if (typeof keys !== 'undefined') {
-    for (var dir in keys) {
-      if (keys.hasOwnProperty(dir)) {
-        App.preventDefaultKeyEvents(keys[dir].join(' '));
-      }
-    }
   }
 
   // Pre-load images and start the animation.
@@ -257,14 +253,14 @@ jQuery(window).load(function() {
       App.reset(true);
     },
   });
-});
+};
 
 /**
  * Reset the environment.
  *
  * @param {Boolean} first
  *   Whether this is the first time App.reset() is being called (i.e. whether
- *   the game is being set up for the first time or not).
+ *   the app is being set up for the first time or not).
  * @member App
  * @static
  */
@@ -654,7 +650,9 @@ function animate() {
   }
 
   // update
-  Mouse.Scroll._update();
+  if (window.Mouse && Mouse.Scroll) {
+    Mouse.Scroll._update();
+  }
   while (frameDelta > 0 && !App.isGameOver) {
     // Break the physics updates down into discrete chunks of no more than
     // 1 / App.MAX_FPS in order to keep them as small as possible for accuracy.
@@ -726,618 +724,6 @@ jQuery(window).on('blur.animFocus', function() {
 
 })();
 
-// RENDERING ------------------------------------------------------------------
-
-/**
- * @class CanvasRenderingContext2D
- *   The native JavaScript canvas graphics context class.
- *
- * This class has been extended with custom methods (and one overridden
- * method).
- *
- * The canvas graphics context for the main canvas is stored in the
- * {@link global#context context} global variable.
- */
-
-/**
- * Clear the canvas.
- *
- * If the rendering context is the {@link global#context global context} for
- * the main canvas or if it belongs to a {@link Layer}, the visible area of the
- * relevant canvas will be cleared. Otherwise, the context doesn't know its
- * transformation matrix, so we have to temporarily reset it to clear the
- * canvas. This has the effect of clearing the visible area of the canvas, but
- * if the fillStyle is being used to draw something, it will not scroll with
- * the rest of the canvas.
- *
- * @param {Mixed} [fillStyle]
- *   If this parameter is passed, the visible area of the canvas will be filled
- *   in with the specified style. Otherwise, the canvas is simply wiped.
- *
- * @member CanvasRenderingContext2D
- */
-CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
-  this.save();
-  var x = 0, y = 0;
-  if (this.__layer) {
-    x = this.__layer.xOffset;
-    y = this.__layer.yOffset;
-  }
-  else {
-    this.setTransform(1, 0, 0, 1, 0, 0);
-  }
-  if (fillStyle) {
-    this.fillStyle = fillStyle;
-    this.fillRect(x, y, this.canvas.width, this.canvas.height);
-  }
-  else {
-    this.clearRect(x, y, this.canvas.width, this.canvas.height);
-  }
-  this.restore();
-};
-
-// Store the original drawImage function so we can actually use it.
-CanvasRenderingContext2D.prototype.__drawImage = CanvasRenderingContext2D.prototype.drawImage;
-/**
- * Draw an image onto the canvas.
- *
- * This method is better than the original `drawImage()` for several reasons:
- *
- * - It uses a cache to allow images to be drawn immediately if they were
- *   pre-loaded and to store images that were not pre-loaded so that they can
- *   be drawn immediately later.
- * - It can draw {@link Sprite}, {@link SpriteMap}, and {@link Layer} objects
- *   as well as the usual images, videos, and canvases. (Note that when Layers
- *   are drawn using this method, their "relative" property IS taken into
- *   account.)
- * - It allows drawing an image by passing in the file path instead of an
- *   Image object.
- *
- * Additionally, this method has an optional `finished` parameter which is a
- * callback that runs when the image passed in the `src` parameter is finished
- * loading (or immediately if the image is already loaded or is a video). The
- * callback's context (its `this` object) is the canvas graphics object. Having
- * this callback is useful because if you do not pre-load images, the image
- * will not be loaded (and therefore will not be drawn) for at least the first
- * time that drawing it is attempted. You can use the `finished` callback to
- * draw the image after it has been loaded if you want.
- *
- * Apart from the additions above, this method works the same way as the
- * [original in the spec](http://www.w3.org/TR/2dcontext/#drawing-images-to-the-canvas).
- *
- * As a summary, this method can be invoked three ways:
- *
- * - `drawImage(src, x, y[, finished])`
- * - `drawImage(src, x, y, w, h[, finished])`
- * - `drawImage(src, sx, sy, sw, sh, x, y, w, h[, finished])`
- *
- * In each case, the `src` parameter accepts one of the following:
- *
- *   - The file path of an image to draw
- *   - A {@link Sprite} or {@link SpriteMap} object
- *   - A {@link Layer} object
- *   - An HTMLCanvasElement
- *   - An HTMLImageElement (same thing as an Image)
- *   - An HTMLVideoElement
- *
- * The `x` and `y` parameters indicate the coordinates of the canvas graphics
- * context at which to draw the top-left corner of the image. (Often this is
- * the number of pixels from the top-left corner of the canvas, though the
- * context can be larger than the canvas if the viewport has scrolled, e.g.
- * with context.translate().)
- *
- * The `w` and `h` parameters indicate the width and height of the image,
- * respectively. Defaults to the image width and height, respectively (or, for
- * a Sprite or SpriteMap, defaults to the projectedW and projectedH,
- * respectively).
- *
- * The `sx`, `sy`, `sw`, and `sh` parameters define a rectangle within the
- * image that will be drawn onto the canvas. `sx` and `sy` are the x- and y-
- * coordinates (within the image) of the upper-left corner of the source
- * rectangle, respectively, and `sw` and `sh` are the width and height of the
- * source rectangle, respectively. These parameters are ignored when drawing a
- * Sprite or SpriteMap. The W3C provides a helpful image to understand these
- * parameters:
- *
- * <img src="http://www.w3.org/TR/2dcontext/images/drawImage.png" alt="drawImage" />
- *
- * See also {@link CanvasRenderingContext2D#drawPattern}() and
- * Caches.preloadImages().
- *
- * @param {Mixed} src
- * @param {Number} [sx]
- * @param {Number} [sy]
- * @param {Number} [sw]
- * @param {Number} [sh]
- * @param {Number} x
- * @param {Number} y
- * @param {Number} [w]
- * @param {Number} [h]
- * @param {Function} [finished]
- * @param {Array} [finished.args]
- *   An array containing the arguments passed to the drawImage() invocation.
- * @param {Boolean} [finished.drawn]
- *   Whether the image was actually drawn (it will not be drawn if the image
- *   wasn't loaded before drawImage() attempted to draw it).
- *
- * @member CanvasRenderingContext2D
- */
-CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, y, w, h, finished) {
-  // Allow the finished parameter to come last,
-  // regardless of how many parameters there are.
-  if (arguments.length % 2 === 0) {
-    finished = Array.prototype.pop.call(arguments);
-    // Don't let finished interfere with other arguments.
-    if (sw instanceof Function) sw = undefined;
-    else if (x instanceof Function) x = undefined;
-    else if (w instanceof Function) w = undefined;
-    if (typeof finished != 'function') {
-      finished = undefined;
-    }
-  }
-  var t = this, a = arguments;
-  // Keep the stupid order of parameters specified by the W3C.
-  // It doesn't matter that we're not providing the correct default values;
-  // those will be implemented by the original __drawImage() later.
-  if (typeof x != 'number' && typeof y === 'undefined' &&
-      typeof w != 'number' && typeof h === 'undefined') {
-    x = sx, y = sy;
-    if (typeof sw == 'number' && typeof sh !== 'undefined') {
-      w = sw, h = sh;
-    }
-    sx = undefined, sy = undefined, sw = undefined, sh = undefined;
-  }
-  // Wrapper function for doing the actual drawing
-  var _drawImage = function(image, x, y, w, h, sx, sy, sw, sh) {
-    if (w && h) {
-      if (sw && sh) {
-        t.__drawImage(image, sx, sy, sw, sh, x, y, w, h);
-      }
-      else {
-        t.__drawImage(image, x, y, w, h);
-      }
-    }
-    else {
-      t.__drawImage(image, x, y);
-    }
-    if (finished instanceof Function) {
-      finished.call(t, a, true);
-    }
-  };
-  if ((typeof Sprite !== 'undefined' && src instanceof Sprite) ||
-      (typeof SpriteMap !== 'undefined' && src instanceof SpriteMap)) { // draw a sprite
-    src.draw(this, x, y, w, h);
-    if (finished instanceof Function) {
-      finished.call(t, a, true); // Sprite images are loaded on instantiation
-    }
-  }
-  else if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
-    t.save();
-    t.globalAlpha = src.opacity;
-    if (src.relative == 'canvas') {
-      t.translate(world.xOffset, world.yOffset);
-    }
-    var f = finished;
-    finished = undefined; // Don't call finished() until after translating back
-    _drawImage(src.canvas, x, y, w, h, sx, sy, sw, sh);
-    t.restore();
-    finished = f;
-    if (finished instanceof Function) {
-      finished.call(t, a, true);
-    }
-  }
-  else if (src instanceof HTMLCanvasElement || // draw a canvas
-      src instanceof HTMLVideoElement) { // draw a video
-    _drawImage(src, x, y, w, h, sx, sy, sw, sh);
-  }
-  else if (src instanceof HTMLImageElement || // draw an image directly
-      src instanceof Image) { // same thing
-    var image = src;
-    src = image._src || image.src; // check for preloaded src
-    if (!src) { // can't draw an empty image
-      if (finished instanceof Function) {
-        finished.call(t, a, false);
-      }
-      return;
-    }
-    if (!Caches.images[src]) { // cache the image by source
-      Caches.images[src] = image;
-    }
-    if (image.complete || (image.width && image.height)) { // draw loaded images
-      _drawImage(image, x, y, w, h, sx, sy, sw, sh);
-    }
-    else { // if the image is not loaded, don't draw it
-      if (image._src) { // We've already tried to draw this one
-        // The finished callback will run from the first time it was attempted to be drawn
-        return;
-      }
-      var o = image.onload;
-      image.onload = function() {
-        if (typeof o == 'function') { // don't overwrite any existing handler
-          o();
-        }
-        if (finished instanceof Function) {
-          finished.call(t, a, false);
-        }
-      };
-    }
-  }
-  else if (typeof src == 'string' && Caches.images[src]) { // cached image path
-    var image = Caches.images[src];
-    if (image.complete || (image.width && image.height)) { // Cached image is loaded
-      _drawImage(image, x, y, w, h, sx, sy, sw, sh);
-    }
-    // If cached image is not loaded, bail; the finished callback will run
-    // from the first time it was attempted to be drawn
-  }
-  else if (typeof src == 'string') { // uncached image path
-    var image = new Image();
-    image.onload = function() {
-      if (finished instanceof Function) {
-        finished.call(t, a, false);
-      }
-    };
-    image._src = src;
-    image.src = src;
-    Caches.images[src] = image; // prevent loading an unloaded image multiple times
-  }
-  else {
-    throw new TypeMismatchError('Image type not recognized.');
-  }
-};
-
-/**
- * Draw a pattern onto the canvas.
- *
- * This function is preferred over createPattern() with fillRect() for drawing
- * patterns for several reasons:
- *
- * - It uses a cache to allow images to be drawn immediately if they were
- *   pre-loaded and to store images that were not pre-loaded so that they can
- *   be drawn immediately later.
- * - It can draw {@link Layer} objects as well as the usual images, videos, and
- *   canvases. (Note that when Layers are drawn using this method, their
- *   "relative" property IS taken into account.)
- * - It allows drawing an image by passing in the file path instead of an
- *   Image object.
- *
- * Unlike our modified `drawImage()`, this method cannot draw {@link Sprite}s
- * or {@link SpriteMap}s. If you need to draw a Sprite or SpriteMap as a
- * pattern, draw the part you want onto a Layer or a new canvas and then pass
- * that as the src.
- *
- * See also {@link CanvasRenderingContext2D#drawImage}() and
- * Caches.preloadImages().
- *
- * @param {Mixed} src
- *   The image to draw as a pattern. Accepts one of the following types:
- *
- *   - The file path of an image to draw
- *   - A {@link Layer} object
- *   - An HTMLCanvasElement
- *   - An HTMLImageElement (same thing as an Image)
- *   - An HTMLVideoElement
- *   - A CanvasPattern
- * @param {Number} [x=0]
- *   The x-coordinate at which to draw the top-left corner of the pattern.
- * @param {Number} [y=0]
- *   The y-coordinate at which to draw the top-left corner of the pattern.
- * @param {Number} [w]
- *   The width of the pattern. Defaults to the canvas width.
- * @param {Number} [h]
- *   The height of the pattern. Defaults to the canvas height.
- * @param {"repeat"/"repeat-x"/"repeat-y"/"no-repeat"} [rpt="repeat"]
- *   The repeat pattern type. This parameter can be omitted even if a finished
- *   callback is passed, so the call `drawPattern(src, x, y, w, h, finished)`
- *   is legal.
- * @param {Function} [finished]
- *   A callback that runs when the image passed in the "src" parameter is
- *   finished loading (or immediately if the image is already loaded or is a
- *   video). The callback's context (its `this` object) is the canvas graphics
- *   object. Having this callback is useful because if you do not pre-load
- *   images, the image will not be loaded (and therefore will not be drawn) for
- *   at least the first time that drawing it is attempted. You can use the
- *   finished callback to draw the image after it has been loaded if you want.
- * @param {Array} [finished.args]
- *   An array containing the arguments passed to the drawPattern() invocation.
- * @param {Boolean} [finished.drawn]
- *   Whether the image was actually drawn (it will not be drawn if the image
- *   wasn't loaded before drawPattern() attempted to draw it).
- *
- * @return {CanvasPattern}
- *   The CanvasPattern object for the pattern that was drawn, if possible; or
- *   undefined if a pattern could not be drawn (usually because the image
- *   specified for drawing had not yet been loaded). If your source parameter
- *   is anything other than an image or a file path, the image and pattern
- *   drawn cannot be cached, so it can be helpful for performance to store this
- *   return value and pass it in as the src parameter in the future if you need
- *   to draw the same pattern repeatedly. (Another option is to cache the
- *   drawn pattern in a {@link Layer}.)
- *
- * @member CanvasRenderingContext2D
- */
-CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, finished) {
-  if (typeof x === 'undefined') x = 0;
-  if (typeof y === 'undefined') y = 0;
-  if (typeof w === 'undefined') w = this.canvas.width;
-  if (typeof h === 'undefined') h = this.canvas.height;
-  if (typeof rpt == 'function') {
-    finished = rpt;
-    rpt = 'repeat';
-  }
-  else if (!rpt) {
-    rpt = 'repeat';
-  }
-  if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
-    src = src.canvas;
-  }
-  if (src instanceof CanvasPattern) { // draw an already-created pattern
-    this.fillStyle = src;
-    this.fillRect(x, y, w, h);
-    if (finished instanceof Function) {
-      finished.call(this, arguments, true);
-    }
-  }
-  else if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
-    this.save();
-    this.globalAlpha = src.opacity;
-    if (src.relative == 'canvas') {
-      this.translate(world.xOffset, world.yOffset);
-    }
-    this.fillStyle = this.createPattern(src.canvas, rpt);
-    this.fillRect(x, y, w, h);
-    this.restore();
-    if (finished instanceof Function) {
-      finished.call(this, arguments, true);
-    }
-  }
-  else if (src instanceof HTMLCanvasElement || // draw a canvas
-      src instanceof HTMLVideoElement) { // draw a video
-    this.fillStyle = this.createPattern(src, rpt);
-    this.fillRect(x, y, w, h);
-    if (finished instanceof Function) {
-      finished.call(this, arguments, true);
-    }
-  }
-  else if (src instanceof HTMLImageElement || // draw an image directly
-      src instanceof Image) { // same thing
-    var image = src;
-    src = image._src || image.src; // check for preloaded src
-    if (!src) { // can't draw an empty image
-      if (finished instanceof Function) {
-        finished.call(this, arguments, false);
-      }
-      return;
-    }
-    if (Caches.imagePatterns[src]) { // We already have a pattern; just draw it
-      this.fillStyle = Caches.imagePatterns[src];
-      this.fillRect(x, y, w, h);
-      if (finished instanceof Function) {
-        finished.call(this, arguments, true);
-      }
-      return this.fillStyle;
-    }
-    if (!Caches.images[src]) { // cache the image by source
-      Caches.images[src] = image;
-    }
-    if (image.complete || (image.width && image.height)) { // draw loaded images
-      this.fillStyle = this.createPattern(image, rpt);
-      this.fillRect(x, y, w, h);
-      Caches.imagePatterns[src] = this.fillStyle;
-      if (finished instanceof Function) {
-        finished.call(this, arguments, true);
-      }
-    }
-    else { // if the image is not loaded, don't draw it
-      if (image._src) { // We've already tried to draw this one
-        // The finished callback will run from the first time it was attempted to be drawn
-        return;
-      }
-      var t = this, o = image.onload;
-      image.onload = function() {
-        if (typeof o == 'function') { // don't overwrite any existing handler
-          o();
-        }
-        Caches.imagePatterns[src] = this.createPattern(image, rpt);
-        if (finished instanceof Function) {
-          finished.call(t, arguments, false);
-        }
-      };
-    }
-  }
-  else if (typeof src == 'string') { // file path
-    if (Caches.imagePatterns[src]) { // We already have a pattern; just draw it
-      this.fillStyle = Caches.imagePatterns[src];
-      this.fillRect(x, y, w, h);
-      if (finished instanceof Function) {
-        finished.call(this, arguments, true);
-      }
-    }
-    else if (Caches.images[src]) { // Image is cached, but no pattern
-      var image = Caches.images[src];
-      if (image.complete || (image.width && image.height)) { // Cached image is loaded
-        this.fillStyle = this.createPattern(image, rpt);
-        this.fillRect(x, y, w, h);
-        Caches.imagePatterns[src] = this.fillStyle;
-        if (finished instanceof Function) {
-          finished.call(this, arguments, true);
-        }
-      }
-      // If cached image is not loaded, bail; the finished callback will run
-      // from the first time it was attempted to be drawn
-    }
-    else { // Image not loaded yet
-      var image = new Image(), t = this;
-      image.onload = function() {
-        Caches.imagePatterns[src] = this.createPattern(image, rpt);
-        if (finished instanceof Function) {
-          finished.call(t, arguments, false);
-        }
-      };
-      image._src = src;
-      image.src = src;
-      Caches.images[src] = image;
-    }
-  }
-  if (Caches.imagePatterns[src]) {
-    return Caches.imagePatterns[src];
-  }
-};
-
-/**
- * Draw a checkerboard pattern.
- *
- * This method can be invoked in two ways:
- *
- * - `drawCheckered(squareSize, x, y, w, h, color1, color2);`
- * - `drawCheckered(color1, color2, squareSize, x, y, w, h);`
- *
- * All parameters are optional either way.
- *
- * @param {Number} [squareSize=80]
- *   The width and height, in pixels, of each square in the checkerboard
- *   pattern.
- * @param {Number} [x=0]
- *   The x-coordinate of where the pattern's upper-left corner should be drawn
- *   on the canvas.
- * @param {Number} [y=0]
- *   The y-coordinate of where the pattern's upper-left corner should be drawn
- *   on the canvas.
- * @param {Number} [w=squareSize*2]
- *   The width of the pattern to draw onto the canvas.
- * @param {Number} [h=squareSize*2]
- *   The height of the pattern to draw onto the canvas.
- * @param {String} [color1="silver"]
- *   The color of one set of squares in the checkerboard.
- * @param {String} [color2="lightGray"]
- *   The color of the other set of squares in the checkerboard.
- *
- * @return {CanvasPattern}
- *   The CanvasPattern object for the pattern that was drawn. It can be helpful
- *   for performance to store this return value and use it to call
- *   {@link CanvasRenderingContext2D#drawPattern}() in the future if you need
- *   to draw this same pattern repeatedly. (Another option is to cache the
- *   drawn pattern in a {@link Layer}.)
- *
- * @member CanvasRenderingContext2D
- */
-CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w, h, color1, color2) {
-  if (typeof squareSize === 'undefined') squareSize = 80;
-  if (typeof squareSize == 'string' && typeof x == 'string') {
-    var c1 = squareSize, c2 = x;
-    squareSize = y, x = w, y = h, w = color1, h = color2;
-    color1 = c1, color2 = c2;
-  }
-  var pattern = document.createElement('canvas'), pctx = pattern.getContext('2d');
-  pattern.width = squareSize*2;
-  pattern.height = squareSize*2;
-  pctx.fillStyle = color1 || 'silver';
-  pctx.fillRect(0, 0, squareSize, squareSize);
-  pctx.fillRect(squareSize, squareSize, squareSize, squareSize);
-  pctx.fillStyle = color2 || 'lightGray';
-  pctx.fillRect(squareSize, 0, squareSize, squareSize);
-  pctx.fillRect(0, squareSize, squareSize, squareSize);
-  return this.drawPattern(pattern, x || 0, y || 0, w || this.canvas.width, h || this.canvas.height);
-};
-
-// DRAW SHAPES ----------------------------------------------------------------
-
-/**
- * Draw a circle.
- *
- * @param {Number} x
- *   The x-coordinate of the center of the circle.
- * @param {Number} y
- *   The y-coordinate of the center of the circle.
- * @param {Number} r
- *   The radius of the circle.
- * @param {Mixed} [fillStyle]
- *   A canvas fillStyle used to fill the circle. If not specified, the circle
- *   uses the current fillStyle. If null, the circle is not filled.
- * @param {Mixed} [strokeStyle]
- *   A canvas strokeStyle used to draw the circle's border. If not specified,
- *   no border is drawn on the circle. If null, the border uses the current
- *   strokeStyle.
- *
- * @member CanvasRenderingContext2D
- */
-CanvasRenderingContext2D.prototype.circle = function(x, y, r, fillStyle, strokeStyle) {
-  // Circle
-  this.beginPath();
-  this.arc(x, y, r, 0, 2 * Math.PI, false);
-  if (fillStyle !== null) {
-    if (fillStyle) {
-      this.fillStyle = fillStyle;
-    }
-    this.fill();
-  }
-  if (strokeStyle !== undefined) {
-    this.lineWidth = Math.max(Math.ceil(r/15), 1);
-    if (strokeStyle) {
-      this.strokeStyle = strokeStyle;
-    }
-    this.stroke();
-  }
-};
-
-/**
- * Draw a smiley face.
- *
- * The {@link Actor} class uses this as a placeholder image.
- *
- * @param {Number} x
- *   The x-coordinate of the center of the smiley face.
- * @param {Number} y
- *   The y-coordinate of the center of the smiley face.
- * @param {Number} r
- *   The radius of the smiley face.
- * @param {Mixed} [fillStyle]
- *   The color of the smiley face.
- *
- * @member CanvasRenderingContext2D
- */
-CanvasRenderingContext2D.prototype.drawSmiley = function(x, y, r, fillStyle) {
-  var thickness = Math.max(Math.ceil(r/15), 1);
-  
-  // Circle
-  this.circle(x, y, r, fillStyle || 'lightBlue', 'black');
-  
-  // Smile
-  this.beginPath();
-  this.arc(x, y, r*0.6, Math.PI*0.1, Math.PI*0.9, false);
-  this.lineWidth = thickness;
-  this.strokeStyle = 'black';
-  this.stroke();
-    
-  // Eyes
-  this.beginPath();
-  this.arc(x - r*0.3, y - r*0.25, Math.max(Math.ceil(r/15), 1), 0, 2 * Math.PI, false);
-  this.fillStyle = 'black';
-  this.fill();
-  this.arc(x + r*0.3, y - r*0.25, Math.max(Math.ceil(r/15), 1), 0, 2 * Math.PI, false);
-  this.fillStyle = 'black';
-  this.fill();
-};
-
-/**
- * Draw a blue-and-yellow radial gradient across the entire background of the
- * world. This is mainly useful to demonstrate that scrolling works if the
- * world is bigger than the canvas.
- *
- * @member CanvasRenderingContext2D
- */
-CanvasRenderingContext2D.prototype.drawBkgdRadialGradient = function() {
-  // Draw a radial gradient on the background.
-  var radgrad = context.createRadialGradient(
-      world.width/2, world.height/2, 50,
-      world.width/2, world.height/2, world.width/2
-  );
-  radgrad.addColorStop(0, '#A7D30C');
-  radgrad.addColorStop(0.6, '#067A9E');
-  radgrad.addColorStop(1, 'rgba(1,159,98,0)');
-  this.clear(radgrad);
-};
-
 // INPUT ----------------------------------------------------------------------
 
 /**
@@ -1360,221 +746,13 @@ CanvasRenderingContext2D.prototype.drawBkgdRadialGradient = function() {
  * @static
  */
 App.preventDefaultKeyEvents = function(combinations) {
-  jQuery(document).keydown(combinations, function() { return false; });
-};
-
-/**
- * Determine whether the mouse is hovering over an object.
- *
- * The object in question must have these properties: `x`, `y`, `width`,
- * `height`. (All {@link Box}es have these properties.)
- *
- * @param {Box} obj
- *   The object to check.
- *
- * @return {Boolean}
- *   Whether the mouse is hovering over the object.
- *
- * @member App
- * @static
- */
-App.isHovered = function(obj) {
-  var offsets = world.getOffsets(),
-      xPos = obj.x - offsets.x,
-      yPos = obj.y - offsets.y;
-  return Mouse.coords.x > xPos && Mouse.coords.x < xPos + obj.width &&
-      Mouse.coords.y > yPos && Mouse.coords.y < yPos + obj.height;
-};
-
-/**
- * @class Mouse.Scroll
- *   Encapsulates mouse position scrolling.
- *
- * @static
- */
-Mouse.Scroll = (function() {
-  var THRESHOLD = 0.2, MOVEAMOUNT = 350;
-  var translating = false, scrolled = {x: 0, y: 0}, enabled = false;
-  function translate(doOffset) {
-    var t = false, ma;
-    if (doOffset === undefined) doOffset = true;
-
-    // Left
-    if (Mouse.coords.x < canvas.width * THRESHOLD) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
-        world.xOffset -= ma;
-        scrolled.x -= ma;
-        context.translate(ma, 0);
-      }
-      t = true;
-    }
-    // Right
-    else if (Mouse.coords.x > canvas.width * (1-THRESHOLD)) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
-        world.xOffset += ma;
-        scrolled.x += ma;
-        context.translate(-ma, 0);
-      }
-      t = true;
-    }
-
-    // Up
-    if (Mouse.coords.y < canvas.height * THRESHOLD) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
-        world.yOffset -= ma;
-        scrolled.y -= ma;
-        context.translate(0, ma);
-      }
-      t = true;
-    }
-    // Down
-    else if (Mouse.coords.y > canvas.height * (1-THRESHOLD)) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
-        world.yOffset += ma;
-        scrolled.y += ma;
-        context.translate(0, -ma);
-      }
-      t = true;
-    }
-
-    // We're not translating if we're not moving.
-    if (doOffset && scrolled.x === 0 && scrolled.y === 0) {
-      t = false;
-    }
-
-    if (doOffset && translating != t) {
-      if (translating) { // We were scrolling. Now we're not.
-        /**
-         * @event mousescrollon
-         *   Fires on the document when the viewport starts scrolling. Binding
-         *   to this event may be useful if you want to pause animation or
-         *   display something while the viewport is moving.
-         */
-        jQuery(document).trigger('mousescrollon');
-      }
-      else { // We weren't scrolling. Now we are.
-        /**
-         * @event mousescrolloff
-         *   Fires on the document when the viewport stops scrolling. Binding
-         *   to this event may be useful if you want to pause animation or
-         *   display something while the viewport is moving.
-         */
-        jQuery(document).trigger('mousescrolloff');
-      }
-    }
-    translating = t;
-    return scrolled;
+  if (jQuery.hotkeys) {
+    jQuery(document).keydown(combinations, function() { return false; });
   }
-  return {
-    /**
-     * Enable mouse position scrolling.
-     * @static
-     */
-    enable: function() {
-      if (enabled) {
-        return;
-      }
-      enabled = true;
-      $canvas.on('mouseenter.translate touchstart.translate', function() {
-        jQuery(this).on('mousemove.translate', function() {
-          translate(false);
-        });
-      });
-      $canvas.on('mouseleave.translate touchleave.translate', function() {
-        translating = false;
-        jQuery(this).off('.translate');
-      });
-    },
-    /**
-     * Disable mouse position scrolling.
-     * @static
-     */
-    disable: function() {
-      $canvas.off('.translate');
-      translating = false;
-      enabled = false;
-    },
-    /**
-     * Test whether mouse position scrolling is enabled.
-     * @static
-     */
-    isEnabled: function() {
-      return enabled;
-    },
-    /**
-     * Test whether the viewport is currently mouse-scrolling.
-     * @static
-     */
-    isScrolling: function() {
-      return translating;
-    },
-    _update: function() {
-      if (translating) {
-        return translate();
-      }
-    },
-    /**
-     * Set how close to the edge of the canvas the mouse triggers scrolling.
-     *
-     * The threshold is a fractional percentage [0.0-0.5) of the width of the
-     * canvas. If the mouse is within this percent of the edge of the canvas,
-     * the viewport attempts to scroll. The default threshold is 0.2 (20%).
-     *
-     * See also Mouse.Scroll.getThreshold().
-     *
-     * @static
-     */
-    setThreshold: function(t) {
-      THRESHOLD = t;
-    },
-    /**
-     * Get how close to the edge of the canvas the mouse triggers scrolling.
-     *
-     * See also Mouse.Scroll.getThreshold().
-     *
-     * @return {Number}
-     *   The mouse-scrolling threshold. The threshold is a fractional
-     *   percentage [0.0-0.5) of the width of the canvas. If the mouse is
-     *   within this percent of the edge of the canvas, the viewport attempts
-     *   to scroll. The default threshold is 0.2 (20%).
-     *
-     * @static
-     */
-    getThreshold: function() {
-      return THRESHOLD;
-    },
-    /**
-     * Set how fast the mouse will cause the viewport to scroll.
-     *
-     * @param {Number} a
-     *   The maximum distance in pixels that the viewport will move each second
-     *   while scrolling (the movement can be less when the viewport is very
-     *   close to an edge of the world). Defaults to 350.
-     *
-     * @static
-     */
-    setScrollDistance: function(a) {
-      MOVEAMOUNT = a;
-    },
-    /**
-     * Get how fast the mouse will cause the viewport to scroll.
-     *
-     * @return {Number}
-     *   The maximum distance in pixels that the viewport will move each second
-     *   while scrolling (the movement can be less when the viewport is very
-     *   close to an edge of the world). Defaults to 350.
-     *
-     * @static
-     */
-    getScrollDistance: function() {
-      return MOVEAMOUNT;
-    },
-  };
-})();
+  else if (window.console && console.warn) {
+    console.warn('Tried to prevent default key events but jQuery.hotkeys does not exist.');
+  }
+};
 
 // TIMER ----------------------------------------------------------------------
 
@@ -1592,7 +770,8 @@ performance.now = (function() {
 /**
  * A timer.
  *
- * Adapted from the [three.js clock](https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js).
+ * Adapted from the
+ * [three.js clock](https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js).
  *
  * If you only care about how long something takes (e.g. when testing
  * performance) and you don't need to stop the timer, Timer#event() and
@@ -1841,6 +1020,9 @@ function World(w, h) {
    *   resizing the canvas. A common use is `player.y`.
    */
   this.scaleResolution = function(factor, x, y) {
+    if (factor === 1) {
+      return;
+    }
     $canvas.css({
       width: (canvas.width/this.scale) + 'px',
       height: (canvas.height/this.scale) + 'px',
@@ -2218,87 +1400,3 @@ Number.prototype.sign = function(v) {
   }
   return v > 0 ? 1 : (v < 0 ? -1 : 0);
 };
-
-(function(console) {
-  /**
-   * Get a string with the function, filename, and line number of the call.
-   *
-   * This provides a unique ID to identify where each call originated.
-   *
-   * This function was written by Steven Wittens (unconed). MIT Licensed.
-   * More at [console-extras.js](https://github.com/unconed/console-extras.js).
-   *
-   * @ignore
-   */
-  function getCallID() {
-    var stack = new Error().stack;
-    if (stack) {
-      var lines = stack.split(/\n/g), skip = 2;
-      var found = false, offset = 0;
-      for (var i in lines) {
-        if (offset == skip) {
-          return lines[i];
-        }
-        if (!found && lines[i].match(/getCallID/)) {
-          found = true;
-        }
-        if (found) {
-          offset++;
-        }
-      }
-    }
-    return 'exception';
-  }
-  /**
-   * Periodically log a message to the JavaScript console.
-   *
-   * This is useful for logging things in loops; it avoids being overwhelmed by
-   * an unstoppable barrage of similar log messages. Example calls:
-   *
-   *     # Log "message" to the console no more than every 500ms.
-   *     console.throttle('message', 500);
-   *     # Log "message 1" and "message 2" as errors no more than every 500ms.
-   *     console.throttle('message 1', 'message 2', 500, console.error);
-   *
-   * @param {Arguments} ...
-   *   An arbitrary number of arguments to pass to the loggging function.
-   * @param {Number} freq
-   *   The minimum amount of time in milliseconds that must pass between the
-   *   same call before logging the next one. To only log something once, pass
-   *   `Infinity` to this parameter.
-   * @param {Function} [func=console.log]
-   *   The logging function to use.
-   *
-   * @return
-   *   The console object (this method is chainable).
-   *
-   * @member console
-   * @chainable
-   * @ignore
-   */
-  console.throttle = function() {
-    if (arguments.length < 2) {
-      return console;
-    }
-    var freq = 0, id = getCallID(), func = Array.prototype.pop.call(arguments);
-    if (typeof func == 'number') {
-      freq = func;
-      func = console.log || function() {};
-    }
-    else if (typeof func == 'function') {
-      freq = Array.prototype.pop.call(arguments);
-    }
-    if (typeof this.lastLogged === 'undefined') {
-      this.lastLogged = {};
-    }
-    if (typeof this.lastLogged[id] === 'undefined') {
-      this.lastLogged[id] = 0;
-    }
-    var now = performance.now();
-    if (now > this.lastLogged[id] + freq) {
-      this.lastLogged[id] = now;
-      func.apply(func, arguments);
-    }
-    return console;
-  };
-})(console);

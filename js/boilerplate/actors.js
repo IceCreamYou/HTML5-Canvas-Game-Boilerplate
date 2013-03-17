@@ -1,10 +1,8 @@
 /**
  * Defines useful classes for actors in the world.
  *
- * Specifically, this file holds the Box, Actor, Player, Collection, TileMap,
- * Layer, and World classes. Though not strictly boilerplate, Layer and World
- * are useful for any Canvas project, and the rest are are useful abstractions
- * for practically any game-style environment.
+ * Specifically, this file holds the Box, Actor, and Player classes. These are
+ * useful abstractions for practically any game-style environment.
  *
  * @ignore
  */
@@ -185,6 +183,17 @@ var Box = Class.extend({
    * indicating whether there is overlap, whereas Box#collides() can check
    * against many Boxes and returns the first item to overlap (if any).
    *
+   * The collision checking here uses AABB detection, meaning it uses upright
+   * rectangles. It is accurate, but not as fast as it could be if there are
+   * many objects to check against. If you need faster collision checking
+   * against many objects and you're willing to do it manually, consider
+   * implementing
+   * [spatial partitioning](http://buildnewgames.com/broad-phase-collision-detection/).
+   * If you need different collision models (for example with rotated
+   * rectangles or different shapes) or if you need more advanced physics
+   * simulation (for example to model springs) consider using the
+   * [Box2D library](https://github.com/kripken/box2d.js/).
+   *
    * @param {Box/Collection/TileMap} collideWith
    *   A Box, Collection of Boxes, or TileMap with which to check for overlap.
    * @param {Boolean} [returnAll=false]
@@ -256,6 +265,12 @@ var Box = Class.extend({
    * Determine whether the mouse is hovering over this Box.
    */
   isHovered: function() {
+    if (typeof App.isHovered != 'function') {
+      if (window.console && console.warn) {
+        console.warn('Box#isHovered called, but App.isHovered does not exist.');
+      }
+      return false;
+    }
     return App.isHovered(this);
   },
   /**
@@ -285,7 +300,12 @@ var Box = Class.extend({
    *   multiple listening objects are overlapping.
    */
   listen: function(eventName, callback, weight) {
-    App.Events.listen(this, eventName, callback, weight);
+    if (App.Events) {
+      App.Events.listen(this, eventName, callback, weight);
+    }
+    else if (window.console && console.warn) {
+      console.warn('Box#listen called, but App.Events does not exist.');
+    }
     return this;
   },
   /**
@@ -316,7 +336,12 @@ var Box = Class.extend({
    *   multiple listening objects are overlapping.
    */
   once: function(eventName, callback, weight) {
-    App.Events.once(this, eventName, callback, weight);
+    if (App.Events) {
+      App.Events.once(this, eventName, callback, weight);
+    }
+    else if (window.console && console.warn) {
+      console.warn('Box#once called, but App.Events does not exist.');
+    }
     return this;
   },
   /**
@@ -334,7 +359,12 @@ var Box = Class.extend({
    *   unbound regardless of their namespace.
    */
   unlisten: function(eventName) {
-    App.Events.unlisten(this, eventName);
+    if (App.Events) {
+      App.Events.unlisten(this, eventName);
+    }
+    else if (window.console && console.warn) {
+      console.warn('Box#unlisten called, but App.Events does not exist.');
+    }
     return this;
   },
   /**
@@ -366,872 +396,6 @@ var Box = Class.extend({
    */
   stoodOn: null,
 });
-
-/**
- * A container to keep track of multiple Boxes/Box descendants.
- *
- * @constructor
- *   Creates a new Collection instance.
- *
- * @param {Array} [items]
- *   An Array of Boxes that the Collection should hold.
- */
-function Collection(items) {
-  this.items = items || [];
-}
-Collection.prototype = {
-  /**
-   * Draw every object in the Collection.
-   *
-   * This calls Box#draw() on every Box in the Collection.
-   *
-   * @param {CanvasRenderingContext2D} [ctx]
-   *   A canvas graphics context onto which to draw. This is useful for drawing
-   *   onto {@link Layer}s. If not specified, defaults to the
-   *   {@link global#context global context} for the default canvas.
-   */
-  draw: function(ctx) {
-    ctx = ctx || context;
-    for (var i = 0; i < this.items.length; i++) {
-      this.items[i].draw(ctx);
-    }
-    return this;
-  },
-  /**
-   * Execute a function on every item in the Collection.
-   *
-   * @param {Function/String} f
-   *   The function to execute on each item, or the (string) name of a method
-   *   of each object in the Collection that should be invoked. In the first
-   *   case, the function should return a truthy value in order to remove the
-   *   item being processed from the Collection. In the second case, additional
-   *   arguments to the forEach method are also passed on to the items' method.
-   */
-  forEach: function(f) {
-    if (typeof f == 'string') {
-      return this._executeMethod.apply(this, arguments);
-    }
-    for (var i = this.items.length-1; i >= 0; i--) {
-      if (f(this.items[i])) {
-        if (this.items[i].destroy instanceof Function) {
-          this.items[i].destroy();
-        }
-        this.items.splice(i, 1);
-      }
-    }
-    return this;
-  },
-  /**
-   * Execute an arbitrary method of all items in the Collection.
-   *
-   * All items in the Collection are assumed to have the specified method.
-   *
-   * This is used *internally* by Collection#forEach().
-   *
-   * @param {String} name
-   *    The name of the method to invoke on each object in the Collection.
-   * @param {Arguments} ...
-   *    Additional arguments are passed on to the specified method.
-   *
-   * @ignore
-   */
-  _executeMethod: function(name) {
-    Array.prototype.shift.call(arguments);
-    for (var i = 0; i < this.items.length; i++) {
-      this.items[i][name].apply(this.items[i], arguments);
-    }
-    return this;
-  },
-  /**
-   * Check each pair of items in this Collection for collision.
-   *
-   * To check all items in a Collection against a single Box, use the
-   * Box#collides() method. To check all items in a Collection against all
-   * items in another Collection, use the following pattern:
-   *
-   *     collection1.foreach(function(item) {
-   *       if (item.collides(collection2)) {
-   *         // do something
-   *       }
-   *     });
-   *
-   * In the example above, to get the Boxes that collide with each item, simply
-   * pass `true` as the second parameter to `item.collides()` and note the
-   * return value.
-   *
-   * @param {Function} [callback]
-   *   A function to call when two items in this Collection collide.
-   * @param {Box} [callback.a]
-   *   A Box in the Collection that overlaps.
-   * @param {Box} [callback.b]
-   *   A Box in the Collection that overlaps.
-   */
-  collideAll: function(callback) {
-    var collision = false;
-    for (var i = 0, l = this.items.length; i < l; i++) {
-      for (var j = i+1; j < l; j++) {
-        if (this.items[i].overlaps(this.items[j])) {
-          if (typeof callback == 'function') {
-            callback.call(this, this.items[i], this.items[j]);
-            collision = true;
-          }
-          else {
-            return true;
-          }
-        }
-      }
-    }
-    return collision;
-  },
-  /**
-   * Add an item to the Collection.
-   *
-   * @param {Box} item
-   *   The Box to add to the Collection.
-   *
-   * @return {Number}
-   *   The number of items in the Collection.
-   */
-  add: function(item) {
-    return this.items.push(item);
-  },
-  /**
-   * Add the items in an Array to the Collection.
-   *
-   * See Collection#combine() to add the items in another Collection to this
-   * Collection.
-   *
-   * @param {Array} items
-   *   An Array of Boxes to add to the Collection.
-   */
-  concat: function(items) {
-    this.items = this.items.concat(items);
-    return this;
-  },
-  /**
-   * Add the items in another Collection to this Collection.
-   *
-   * See Collection#concat() to add the items in an Array to this Collection.
-   *
-   * @param {Collection} otherCollection
-   *   A Collection whose items should be added to this Collection.
-   */
-  combine: function(otherCollection) {
-    this.items = this.items.concat(otherCollection.items);
-    return this;
-  },
-  /**
-   * Remove an item from the Collection.
-   *
-   * See Collection#removeLast() to pop the last item in the collection.
-   *
-   * @param {Box} item
-   *   The Box to remove from the Collection.
-   *
-   * @return Array
-   *   An Array containing the removed element, if any.
-   */
-  remove: function(item) {
-    return this.items.remove(item);
-  },
-  /**
-   * Remove and return the last item in the Collection.
-   */
-  removeLast: function() {
-    return this.items.pop();
-  },
-  /**
-   * Return the number of items in the Collection.
-   */
-  count: function() {
-    return this.items.length;
-  },
-  /**
-   * Return an Array containing all items in the Collection.
-   */
-  getAll: function() {
-    return this.items;
-  },
-  /**
-   * Remove all items in the Collection.
-   */
-  removeAll: function() {
-    this.items = [];
-    return this;
-  },
-};
-
-/**
- * A wrapper for image tiles so they can be drawn in the right location.
- *
- * Used *internally* by TileMap as a lighter version of a Box.
- *
- * `src` can be any object of type String (e.g. a file path to an image),
- * Image, HTMLImageElement, HTMLCanvasElement, Sprite, or SpriteMap.
- *
- * @ignore
- */
-function ImageWrapper(src, x, y, w, h) {
-  this.src = src;
-  this.x = x;
-  this.y = y;
-  this.w = w;
-  this.h = h;
-  /**
-   * Draws the image.
-   */
-  this.draw = function() {
-    context.drawImage(this.src, this.x, this.y, this.w, this.h);
-  };
-}
-
-/**
- * A grid of objects (like a 2D {@link Collection}) for easy manipulation.
- *
- * Useful for rapidly initializing and managing large sets of same-sized
- * "tiles."
- *
- * @constructor
- *   Creates a new TileMap instance.
- *
- * @param {String/String[][]} grid
- *   `grid` represents the initial layout of the TileMap. If it is specified as
- *   a 2D Array of Strings, each inner value is used to construct a tile by
- *   using it as a key for the `map` parameter. If it is specified as a single
- *   String, that String is deconstructed into a 2D Array of Strings by
- *   splitting each row at newlines (`\n`) and assuming each character belongs
- *   in its own column. For example, this String:
- *
- *       "    A    \n
- *           BBB   \n
- *        BBBBBBBBB"
- *
- *   is equivalent to this Array:
- *
- *       [[' ', ' ', ' ', ' ', 'A', ' ', ' ', ' ', ' '],
- *        [' ', ' ', ' ', 'B', 'B', 'B', ' ', ' ', ' '],
- *        ['B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B']]
- *
- *   If `map` was specified as `{'A': Actor, 'B': Box}`, then this layout would
- *   correspond to an Actor standing on top of a small hill of Boxes.
- * @param {Object/Array} map
- *   An Array or object whose keys are found in the `grid` parameter and whose
- *   values are one of the following:
- *
- *   - null: Indicates a blank tile.
- *   - A String object: Assumed to be a path to an image file that should be
- *     used to render the tile.
- *   - An Image, HTMLImageElement, HTMLCanvasElement, {@link Sprite}, or
- *     {@link SpriteMap} object: An image used to render the tile.
- *   - {@link Box}, or a descendant of Box: Passing the literal class
- *     constructor (not an instance) will cause the TileMap to automatically
- *     initialize instances of that class.
- *
- *   This value is irrelevant if `options.gridSize` is specified since the
- *   entire TileMap is then created as a blank grid. In this case,
- *   `undefined`, `null`, or an empty array or object are acceptable values.
- * @param {Object} [options]
- *   A set of configuration settings for the TileMap.
- * @param {Number[]} [options.gridSize=null]
- *   Ignored if null. If this is a two-element Array containing positive
- *   integers, then the TileMap is initialized as a blank grid using these
- *   dimensions (col*row) and the `grid` and `map` parameters become
- *   irrelevant.
- * @param {Number[]} [options.cellSize]
- *   A two-element Array containing positive integers indicating the width and
- *   height in pixels of each tile. Defaults to the default dimensions of a
- *   Box.
- * @param {Number[]} [options.startCoords]
- *   A two-element Array containing positive integers indicating the x- and
- *   y-coordinates of the upper-left corner of the TileMap relative to the
- *   World. Defaults to placing the lower-left corner of the TileMap at the
- *   lower-left corner of the world.
- */
-function TileMap(grid, map, options) {
-  // Setup and options
-  var i, j, l, m;
-  this.options = {
-      cellSize: [Box.prototype.DEFAULT_WIDTH, Box.prototype.DEFAULT_HEIGHT],
-      gridSize: null,
-  };
-  if (options && options.cellSize instanceof Array && options.cellSize.length > 1) {
-    this.options.cellSize = options.cellSize;
-  }
-  if (options && options.gridSize instanceof Array && options.gridSize.length > 1) {
-    this.options.gridSize = options.gridSize;
-  }
-  if (typeof map === 'undefined' || map === null) {
-    map = [];
-  }
-  // Place the TileMap in the lower-left corner of the world.
-  if (typeof this.options.startCoords === 'undefined' ||
-      this.options.startCoords.length === 0) {
-    this.options.startCoords = [0, world.height - this.options.cellSize[1] *
-                                  (typeof grid == 'string' ? grid.split("\n") : grid).length
-                                ];
-  }
-  var gs = this.options.gridSize,
-      cw = this.options.cellSize[0],
-      ch = this.options.cellSize[1],
-      sx = this.options.startCoords[0],
-      sy = this.options.startCoords[1];
-
-  // If options.gridSize was specified, build a blank grid.
-  if (gs instanceof Array && gs.length > 0) {
-    grid = new Array(gs[0]);
-    for (i = 0; i < gs[0]; i++) {
-      grid[i] = new Array(gs[1]);
-      for (j = 0; j < gs[1]; j++) {
-        grid[i][j] = null;
-      }
-    }
-  }
-  // Allow specifying grid as a string; we'll deconstruct it into an array.
-  if (typeof grid == 'string') {
-    grid = grid.split("\n");
-    for (i = 0, l = grid.length; i < l; i++) {
-      grid[i] = grid[i].split('');
-    }
-  }
-  this.grid = grid;
-  // Make space mean null (blank) unless otherwise specified.
-  if (typeof map !== 'undefined' && typeof map[' '] === 'undefined') {
-    map[' '] = null;
-  }
-
-  // Initialize all the objects in the grid.
-  for (i = 0, l = grid.length; i < l; i++) {
-    for (j = 0, m = grid[i].length; j < m; j++) {
-      // Avoid errors with map[] and allow writing null directly
-      if (grid[i][j] === null) {
-        this.grid[i][j] = null;
-        continue;
-      }
-      var o = map ? map[grid[i][j]] : grid[i][j];
-      // Blank tile or no match is found in map
-      if (o === null || o === undefined) {
-        this.grid[i][j] = null;
-      }
-      else {
-        var x = sx + j * cw, y = sy + i * ch; // x- and y-coordinates of tile
-        // We can handle any image type that context.drawImage() can draw
-        if (typeof o === 'string' ||
-            o instanceof Image ||
-            o instanceof HTMLImageElement ||
-            o instanceof HTMLCanvasElement ||
-            o instanceof Sprite ||
-            o instanceof SpriteMap ||
-            o instanceof Layer) {
-          this.grid[i][j] = new ImageWrapper(o, x, y, cw, ch);
-        }
-        // If we have a Class, initialize a new instance of it
-        else if (o instanceof Function) {
-          this.grid[i][j] = new (Function.prototype.bind.call(o, null, x, y, cw, ch))();
-        }
-        else { // fallback
-          this.grid[i][j] = null;
-        }
-      }
-    }
-  }
-  /**
-   * Draw all the tiles.
-   *
-   * @param {CanvasRenderingContext2D} [ctx]
-   *   A canvas graphics context onto which to draw the tiles. This is useful
-   *   for drawing onto {@link Layer}s. If not specified, defaults to the
-   *   {@link global#context global context} for the default canvas.
-   * @param {Boolean} [occlude=false]
-   *   Indicates whether to only draw tiles that are visible within the
-   *   viewport (true) or to draw all tiles (false). Drawing only visible tiles
-   *   is performance-friendly for huge TileMaps, but requires re-drawing the
-   *   TileMap whenever the viewport scrolls. If you are just drawing the
-   *   TileMap once, for example onto a background Layer cache, occluding is
-   *   unnecessary.
-   * @param {Boolean} [smooth]
-   *   Indicates whether to force the Box to be drawn at whole-pixel
-   *   coordinates. If you don't already know that your coordinates
-   *   will be integers, this option can speed up painting since the browser
-   *   does not have to interpolate the image. Defaults to whatever the default
-   *   is for each object being drawn (the default for Boxes is true).
-   */
-  this.draw = function(ctx, occlude, smooth) {
-    ctx = ctx || context;
-    var i, l;
-    if (occlude) {
-      var active = this.getCellsInRect();
-      for (i = 0, l = active.length; i < l; i++) {
-        active[i].draw(ctx, smooth);
-      }
-      return;
-    }
-    for (i = 0, l = this.grid.length; i < l; i++) {
-      for (var j = 0, m = this.grid[i].length; j < m; j++) {
-        var o = this.grid[i][j];
-        if (o !== null) {
-          o.draw(ctx, smooth);
-        }
-      }
-    }
-    return this;
-  };
-  /**
-   * Get the object at a specific tile using the row and column.
-   *
-   * @param {Number} row The row of the tile being retrieved.
-   * @param {Number} col The column of the tile being retrieved.
-   * @return {Mixed} The object at the specified tile.
-   */
-  this.getCell = function(row, col) {
-    return this.grid[row] ? this.grid[row][col] : undefined;
-  };
-  /**
-   * Place a specific object into a specific tile using the row and column.
-   *
-   * If an object is already located there, it will be overwritten.
-   *
-   * Note that placing an object into a specific cell does not adjust its
-   * position, but rather merely stores it in the TileMap. If you want an
-   * object to appear at a specific position relative to other tiles, you need
-   * to place it there yourself.
-   *
-   * @param {Number} row The row of the tile being set.
-   * @param {Number} col The column of the tile being set.
-   * @param {Object} obj The object to place at the specified tile.
-   */
-  this.setCell = function(row, col, obj) {
-    if (this.grid[row] && typeof this.grid[row][col] !== 'undefined') {
-      this.grid[row][col] = obj;
-    }
-    return this;
-  };
-  /**
-   * Clear a specific tile (make it blank).
-   *
-   * @param {Number} row The row of the tile being cleared.
-   * @param {Number} col The column of the tile being cleared.
-   */
-  this.clearCell = function(row, col) {
-    if (this.grid[row] && typeof this.grid[row][col] !== 'undefined') {
-      this.grid[row][col] = null;
-    }
-    return this;
-  };
-  /**
-   * Return an Array of all non-null objects in the TileMap.
-   *
-   * For large TileMaps, consider using TileMap#getCellsInRect() for
-   * efficiency, since it only returns cells within a certain area (the
-   * viewport by default).
-   *
-   * Note that if you just used a TileMap to easily initialize a bunch of
-   * tiles, or if you're not adding or removing tiles frequently but you are
-   * calling this function frequently, you can also convert your TileMap to a
-   * {@link Collection}:
-   *
-   *     var myCollection = new Collection(myTileMap.getAll());
-   *
-   * This is more efficient if you always need to process every item in the
-   * TileMap and you don't care about their relative position.
-   */
-  this.getAll = function() {
-    var w = this.grid.length, h = (w > 0 ? this.grid[0].length : 0), r = [], i, j;
-    for (i = 0; i < w; i++) {
-      for (j = 0; j < h; j++) {
-        if (this.grid[i][j] !== null) {
-          r.push(this.grid[i][j]);
-        }
-      }
-    }
-    return r;
-  };
-  /**
-   * Clear all tiles (make them blank).
-   */
-  this.clearAll = function() {
-    var w = this.grid.length, h = (w > 0 ? this.grid[0].length : 0), i, j;
-    this.grid = new Array(w);
-    for (i = 0; i < w; i++) {
-      this.grid[i] = new Array(h);
-      for (j = 0; j < h; j++) {
-        grid[i][j] = null;
-      }
-    }
-    return this;
-  };
-  /**
-   * Get the number of rows in the grid.
-   *
-   * See also TileMap#getCols().
-   */
-  this.getRows = function() {
-    return this.grid.length;
-  };
-  /**
-   * Get the number of columns in the grid.
-   *
-   * See also TileMap#getRows().
-   */
-  this.getCols = function() {
-    return this.grid.length > 0 ? this.grid[0].length : 0;
-  };
-  /**
-   * Execute a function on every element in the TileMap.
-   *
-   * @param {Function} f
-   *   The function to execute on each tile.
-   * @param {Mixed} f.obj
-   *   The object being processed.
-   * @param {Number} f.row
-   *   The row of the tile being processed. This lets the function use
-   *   TileMap#getCell() if it needs to check surrounding cells.
-   * @param {Number} f.col
-   *   The column of the tile being processed. This lets the function use
-   *   TileMap#getCell() if it needs to check surrounding cells.
-   * @param {Boolean} f.return
-   *   If the return value is truthy, the object being processed will be
-   *   removed from the TileMap. If it has a destroy() method, that method will
-   *   be called.
-   * @param {Boolean} [includeNull=false]
-   *   Indicates whether to execute the function on null (blank) tiles.
-   */
-  this.forEach = function(f, includeNull) {
-    var w = this.grid.length, h = (w > 0 ? this.grid[0].length : 0), i, j;
-    for (i = 0; i < w; i++) {
-      for (j = 0; j < h; j++) {
-        if (this.grid[i][j] !== null || includeNull) {
-          if (f(this.grid[i][j], i, j)) {
-            if (this.grid[i][j].destroy instanceof Function) {
-              this.grid[i][j].destroy();
-            }
-            this.clearCell(i, j);
-          }
-        }
-      }
-    }
-    return this;
-  };
-  /**
-   * Get the max and min array coordinates of cells that are in a rectangle.
-   *
-   * wx and wy are the x- and y-coordinates in pixels of the upper-left corner
-   * of the rectangle to retrieve, respectively. tw and th are the width and
-   * height in pixels of the rectangle, respectively. This function returns an
-   * Array containing the starting column, starting row, ending column, and
-   * ending row of the TileMap grid that fall within the specified pixel
-   * rectangle. These values may be outside of the actual bounds of the TileMap
-   * grid. This function is only called *internally* (from
-   * TileMap#getCellsInRect(), which restricts the returned values to the
-   * bounds of the TileMap grid).
-   *
-   * @ignore
-   */
-  this._getCellCoordsInRect = function(wx, wy, tw, th) {
-    if (typeof wx === 'undefined') wx = world.xOffset;
-    if (typeof wy === 'undefined') wy = world.yOffset;
-    if (typeof tw === 'undefined') tw = canvas.width;
-    if (typeof th === 'undefined') th = canvas.height;
-    var x = this.options.startCoords[0], y = this.options.startCoords[1];
-    var cw = this.options.cellSize[0], cy = this.options.cellSize[1];
-    var sx = (wx - x) / cw, sy = (wy - y) / cy;
-    var sxe = (wx + tw - x) / cw, sye = (y - wy + th) / cy;
-    // startCol, startRow, endCol, endRow
-    return [Math.floor(sx), Math.floor(sy), Math.ceil(sxe), Math.ceil(sye)];
-  };
-  /**
-   * Return all objects within a given rectangle.
-   *
-   * This method returns an array of all non-null objects in the TileMap within
-   * a rectangle specified in pixels. If no rectangle is specified, this method
-   * defaults to retrieving all objects in view (i.e. it uses the viewport as
-   * the rectangle).
-   *
-   * This is an efficient way to process only objects that are in view (or
-   * nearly in view) which is useful for efficient processing of only relevant
-   * information in a very large map.
-   *
-   * Use TileMap#getAll() to process every tile in a TileMap.
-   *
-   * @param {Number} [x]
-   *   The x-coordinate in pixels of the upper-left corner of the rectangle
-   *   to retrieve. Defaults to the upper-left corner of the viewport.
-   * @param {Number} [y]
-   *   The y-coordinate in pixels of the upper-left corner of the rectangle
-   *   to retrieve. Defaults to the upper-left corner of the viewport.
-   * @param {Number} [w]
-   *   The width of the rectangle to retrieve. Defaults to the width of the
-   *   viewport.
-   * @param {Number} [h]
-   *   The height of the rectangle to retrieve. Defaults to the height of the
-   *   viewport.
-   *
-   * @return {Array}
-   *   All non-null objects in the TileMap within the specified rectangle.
-   */
-  this.getCellsInRect = function(x, y, w, h) {
-    // startCol, startRow, endCol, endRow
-    var r = this._getCellCoordsInRect(x, y, w, h), s = [];
-    var startRow = Math.min(this.getRows(), Math.max(0, r[1]));
-    var endRow = Math.min(this.getRows(), Math.max(0, r[3]));
-    var startCol = Math.min(this.getCols(), Math.max(0, r[0]));
-    var endCol = Math.min(this.getCols(), Math.max(0, r[2]));
-    for (var i = startRow, l = endRow; i < l; i++) {
-      for (var j = startCol, m = endCol; j < m; j++) {
-        if (this.grid[i][j] !== null) {
-          s.push(this.grid[i][j]);
-        }
-      }
-    }
-    return s;
-  };
-}
-
-/**
- * The Layer object (basically a new, utility canvas).
- *
- * Layers allow efficient rendering of complex scenes by acting as caches for
- * parts of the scene that are grouped together. For example, it is recommended
- * to create a Layer for your canvas's background so that you can render the
- * background once and then draw the completely rendered background onto the
- * main canvas in each frame instead of re-computing the background for each
- * frame. This can significantly speed up animation.
- *
- * In general you should create a layer for any significant grouping of items
- * if that grouping moves together when animated. It is more memory-efficient
- * to specify a smaller layer size if possible; otherwise the layer will
- * default to the size of the whole canvas.
- *
- * Draw onto a Layer by using its "context" property, which is a
- * {@link CanvasRenderingContext2D canvas graphics context}.
- *
- * @param {Object} [options]
- *   A set of options.
- * @param {Number} [options.x=0]
- *   The x-coordinate of the top-left corner of the Layer.
- * @param {Number} [options.y=0]
- *   The y-coordinate of the top-left corner of the Layer.
- * @param {Number} [options.width]
- *   The width of the Layer.
- * @param {Number} [options.height]
- *   The height of the Layer.
- * @param {"world"/"canvas"} [options.relative="world"]
- *   Indicates what to draw the Layer relative to:
- *
- *   - 'world': Draw the layer relative to the world so that it will appear
- *     to be in one specific place as the player or viewport moves.
- *   - 'canvas': Draw the layer relative to the canvas so that it stays fixed
- *     as the player moves. This is useful for a HUD, for example.
- *
- *   This option is irrelevant if the world is the same size as the canvas.
- * @param {Number} [options.opacity=1]
- *   A fractional percentage [0, 1] indicating the opacity of the Layer.
- *   0 (zero) means fully transparent; 1 means fully opaque. This value is
- *   applied when {@link Layer#draw drawing} the layer.
- * @param {Number} [options.parallax=1]
- *   A fractional percentage indicating how much to {@link Layer#scroll scroll}
- *   the Layer relative to the viewport's movement.
- * @param {Mixed} [options.src]
- *   Anything that can be passed to the `src` parameter of
- *   {@link CanvasRenderingContext2D#drawImage drawImage()}. This will be used
- *   to draw an image stretched over the whole Layer as a convenience.
- * @param {HTMLElement} [options.canvas]
- *   A Canvas element in which to hold the Layer. If not specified, a new,
- *   invisible canvas is created. Careful; if width and height are specified,
- *   the canvas will be resized (and therefore cleared). This is mainly for
- *   internal use.
- */
-function Layer(options) {
-  options = options || {};
-  /**
-   * @property {HTMLElement} canvas
-   *   The canvas backing the Layer.
-   * @readonly
-   */
-  this.canvas = options.canvas || document.createElement('canvas');
-  /**
-   * @property {CanvasRenderingContext2D} context
-   *   The Layer's graphics context. Use this to draw onto the Layer.
-   * @readonly
-   */
-  this.context = this.canvas.getContext('2d');
-  this.context.__layer = this;
-  /**
-   * @property {Number} width
-   *   The width of the Layer.
-   * @readonly
-   */
-  this.width = options.width || world.width || canvas.width;
-  /**
-   * @property {Number} height
-   *   The height of the Layer.
-   * @readonly
-   */
-  this.height = options.height || world.height || canvas.height;
-  /**
-   * @property {Number} x
-   *   The x-coordinate on the {@link global#canvas global canvas} of the
-   *   upper-left corner of the Layer.
-   */
-  this.x = options.x || 0;
-  /**
-   * @property {Number} y
-   *   The y-coordinate on the {@link global#canvas global canvas} of the
-   *   upper-left corner of the Layer.
-   */
-  this.y = options.y || 0;
-  /**
-   * @property {"world"/"canvas"} relative
-   *   What to draw the Layer relative to.
-   */
-  this.relative = options.relative || 'world';
-  /**
-   * @property {Number} opacity
-   *   A fractional percentage [0, 1] indicating the opacity of the Layer.
-   *   0 (zero) means fully transparent; 1 means fully opaque. This value is
-   *   applied when {@link Layer#draw drawing} the layer.
-   */
-  this.opacity = options.opacity || 1;
-  /**
-   * @property {Number} parallax
-   *   A fractional percentage indicating how much to
-   *   {@link Layer#scroll scroll} the Layer relative to the viewport's
-   *   movement.
-   */
-  this.parallax = options.parallax || 1;
-  this.canvas.width = this.width;
-  this.canvas.height = this.height;
-  /**
-   * @property {Number} xOffset
-   *   The horizontal distance in pixels that the Layer has
-   *   {@link Layer#scroll scrolled}.
-   */
-  this.xOffset = 0;
-  /**
-   * @property {Number} yOffset
-   *   The vertical distance in pixels that the Layer has
-   *   {@link Layer#scroll scrolled}.
-   */
-  this.yOffset = 0;
-  if (options.src) {
-    this.context.drawImage(options.src, 0, 0, this.width, this.height);
-  }
-  /**
-   * Draw the Layer.
-   *
-   * This method can be invoked in two ways:
-   *
-   * - `draw(x, y)`
-   * - `draw(ctx, x, y)`
-   *
-   * All parameters are optional either way.
-   *
-   * @param {CanvasRenderingContext2D} [ctx]
-   *   A canvas graphics context onto which this Layer should be drawn. This is
-   *   useful for drawing onto other Layers. If not specified, defaults to the
-   *   {@link global#context global context} for the default canvas.
-   * @param {Number} [x]
-   *   An x-coordinate on the canvas specifying where to draw the upper-left
-   *   corner of the Layer. The actual position that the coordinate equates to
-   *   depends on the value of the
-   *   {@link Layer#relative Layer's "relative" property}. Defaults to the
-   *   {@link Layer#x Layer's "x" property} (which defaults to 0 [zero]).
-   * @param {Number} [y]
-   *   A y-coordinate on the canvas specifying where to draw the upper-left
-   *   corner of the Layer. The actual position that the coordinate equates to
-   *   depends on the value of the
-   *   {@link Layer#relative Layer's "relative" property}. Defaults to the
-   *   {@link Layer#y Layer's "y" property} (which defaults to 0 [zero]).
-   */
-  this.draw = function(ctx, x, y) {
-    if (!(ctx instanceof CanvasRenderingContext2D)) {
-      y = x;
-      x = ctx;
-      ctx = context;
-    }
-    x = typeof x === 'undefined' ? this.x : x;
-    y = typeof y === 'undefined' ? this.y : y;
-    ctx.save();
-    ctx.globalAlpha = this.opacity;
-    if (this.relative == 'canvas') {
-      ctx.translate(world.xOffset, world.yOffset);
-    }
-    if (this.xOffset || this.yOffset) {
-      ctx.translate(this.xOffset, this.yOffset);
-    }
-    ctx.drawImage(this.canvas, x, y);
-    ctx.restore();
-    return this;
-  };
-  /**
-   * Clear the layer, optionally by filling it with a given style.
-   *
-   * @param {Mixed} [fillStyle]
-   *   A canvas graphics context fill style. If not passed, the Layer will
-   *   simply be cleared. If passed, the Layer will be filled with the given
-   *   style.
-   */
-  this.clear = function(fillStyle) {
-    this.context.clear(fillStyle);
-    return this;
-  };
-  /**
-   * Scroll the Layer.
-   *
-   * @param {Number} x
-   *   The horizontal distance the target has shifted.
-   * @param {Number} y
-   *   The vertical distance the target has shifted.
-   * @param {Number} [p]
-   *   The parallax factor. Defaults to {@link Layer#parallax this.parallax}.
-   */
-  this.scroll = function(x, y, p) {
-    p = p || this.parallax;
-    this.xOffset += -x*p;
-    this.yOffset += -y*p;
-    return this;
-  };
-  /**
-   * Display this Layer's canvas in an overlay (for debugging purposes).
-   *
-   * Clicking the overlay will remove it.
-   *
-   * @return {HTMLElement}
-   *   A jQuery representation of a div containing the canvas holding the
-   *   Layer.
-   */
-  this.showCanvasOverlay = function() {
-    stopAnimating();
-    var $d = jQuery('<div></div>');
-    $d.css({
-      cursor: 'pointer',
-      display: 'block',
-      height: '100%',
-      left: 0,
-      position: 'absolute',
-      top: 0,
-      width: '100%',
-    });
-    var $c = jQuery(this.canvas);
-    $c.css({
-      border: '1px solid black',
-      display: 'block',
-      margin: '0 auto',
-      position: 'absolute',
-      'z-index': 100,
-    }).click(function() {
-      $d.remove();
-      startAnimating();
-    });
-    $d.append($c);
-    jQuery('body').append($d);
-    $d.click(function(e) {
-      if (e.which != 3) { // Don't intercept right-click events
-        $d.remove();
-      }
-    });
-    return $d;
-  };
-}
 
 /**
  * Actors are {@link Box Boxes} that can move.
@@ -1401,7 +565,7 @@ var Actor = Box.extend({
    */
   keys: undefined,
 
-  // Dynamic (internal) variables
+  // Used internally; not publicly documented. Reading is okay, but don't write.
   lastJump: 0, // Time when the last jump occurred in milliseconds since the epoch
   lastDirection: [], // The last direction (i.e. key press) passed to processInput()
   jumpDirection: {right: false, left: false}, // Whether the Actor was moving horizontally before jumping
@@ -1450,7 +614,27 @@ var Actor = Box.extend({
    * @inheritdoc Box#drawDefault
    */
   drawDefault: function(ctx, x, y, w, h) {
-    ctx.drawSmiley(x + w/2, y + h/2, (w+h)/4);
+    x = x + w/2;
+    y = y + h/2;
+    r = (w+h)/4;
+
+    // Circle
+    ctx.circle(x, y, r, 'lightBlue', 'black');
+
+    // Smile
+    ctx.beginPath();
+    ctx.arc(x, y, r*0.6, Math.PI*0.1, Math.PI*0.9, false);
+    ctx.lineWidth = Math.max(Math.ceil(r/15), 1);
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
+
+    // Eyes
+    ctx.beginPath();
+    ctx.arc(x - r*0.3, y - r*0.25, Math.max(Math.ceil(r/15), 1), 0, 2 * Math.PI, false);
+    ctx.fillStyle = 'black';
+    ctx.fill();
+    ctx.arc(x + r*0.3, y - r*0.25, Math.max(Math.ceil(r/15), 1), 0, 2 * Math.PI, false);
+    ctx.fill();
   },
 
   /**
@@ -1464,7 +648,7 @@ var Actor = Box.extend({
   update: function(direction) {
     this.lastX = this.x;
     this.lastY = this.y;
-    if (this.isBeingDragged) {
+    if (this.isBeingDragged && window.Mouse) {
       this.x = Mouse.coords.x + world.xOffset - this.width/2;
       this.y = Mouse.coords.y + world.yOffset - this.height/2;
     }
@@ -1967,6 +1151,17 @@ var Actor = Box.extend({
    * This method has the side-effect that it will stop the Actor from falling
    * if it is standing on a Box.
    *
+   * The collision checking here uses AABB detection, meaning it uses upright
+   * rectangles. It is accurate, but not as fast as it could be if there are
+   * many objects to check against. If you need faster collision checking
+   * against many objects and you're willing to do it manually, consider
+   * implementing
+   * [spatial partitioning](http://buildnewgames.com/broad-phase-collision-detection/).
+   * If you need different collision models (for example with rotated
+   * rectangles or different shapes) or if you need more advanced physics
+   * simulation (for example to model springs) consider using the
+   * [Box2D library](https://github.com/kripken/box2d.js/).
+   *
    * @param {Box/Collection/TileMap} collideWith
    *   A Box, Collection, or TileMap of objects with which to check collision.
    *
@@ -2112,11 +1307,12 @@ var Actor = Box.extend({
     }
     var keys = this.keys || window.keys,
         lastDirection = this.lastDirection,
+        anyIn = App.Utils.anyIn,
         keysIsDefined = typeof keys !== 'undefined'; // Don't fail if "keys" was removed
     // Don't let shooting make us change where we're looking.
     if (keysIsDefined &&
         typeof keys.shoot !== 'undefined' &&
-        App.Utils.anyIn(keys.shoot, lastDirection)) {
+        anyIn(keys.shoot, lastDirection)) {
       lastDirection = this.lastLooked;
     }
     if (this.isBeingDragged) {
@@ -2164,32 +1360,32 @@ var Actor = Box.extend({
     else if (this.x < this.lastX) {
       this.useAnimation('left', 'stand');
     }
-    else if (keysIsDefined && App.Utils.anyIn(keys.up, lastDirection)) {
-      if (App.Utils.anyIn(keys.right, lastDirection)) {
+    else if (keysIsDefined && anyIn(keys.up, lastDirection)) {
+      if (anyIn(keys.right, lastDirection)) {
         this.useAnimation('lookUpRight', 'stand');
       }
-      else if (App.Utils.anyIn(keys.left, lastDirection)) {
+      else if (anyIn(keys.left, lastDirection)) {
         this.useAnimation('lookUpLeft', 'stand');
       }
       else {
         this.useAnimation('lookUp', 'stand');
       }
     }
-    else if (keysIsDefined && App.Utils.anyIn(keys.down, lastDirection)) {
-      if (App.Utils.anyIn(keys.right, lastDirection)) {
+    else if (keysIsDefined && anyIn(keys.down, lastDirection)) {
+      if (anyIn(keys.right, lastDirection)) {
         this.useAnimation('lookDownRight', 'stand');
       }
-      else if (App.Utils.anyIn(keys.left, lastDirection)) {
+      else if (anyIn(keys.left, lastDirection)) {
         this.useAnimation('lookDownLeft', 'stand');
       }
       else {
         this.useAnimation('lookDown', 'stand');
       }
     }
-    else if (keysIsDefined && App.Utils.anyIn(keys.right, lastDirection)) {
+    else if (keysIsDefined && anyIn(keys.right, lastDirection)) {
       this.useAnimation(collided && collided.x ? 'right' : 'lookRight', 'stand');
     }
-    else if (keysIsDefined && App.Utils.anyIn(keys.left, lastDirection)) {
+    else if (keysIsDefined && anyIn(keys.left, lastDirection)) {
       this.useAnimation(collided && collided.x ? 'left' : 'lookLeft', 'stand');
     }
     else {
@@ -2240,12 +1436,24 @@ var Actor = Box.extend({
    */
   setDraggable: function(on) {
     if (this.isDraggable && on) {
-      return;
+      return this;
     }
     else if (!on) {
       this.isDraggable = false;
       this.unlisten('.drag');
-      return;
+      return this;
+    }
+    else if (!App.Events) {
+      if (window.console && console.warn) {
+        console.warn('Actor#setDraggable called, but App.Events does not exist.');
+      }
+      return this;
+    }
+    else if (!window.Mouse) {
+      if (window.console && console.warn) {
+        console.warn('Actor#setDraggable called, but window.Mouse does not exist.');
+      }
+      return this;
     }
     this.isDraggable = true;
     this.listen('mousedown.drag touchstart.drag', function() {
@@ -2287,6 +1495,7 @@ var Actor = Box.extend({
         jQuery(document).trigger('canvasdrop', [target]);
       }
     });
+    return this;
   },
 
   /**
@@ -2368,7 +1577,9 @@ var Player = Actor.extend({
       // lastKeyPressed() actually contains all keys that were pressed at the
       // last key event, whereas event.keyPressed just holds the single key
       // that triggered the event.
-      t.release([jQuery.hotkeys.lastKeyPressed()]);
+      if (jQuery.hotkeys) {
+        t.release([jQuery.hotkeys.lastKeyPressed()]);
+      }
     };
     // Notify the Player object when keys are released.
     jQuery(document).on('keyup.release', this.__keytracker);
@@ -2382,7 +1593,7 @@ var Player = Actor.extend({
    * @inheritdoc Actor#processInput
    */
   processInput: function(direction) {
-    if (direction === undefined) {
+    if (typeof direction === 'undefined' && jQuery.hotkeys) {
       direction = jQuery.hotkeys.keysDown;
     }
     return this._super(direction);
@@ -2410,7 +1621,7 @@ var Player = Actor.extend({
    * @inheritdoc Actor#setDraggable
    */
   setDraggable: function(on) {
-    if (on && !this.isDraggable) {
+    if (on && !this.isDraggable && App.Events && window.Mouse) {
       this.listen('canvasdragstop.drag', function() {
         if (this.isBeingDragged &&
             (!this.dropTargets.count() || this.collides(this.dropTargets))) {
@@ -2418,7 +1629,7 @@ var Player = Actor.extend({
         }
       }, -1);
     }
-    this._super.apply(this, arguments);
+    return this._super.apply(this, arguments);
   },
 
   /**
@@ -2431,7 +1642,7 @@ var Player = Actor.extend({
   adjustViewport: function() {
     var offsets = world.getOffsets(), changed = {x: 0, y: 0};
     // We should only have mouse or player scrolling, but not both.
-    if (Mouse.Scroll.isEnabled()) {
+    if (window.Mouse && Mouse.Scroll.isEnabled()) {
       return changed;
     }
     // left

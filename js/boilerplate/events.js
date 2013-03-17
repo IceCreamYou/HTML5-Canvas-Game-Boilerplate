@@ -15,6 +15,12 @@
 (function() {
 
 function _handlePointerBehavior() {
+  if (typeof App.isHovered != 'function') {
+    if (window.console && console.warn) {
+      console.warn('Mouse event triggered, but App.isHovered does not exist.');
+    }
+    return false;
+  }
   return App.isHovered(this);
 }
 
@@ -301,4 +307,4 @@ App.Events = {
   },
 };
 
-})();
+}).call(this);
