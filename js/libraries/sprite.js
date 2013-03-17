@@ -1,8 +1,9 @@
 /**
  * A powerful, easy-to-use Sprite animation library for HTML5 Canvas.
  *
+ * MIT License: http://opensource.org/licenses/mit-license.php
+ *
  * @author Isaac Sukin (IceCreamYou)
- * @license MIT License: http://opensource.org/licenses/mit-license.php
  * @ignore
  */
 

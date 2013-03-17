@@ -57,7 +57,7 @@ function update(delta, timeElapsed) {
  */
 function draw() {
   // Draw a background. This is just for illustration so we can see scrolling.
-  context.drawBkgdRadialGradient();
+  context.drawCheckered(80, 0, 0, world.width, world.height);
 
 	player.draw();
 }

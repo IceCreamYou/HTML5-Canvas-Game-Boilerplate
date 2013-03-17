@@ -1,5 +1,22 @@
-/**
- * Provides helpful utilities for common Canvas operations.
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * Provides helpful utilities for common Canvas operations.
  *
  * This file is the core of the project. It contains all the abstractions that
  * avoid low-level and boilerplate code, namely initializing / manipulating the
@@ -9,29 +26,37 @@
  * @ignore
  */
 
-/**
- * The App object holds all the miscellaneous things that don't deserve to be
+<span id='global-property-'>/**
+</span> * HTML5 Canvas Game Boilerplate
+ * Certain components copyright their respective authors.
+ * @author Isaac Sukin
+ * @license MIT License
+ * @ignore
+ */
+
+<span id='App'>/**
+</span> * The App object holds all the miscellaneous things that don't deserve to be
  * global.
  * @static
  */
 var App = {};
-/**
- * @property
+<span id='App-static-property-isGameOver'>/**
+</span> * @property
  *   Whether the game is over. Set by calling App#gameOver().
  * @member App
  * @static
  * @readonly
  */
 App.isGameOver = false;
-/**
- * @property
+<span id='App-static-property-debugMode'>/**
+</span> * @property
  *   Whether Debug Mode is on or off (shows or hides debugging information).
  * @member App
  * @static
  */
 App.debugMode = false;
-/**
- * @property
+<span id='App-static-property-MIN_FPS'>/**
+</span> * @property
  *   The minimum number of physics updates each second.
  *
  * If the frame rate goes below this value, the app will appear to slow down;
@@ -40,7 +65,7 @@ App.debugMode = false;
  * physics during each physics step, even if the time between calculating
  * physics steps is longer than that.
  *
- * Setting this to zero is allowed, but risks entering a "spiral of death"
+ * Setting this to zero is allowed, but risks entering a &quot;spiral of death&quot;
  * where the system attempts to calculate more and more simulated physics time
  * each frame, which takes longer and longer, which means more simulation must
  * be run...
@@ -53,8 +78,8 @@ App.debugMode = false;
  * @static
  */
 App.MIN_FPS = 4;
-/**
- * @property
+<span id='App-static-property-MAX_FPS'>/**
+</span> * @property
  *   The maximum number of physics updates each second.
  *
  * This determines the discrete time-step for physics updates. If the rendering
@@ -75,8 +100,8 @@ App.MIN_FPS = 4;
  * @static
  */
 App.MAX_FPS = 100;
-/**
- * @property
+<span id='App-static-property-physicsTimeElapsed'>/**
+</span> * @property
  *   The total amount of time simulated, in seconds.
  *
  * This is the amount of time for which physics has been calculated. Physics
@@ -106,43 +131,43 @@ App.Debug.drawTimeElapsed = 0;
 
 // SETUP ----------------------------------------------------------------------
 
-/**
- * The Canvas DOM element.
+<span id='global-property-canvas'>/**
+</span> * The Canvas DOM element.
  * @member global
  */
 var canvas;
-/**
- * The jQuery representation of the Canvas element.
+<span id='global-property-S-canvas'>/**
+</span> * The jQuery representation of the Canvas element.
  * @member global
  */
 var $canvas;
-/**
- * The main Canvas graphics context.
+<span id='global-property-context'>/**
+</span> * The main Canvas graphics context.
  * @member global
  */
 var context;
-/**
- * The {@link World} object for the current environment.
+<span id='global-property-world'>/**
+</span> * The {@link World} object for the current environment.
  * @member global
  */
 var world;
 
-/**
- * Set the canvas that the app should use.
+<span id='App-static-method-setCanvas'>/**
+</span> * Set the canvas that the app should use.
  *
  * The canvas will be automatically detected if possible, using the following
  * rules in order:
  *
- * - Look for a canvas with the DOM ID "canvas"
+ * - Look for a canvas with the DOM ID &quot;canvas&quot;
  * - Look for the first canvas on the page without a data-takeover attribute
- *   that has the value "false"
+ *   that has the value &quot;false&quot;
  * - Create a new canvas
  *
  * However, you can force a specific canvas to be used by calling this
  * function. Currently the app can only manage one canvas at a time.
  *
- * @param {Mixed} c
- *   An HTMLCanvasElement (&lt;canvas&gt; object) or a DOM ID belonging to a
+ * @param c
+ *   An HTMLCanvasElement (&amp;lt;canvas&amp;gt; object) or a DOM ID belonging to a
  *   canvas. This is the canvas to which the app should switch.
  * @member App
  * @static
@@ -152,7 +177,7 @@ App.setCanvas = function(c) {
   if (typeof c == 'string') {
     var oc = c;
     c = document.getElementById(c);
-    if (!(c instanceof HTMLCanvasElement) && window.console && console.warn) {
+    if (!(c instanceof HTMLCanvasElement) &amp;&amp; window.console &amp;&amp; console.warn) {
       console.warn('No canvas with ID ' + oc + ' found.');
     }
   }
@@ -161,11 +186,11 @@ App.setCanvas = function(c) {
     if (canvas instanceof HTMLCanvasElement) {
       return;
     }
-    // Try to use the canvas with the ID "canvas"
+    // Try to use the canvas with the ID &quot;canvas&quot;
     canvas = document.getElementById('canvas');
-    // Automatically use the first canvas on the page without data-takeover="false"
+    // Automatically use the first canvas on the page without data-takeover=&quot;false&quot;
     if (!(canvas instanceof HTMLCanvasElement)) {
-      for (var i = 0, n = document.getElementsByTagName('canvas'), l = n.length; i < l; i++) {
+      for (var i = 0, n = document.getElementsByTagName('canvas'), l = n.length; i &lt; l; i++) {
         if (n[i].getAttribute('data-takeover') != 'false') {
           canvas = n[i];
           break;
@@ -221,7 +246,7 @@ App.beforeSetup = function() {
   context = canvas.getContext('2d');
 
   // If we have the Stats widget, set it up.
-  if (typeof Stats !== 'undefined' && App.debugMode) {
+  if (typeof Stats !== 'undefined' &amp;&amp; App.debugMode) {
     App.stats = new Stats();
     App.stats.setMode(0);
     App.stats.domElement.style.position = 'absolute';
@@ -234,10 +259,10 @@ App.beforeSetup = function() {
   Caches.preloadImages(typeof preloadables === 'undefined' ? [] : preloadables, {
     finishCallback: function() {
       // Expose utilities globally if they are not already defined.
-      if (typeof Events === 'undefined' && typeof App.Events !== 'undefined') {
+      if (typeof Events === 'undefined' &amp;&amp; typeof App.Events !== 'undefined') {
         Events = App.Events;
       }
-      if (typeof Utils === 'undefined' && typeof App.Utils !== 'undefined') {
+      if (typeof Utils === 'undefined' &amp;&amp; typeof App.Utils !== 'undefined') {
         Utils = App.Utils;
       }
 
@@ -247,8 +272,8 @@ App.beforeSetup = function() {
   });
 };
 
-/**
- * Reset the environment.
+<span id='App-static-method-reset'>/**
+</span> * Reset the environment.
  *
  * @param {Boolean} first
  *   Whether this is the first time App.reset() is being called (i.e. whether
@@ -278,8 +303,8 @@ App.reset = function(first) {
   world = new World();
   context.__layer = world;
 
-  /**
-   * @property {Timer} timer
+<span id='App-static-property-timer'>  /**
+</span>   * @property {Timer} timer
    *   Tracks time elapsed while the app is running and during each frame.
    *
    * **Warning:** The {@link Timer#getDelta delta} is retrieved each frame and
@@ -314,8 +339,8 @@ App.reset = function(first) {
     startAnimating();
   }
 
-  /**
-   * @event start
+<span id='global-event-start'>  /**
+</span>   * @event start
    *   Fires on the document when all setup is complete.
    *
    * Unless specified otherwise by the return value of setup(), animation
@@ -331,8 +356,8 @@ App.reset = function(first) {
   jQuery(document).trigger('start', [!!first]);
 };
 
-/**
- * Set the default size of the canvas as early as possible.
+<span id='App-static-method-setDefaultCanvasSize'>/**
+</span> * Set the default size of the canvas as early as possible.
  *
  * The canvas is resized according to the following rules, in order of
  * precedence:
@@ -351,17 +376,17 @@ App.reset = function(first) {
  *   dimensions.
  * - The canvas will scale to the largest size that fits within both the window
  *   and the max attributes (if they are present).
- * - In all cases except when `data-resize="false"`, the `data-aspectratio`
+ * - In all cases except when `data-resize=&quot;false&quot;`, the `data-aspectratio`
  *   attribute takes effect if present. This causes the canvas to resize to the
  *   largest possible size within the boundaries of the size calculated from
  *   the other rules, while still maintaining the specified aspect ratio. The
  *   value of this attribute can be any floating point number or one of the
- *   common ratios "4:3", "16:9", "16:10", or "8:5". For example, with an
+ *   common ratios &quot;4:3&quot;, &quot;16:9&quot;, &quot;16:10&quot;, or &quot;8:5&quot;. For example, with an
  *   aspect ratio of 4:3, if the width was calculated to be 1024 and the height
  *   was calculated to be 800, the height would be adjusted to 768.
  *
  * Note that using CSS to resize the canvas causes it to scale the graphics as
- * well; it changes the size of each virtual "pixel" on the canvas rather than
+ * well; it changes the size of each virtual &quot;pixel&quot; on the canvas rather than
  * changing the number of pixels inside the canvas. Unless you want to stretch
  * the canvas display, using CSS to resize the canvas is not recommended.
  *
@@ -406,10 +431,10 @@ App.setDefaultCanvasSize = function() {
       else if (aspectRatio == '16:9') aspectRatio = 16/9;
       else if (aspectRatio == '16:10' || aspectRatio == '8:5') aspectRatio = 1.6;
     }
-    if (canvas.width < canvas.height * aspectRatio) {
+    if (canvas.width &lt; canvas.height * aspectRatio) {
       canvas.height = Math.floor(canvas.width / aspectRatio);
     }
-    else if (canvas.width > canvas.height * aspectRatio) {
+    else if (canvas.width &gt; canvas.height * aspectRatio) {
       canvas.width = Math.floor(canvas.height * aspectRatio);
     }
   }
@@ -417,23 +442,23 @@ App.setDefaultCanvasSize = function() {
 
 // CACHES ---------------------------------------------------------------------
 
-/**
- * Tracks cached items.
+<span id='Caches'>/**
+</span> * Tracks cached items.
  * @static
  */
 var Caches = {
-    /**
-     * A map from image file paths to Image objects.
+<span id='Caches-static-property-images'>    /**
+</span>     * A map from image file paths to Image objects.
      * @static
      */
     images: {},
-    /**
-     * A map from image file paths to CanvasPattern objects.
+<span id='Caches-static-property-imagePatterns'>    /**
+</span>     * A map from image file paths to CanvasPattern objects.
      * @static
      */
     imagePatterns: {},
-    /**
-     * Preload a list of images asynchronously.
+<span id='Caches-static-method-preloadImages'>    /**
+</span>     * Preload a list of images asynchronously.
      * 
      * @param {String[]} files
      *   An Array of paths to images to preload.
@@ -462,7 +487,7 @@ var Caches = {
         if (typeof itemCallback == 'function') {
           itemCallback(src, m, l);
         }
-        if (m == l && typeof options.finishCallback == 'function') {
+        if (m == l &amp;&amp; typeof options.finishCallback == 'function') {
           options.finishCallback(l);
         }
       };
@@ -511,8 +536,8 @@ window.requestAnimFrame = (function() {
   // Indicates whether the canvas is animating or focused.
   var _animate = false, _blurred = false;
 
-/**
- * Start animating the canvas.
+<span id='global-method-startAnimating'>/**
+</span> * Start animating the canvas.
  * 
  * See also {@link global#method-stopAnimating stopAnimating()} and
  * {@link global#method-isAnimating isAnimating()}.
@@ -522,8 +547,8 @@ window.requestAnimFrame = (function() {
 window.startAnimating = function() {
   if (!_animate) {
     _animate = true;
-    /**
-     * @event startAnimating
+<span id='global-event-startAnimating'>    /**
+</span>     * @event startAnimating
      *   Fires on the document when the animation loop is about to begin.
      * @member global
      */
@@ -532,8 +557,8 @@ window.startAnimating = function() {
   }
 };
 
-/**
- * Stop animating the canvas.
+<span id='global-method-stopAnimating'>/**
+</span> * Stop animating the canvas.
  * 
  * See also {@link global#method-startAnimating startAnimating()} and
  * {@link global#method-isAnimating isAnimating()}.
@@ -552,8 +577,8 @@ window.stopAnimating = function() {
   // started again the timer doesn't start until the first frame is requested
   // so the delta is still correct.
   App.timer.stop();
-  /**
-   * @event stopAnimating
+<span id='global-event-stopAnimating'>  /**
+</span>   * @event stopAnimating
    *   Fires on the document when the animation loop is ending.
    * @member global
    */
@@ -562,7 +587,7 @@ window.stopAnimating = function() {
   // Output performance statistics.
   // This can be slightly inaccurate because this function can be called in the
   // middle of updating a frame, rather than after the last frame is drawn.
-  if (App.debugMode && console && console.log) {
+  if (App.debugMode &amp;&amp; console &amp;&amp; console.log) {
     var elapsed = App.physicsTimeElapsed, frames = App.timer.frames, d = App.Debug;
     var sum = d.updateTimeElapsed + d.clearTimeElapsed + d.drawTimeElapsed;
     console.log({
@@ -586,8 +611,8 @@ window.stopAnimating = function() {
   }
 };
 
-/**
- * Determine whether the canvas is currently animating.
+<span id='global-method-isAnimating'>/**
+</span> * Determine whether the canvas is currently animating.
  * 
  * See also {@link global#method-startAnimating startAnimating()} and
  * {@link global#method-stopAnimating stopAnimating()}.
@@ -598,8 +623,8 @@ window.isAnimating = function() {
   return _animate;
 };
 
-/**
- * Animate the canvas. This is intended for private use and should not be
+<span id='App-method-animate'>/**
+</span> * Animate the canvas. This is intended for private use and should not be
  * called directly. Instead see {@link #startAnimating} and
  * {@link #stopAnimating}.
  *
@@ -622,9 +647,9 @@ function animate() {
     App.timer.start();
   }
   // Cap the delta in order to avoid the spiral of death.
-  if (App.MIN_FPS && frameDelta > 1 / App.MIN_FPS) {
-    /**
-     * @event low_fps
+  if (App.MIN_FPS &amp;&amp; frameDelta &gt; 1 / App.MIN_FPS) {
+<span id='global-event-low_fps'>    /**
+</span>     * @event low_fps
      *   Fires on the document when the frame rate drops below App.MIN_FPS.
      *
      * @param {Number} fps The frame-per-second rate.
@@ -642,14 +667,14 @@ function animate() {
   }
 
   // update
-  if (window.Mouse && Mouse.Scroll) {
+  if (window.Mouse &amp;&amp; Mouse.Scroll) {
     Mouse.Scroll._update();
   }
-  while (frameDelta > 0 && !App.isGameOver) {
+  while (frameDelta &gt; 0 &amp;&amp; !App.isGameOver) {
     // Break the physics updates down into discrete chunks of no more than
     // 1 / App.MAX_FPS in order to keep them as small as possible for accuracy.
-    /**
-     * @property physicsDelta
+<span id='App-static-property-physicsDelta'>    /**
+</span>     * @property physicsDelta
      *   The amount of simulated time in seconds since the last physics update.
      *
      * Use this to smooth animation.
@@ -693,8 +718,8 @@ function animate() {
   }
 }
 
-/**
- * Stops animating when the window (tab) goes out of focus.
+<span id='global-property-'>/**
+</span> * Stops animating when the window (tab) goes out of focus.
  *
  * This stops running the CPU when we don't need it, but it can cause
  * unexpected behavior if you expect something to be running in the background
@@ -718,8 +743,8 @@ jQuery(window).on('blur.animFocus', function() {
 
 // INPUT ----------------------------------------------------------------------
 
-/**
- * Prevent the default behavior from occurring when hitting keys.
+<span id='App-static-method-preventDefaultKeyEvents'>/**
+</span> * Prevent the default behavior from occurring when hitting keys.
  *
  * This won't prevent everything -- for example it won't prevent combinations
  * of multiple non-control-character keys -- and if you want to do something
@@ -741,7 +766,7 @@ App.preventDefaultKeyEvents = function(combinations) {
   if (jQuery.hotkeys) {
     jQuery(document).keydown(combinations, function() { return false; });
   }
-  else if (window.console && console.warn) {
+  else if (window.console &amp;&amp; console.warn) {
     console.warn('Tried to prevent default key events but jQuery.hotkeys does not exist.');
   }
 };
@@ -759,8 +784,8 @@ performance.now = (function() {
          function() { return Date.now(); };
 })();
 
-/**
- * A timer.
+<span id='Timer'>/**
+</span> * A timer.
  *
  * Adapted from the
  * [three.js clock](https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js).
@@ -784,8 +809,8 @@ function Timer(autoStart, whileAnimating) {
   this.lastDeltaTime = 0;
   this.elapsedTime = 0;
   this.running = false;
-  /**
-   * Get the time elapsed in seconds since the last time a delta was measured.
+<span id='Timer-method-getDelta'>  /**
+</span>   * Get the time elapsed in seconds since the last time a delta was measured.
    *
    * Deltas are taken when the timer starts or stops or elapsed time is
    * measured.
@@ -803,8 +828,8 @@ function Timer(autoStart, whileAnimating) {
     }
     return diff;
   };
-  /**
-   * Start the timer.
+<span id='Timer-method-start'>  /**
+</span>   * Start the timer.
    */
   this.start = function() {
     if (this.running) {
@@ -815,15 +840,15 @@ function Timer(autoStart, whileAnimating) {
       : performance.now();
     this.running = true;
   };
-  /**
-   * Stop the timer.
+<span id='Timer-method-stop'>  /**
+</span>   * Stop the timer.
    */
   this.stop = function () {
     this.elapsedTime += this.getDelta();
     this.running = false;
   };
-  /**
-   * Get the amount of time the timer has been running, in seconds.
+<span id='Timer-method-getElapsedTime'>  /**
+</span>   * Get the amount of time the timer has been running, in seconds.
    */
   this.getElapsedTime = function() {
     this.getDelta();
@@ -836,8 +861,8 @@ function Timer(autoStart, whileAnimating) {
 
 (function() {
   var events = {}, noID = 0;
-  /**
-   * Register the time at which an event occurred.
+<span id='Timer-static-method-event'>  /**
+</span>   * Register the time at which an event occurred.
    *
    * If you only care about how long something takes (e.g. when testing
    * performance) and you don't need to stop the timer, Timer#event() and
@@ -865,8 +890,8 @@ function Timer(autoStart, whileAnimating) {
       events[id] = result;
     }
   };
-  /**
-   * Return the time since an event occurred.
+<span id='Timer-static-method-getTimeSince'>  /**
+</span>   * Return the time since an event occurred.
    *
    * If you only care about how long something takes (e.g. when testing
    * performance) and you don't need to stop the timer, Timer#event() and
@@ -886,58 +911,58 @@ function Timer(autoStart, whileAnimating) {
 
 // WORLD ----------------------------------------------------------------------
 
-/**
- * The World object.
+<span id='World'>/**
+</span> * The World object.
  * 
  * The World represents the complete playable game area. Its size can be set
- * explicitly or is automatically determined by the "data-worldwidth" and
- * "data-worldheight" attributes set on the HTML canvas element (with a
+ * explicitly or is automatically determined by the &quot;data-worldwidth&quot; and
+ * &quot;data-worldheight&quot; attributes set on the HTML canvas element (with a
  * fallback to the canvas width and height). If the size of the world is larger
  * than the canvas then by default the view of the world will scroll when the
  * {@link global#player player} approaches a side of the canvas.
  * 
  * @param {Number} [w]
- *   The width of the world. Defaults to the value of the "data-worldwidth"
+ *   The width of the world. Defaults to the value of the &quot;data-worldwidth&quot;
  *   attribute on the HTML canvas element, or (if that attribute is not
  *   present) the width of the canvas element.
  * @param {Number} [h]
- *   The height of the world. Defaults to the value of the "data-worldheight"
+ *   The height of the world. Defaults to the value of the &quot;data-worldheight&quot;
  *   attribute on the HTML canvas element, or (if that attribute is not
  *   present) the height of the canvas element.
  */
 function World(w, h) {
-  /**
-   * @property {Number} scale
+<span id='World-property-scale'>  /**
+</span>   * @property {Number} scale
    *   The percent amount (as a fraction) the canvas resolution is scaled.
    */
   this.scale = 1;
-  /**
-   * @property {Number} width
+<span id='World-property-width'>  /**
+</span>   * @property {Number} width
    *   The width of the world.
    */
   this.width = w || parseInt($canvas.attr('data-worldwidth'), 10) || canvas.width;
-  /**
-   * @property {Number} height
+<span id='World-property-height'>  /**
+</span>   * @property {Number} height
    *   The height of the world.
    */
   this.height = h || parseInt($canvas.attr('data-worldheight'), 10) || canvas.height;
 
-  /**
-   * @property {Number} xOffset
+<span id='World-property-xOffset'>  /**
+</span>   * @property {Number} xOffset
    *   The pixel-offset of what's being displayed in the canvas compared to the
    *   world origin.
    */
   this.xOffset = (this.width - canvas.width)/2;
-  /**
-   * @property {Number} yOffset
+<span id='World-property-yOffset'>  /**
+</span>   * @property {Number} yOffset
    *   The pixel-offset of what's being displayed in the canvas compared to the
    *   world origin.
    */
   this.yOffset = (this.height - canvas.height)/2;
   context.translate(-this.xOffset, -this.yOffset);
 
-  /**
-   * Return an object with 'x' and 'y' properties indicating how far offset
+<span id='World-method-getOffsets'>  /**
+</span>   * Return an object with 'x' and 'y' properties indicating how far offset
    * the viewport is from the world origin.
    */
   this.getOffsets = function() {
@@ -947,8 +972,8 @@ function World(w, h) {
     };
   };
 
-  /**
-   * Resize the world to new dimensions.
+<span id='World-method-resize'>  /**
+</span>   * Resize the world to new dimensions.
    *
    * Careful! This will shift the viewport regardless of where the player is.
    * Objects already in the world will retain their coordinates and so may
@@ -969,8 +994,8 @@ function World(w, h) {
     this.width = newWidth;
     this.height = newHeight;
     
-    /**
-     * @event resizeWorld
+<span id='World-event-resizeWorld'>    /**
+</span>     * @event resizeWorld
      *   Broadcast that the world size changed so that objects already in the
      *   world or other things that depend on the world size can update their
      *   position or size accordingly.
@@ -981,13 +1006,13 @@ function World(w, h) {
     jQuery(document).trigger('resizeWorld', [deltaX, deltaY, this]);
   };
 
-  /**
-   * Scale the canvas resolution.
+<span id='World-method-scaleResolution'>  /**
+</span>   * Scale the canvas resolution.
    *
    * Passing a factor smaller than 1 allows reducing the resolution of the
    * canvas, which should improve performance (since there is less to render in
    * each frame). It does not actually change the size of the canvas on the
-   * page; it just scales how big each "pixel" is drawn on the canvas, much
+   * page; it just scales how big each &quot;pixel&quot; is drawn on the canvas, much
    * like changing the resolution of your monitor does not change its physical
    * size. It is your responsibility to change the size of any fixed-size
    * entities in the world after resizing, if applicable; if you don't do this,
@@ -998,7 +1023,7 @@ function World(w, h) {
    *
    * @param {Number} factor
    *   The percent amount to scale the resolution on each dimension as a
-   *   fraction of the <em>current</em> resolution (typically between zero and
+   *   fraction of the &lt;em&gt;current&lt;/em&gt; resolution (typically between zero and
    *   one). In other words, if the original resolution is 1024*768, scaling
    *   the resolution by a factor of 0.5 will result in a resolution of 512*384
    *   (showing 25% as many pixels on the screen). If scaled again by a factor
@@ -1032,8 +1057,8 @@ function World(w, h) {
     }
   };
 
-  /**
-   * Center the viewport around a specific location.
+<span id='World-method-centerViewportAround'>  /**
+</span>   * Center the viewport around a specific location.
    *
    * @param {Number} x The x-coordinate around which to center the viewport.
    * @param {Number} y The y-coordinate around which to center the viewport.
@@ -1048,8 +1073,8 @@ function World(w, h) {
     context.translate(deltaX, deltaY);
   };
 
-  /**
-   * Determine whether a Box is inside the viewport.
+<span id='World-method-isInView'>  /**
+</span>   * Determine whether a Box is inside the viewport.
    *
    * To test whether a Box is inside the World, see World#isInWorld().
    *
@@ -1064,19 +1089,19 @@ function World(w, h) {
    */
   this.isInView = function(box, partial) {
     if (partial) {
-      return box.x + box.width > this.xOffset &&
-        box.x < this.xOffset + canvas.width &&
-        box.y + box.height > this.yOffset &&
-        box.y < this.yOffset + canvas.height;
+      return box.x + box.width &gt; this.xOffset &amp;&amp;
+        box.x &lt; this.xOffset + canvas.width &amp;&amp;
+        box.y + box.height &gt; this.yOffset &amp;&amp;
+        box.y &lt; this.yOffset + canvas.height;
     }
-    return box.x > this.xOffset &&
-      box.x + box.width < this.xOffset + canvas.width &&
-      box.y > this.yOffset &&
-      box.y + box.height < this.yOffset + canvas.height;
+    return box.x &gt; this.xOffset &amp;&amp;
+      box.x + box.width &lt; this.xOffset + canvas.width &amp;&amp;
+      box.y &gt; this.yOffset &amp;&amp;
+      box.y + box.height &lt; this.yOffset + canvas.height;
   };
 
-  /**
-   * Determine whether a Box is inside the world.
+<span id='World-method-isInWorld'>  /**
+</span>   * Determine whether a Box is inside the world.
    *
    * To test whether a Box is inside the viewport, see World#isInView().
    *
@@ -1091,26 +1116,26 @@ function World(w, h) {
    */
   this.isInWorld = function(box, partial) {
     if (partial) {
-      return box.x + box.width >= 0 && box.x <= world.width &&
-        box.y + box.height >= 0 && box.y <= world.height;
+      return box.x + box.width &gt;= 0 &amp;&amp; box.x &lt;= world.width &amp;&amp;
+        box.y + box.height &gt;= 0 &amp;&amp; box.y &lt;= world.height;
     }
-    return box.x >= 0 && box.x + box.width <= world.width &&
-      box.y >= 0 && box.y + box.height <= world.height;
+    return box.x &gt;= 0 &amp;&amp; box.x + box.width &lt;= world.width &amp;&amp;
+      box.y &gt;= 0 &amp;&amp; box.y + box.height &lt;= world.height;
   };
 }
 
 // UTILITIES ------------------------------------------------------------------
 
-/**
- * @class App.Utils
+<span id='App-Utils'>/**
+</span> * @class App.Utils
  *   A miscellaneous collection of utilities.
  * @alternateClassName Utils
  * @static
  */
 App.Utils = {};
 
-/**
- * Convert a percent to the corresponding pixel position in the world.
+<span id='App-Utils-static-method-percentToPixels'>/**
+</span> * Convert a percent to the corresponding pixel position in the world.
  *
  * This is useful for specifying the size of objects relative to the size of
  * the canvas or world.
@@ -1139,8 +1164,8 @@ App.Utils.percentToPixels = function(percent, relativeToCanvas) {
   };
 };
 
-/**
- * Get a random number between two numbers.
+<span id='App-Utils-static-method-getRandBetween'>/**
+</span> * Get a random number between two numbers.
  *
  * @param {Number} lo The first number.
  * @param {Number} hi The second number.
@@ -1148,7 +1173,7 @@ App.Utils.percentToPixels = function(percent, relativeToCanvas) {
  * @static
  */
 App.Utils.getRandBetween = function(lo, hi) {
-  if (lo > hi) {
+  if (lo &gt; hi) {
     var t = lo;
     lo = hi;
     hi = t;
@@ -1156,8 +1181,8 @@ App.Utils.getRandBetween = function(lo, hi) {
   return Math.random() * (hi - lo) + lo;
 };
 
-/**
- * Get a random integer between two numbers, inclusive.
+<span id='App-Utils-static-method-getRandIntBetween'>/**
+</span> * Get a random integer between two numbers, inclusive.
  *
  * This function makes no assumptions; despite the parameters being called lo
  * and hi, either one can be higher, and either or both can be integers or
@@ -1171,7 +1196,7 @@ App.Utils.getRandBetween = function(lo, hi) {
  * @static
  */
 App.Utils.getRandIntBetween = function(lo, hi) {
-  if (lo > hi) {
+  if (lo &gt; hi) {
     var t = lo;
     lo = hi;
     hi = t;
@@ -1181,8 +1206,8 @@ App.Utils.getRandIntBetween = function(lo, hi) {
   return Math.floor(Math.random()*(hi-lo+1)+lo);
 };
 
-/**
- * Check if any of the elements in an Array are found in another Array.
+<span id='App-Utils-static-method-anyIn'>/**
+</span> * Check if any of the elements in an Array are found in another Array.
  *
  * @param {Array} search
  *   An Array of elements to search for in the target.
@@ -1195,7 +1220,7 @@ App.Utils.getRandIntBetween = function(lo, hi) {
  * @static
  */
 App.Utils.anyIn = function(search, target) {
-  for (var i = 0, l = search.length; i < l; i++) {
+  for (var i = 0, l = search.length; i &lt; l; i++) {
     if (target.indexOf(search[i]) != -1) {
       return true;
     }
@@ -1203,8 +1228,8 @@ App.Utils.anyIn = function(search, target) {
   return false;
 };
 
-/**
- * Determine whether a is within e of b, inclusive.
+<span id='App-Utils-static-method-almostEqual'>/**
+</span> * Determine whether a is within e of b, inclusive.
  *
  * @param {Number} a
  * @param {Number} b
@@ -1212,12 +1237,12 @@ App.Utils.anyIn = function(search, target) {
  * @static
  */
 App.Utils.almostEqual = function(a, b, e) {
-  // Another (slower) way to express this is Math.abs(a - b) < e
-  return a >= b - e && a <= b + e;
+  // Another (slower) way to express this is Math.abs(a - b) &lt; e
+  return a &gt;= b - e &amp;&amp; a &lt;= b + e;
 };
 
-/**
- * Generate a random URL-safe string of arbitrary length.
+<span id='App-Utils-static-method-randomString'>/**
+</span> * Generate a random URL-safe string of arbitrary length.
  *
  * Useful for generating unique IDs.
  *
@@ -1233,14 +1258,14 @@ App.Utils.randomString = function(n) {
   var c = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_',
       s = '';
   n = n || 32;
-  for (var i = 0; i < n; i++) {
+  for (var i = 0; i &lt; n; i++) {
     s += c.charAt(Math.floor(Math.random() * c.length));
   }
   return s;
 };
 
-/**
- * Position a DOM element at a specific location over the canvas.
+<span id='App-Utils-static-method-positionOverCanvas'>/**
+</span> * Position a DOM element at a specific location over the canvas.
  *
  * Useful for placing forms, text, menus, and other UI elements that are more
  * easily handled in HTML.
@@ -1272,8 +1297,8 @@ App.Utils.positionOverCanvas = function(elem, x, y) {
   });
 };
 
-/**
- * End the game, display "GAME OVER," and allow clicking to restart.
+<span id='App-static-method-gameOver'>/**
+</span> * End the game, display &quot;GAME OVER,&quot; and allow clicking to restart.
  *
  * To disable clicking to restart, run `$canvas.off('.gameover');`
  *
@@ -1302,8 +1327,8 @@ App.gameOver = function() {
     context.lineWidth = 5;
     var x = Math.round(world.xOffset+canvas.width/2);
     var y = Math.round(world.yOffset+canvas.height/2);
-    context.strokeText("GAME OVER", x, y);
-    context.fillText("GAME OVER", x, y);
+    context.strokeText(&quot;GAME OVER&quot;, x, y);
+    context.fillText(&quot;GAME OVER&quot;, x, y);
     context.restore();
   }, 100);
   $canvas.css('cursor', 'pointer');
@@ -1314,10 +1339,10 @@ App.gameOver = function() {
   });
 };
 
-/** @class Array The built-in JavaScript Array class. */
-
-/**
- * Remove an item from an array by value.
+<span id='Array'>/** @class Array The built-in JavaScript Array class. */
+</span>
+<span id='Array-method-remove'>/**
+</span> * Remove an item from an array by value.
  *
  * @param {Mixed} item
  *   The item to remove from the array, if it exists.
@@ -1329,16 +1354,16 @@ App.gameOver = function() {
  */
 Array.prototype.remove = function(item) {
   var i = this.indexOf(item);
-  if (i === undefined || i < 0) {
+  if (i === undefined || i &lt; 0) {
     return undefined;
   }
   return this.splice(i, 1);
 };
 
-/** @class Number The built-in JavaScript Number class. */
-
-/**
- * Round a number to a specified precision.
+<span id='Number'>/** @class Number The built-in JavaScript Number class. */
+</span>
+<span id='Number-method-round'>/**
+</span> * Round a number to a specified precision.
  *
  * Usage:
  *
@@ -1374,8 +1399,8 @@ Number.prototype.round = function(v, a) {
   return Math.round(v*m)/m;
 };
 
-/**
- * Return the sign of a number.
+<span id='Number-method-sign'>/**
+</span> * Return the sign of a number.
  *
  * @param {Number} v
  *   The number whose sign should be retrieved.
@@ -1390,5 +1415,8 @@ Number.prototype.sign = function(v) {
   if (typeof v === 'undefined') {
     v = this;
   }
-  return v > 0 ? 1 : (v < 0 ? -1 : 0);
+  return v &gt; 0 ? 1 : (v &lt; 0 ? -1 : 0);
 };
+</pre>
+</body>
+</html>
