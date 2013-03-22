@@ -145,7 +145,11 @@ function setup(again) {
     activeLayer.context.strokeStyle = activeColor;
     brush.mousedown(activeLayer.context);
   });
-  $canvas.on('mousemove touchmove', function() {
+  $canvas.on('mousemove touchmove', function(e) {
+    // Prevent iOS webkit from scrolling
+    if (e.type == 'touchmove') {
+      e.preventDefault();
+    }
     if (mousedown) {
       brush.mousemove(activeLayer.context);
     }
@@ -159,5 +163,9 @@ function setup(again) {
       activeLayer = null;
     }
     mousedown = false;
+  });
+  // Prevent iOS webkit from scrolling
+  $(document).on('touchmove', function(e) {
+    e.preventDefault();
   });
 }
