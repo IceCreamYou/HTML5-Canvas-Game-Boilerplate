@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Site</title>
+
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Display full-screen in standalone mode -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png"/>
+  <link rel="icon" href="../favicon.ico"/>
+  <!-- <link rel="author" href="humans.txt" /> -->
+
+  <link rel="stylesheet" media="all" href="../css/reset.css" />
+  <link rel="stylesheet" media="all" href="../css/main.css" />
+  <link rel="stylesheet" media="all" href="../css/utilities.css" />
+  <link rel="stylesheet" media="screen" href="../css/media.css" />
+  <link rel="stylesheet" media="print" href="../css/print.css" />
+</head>
+<body>
+  <!-- Prompt IE 6/7/8 users to install Chrome Frame.
+    Earlier IE doesn't have good enough Canvas support.
+    Flash libraries that claim to add Canvas support back don't support some of
+    the tricks we use like context.transform(). -->
+  <!--[if lt IE 9 ]>
+    <p class="chromeframe">
+      You are using an <strong>outdated</strong> browser.
+      <a href="http://browsehappy.com/">Upgrade to a different browser</a> or
+      <a href="http://www.google.com/chromeframe/?redirect=true">install Google
+        Chrome Frame</a> to experience this site.
+    </p>
+  <![endif]-->
+  <div id="main">
+    <div id="content">
+      <noscript>You must have JavaScript enabled to use this site.</noscript>
+      <style>
+        #controls {
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          -webkit-user-select: none;
+          -webkit-touch-callout: none;
+          background-color: #DDDDDD;
+          border: 1px solid #CCCCCC;
+          border-bottom-width: 0;
+          height: 32px;
+          margin: 25px auto 0;
+          padding: 0;
+          text-align: center;
+          user-select: none;
+          width: 800px;
+        }
+        #colors, #brushes, #stack {
+          display: inline-block;
+          margin: 0 auto;
+          padding: 0 20px;
+          text-align: center;
+        }
+        #colors li, #brushes li, #stack li {
+          cursor: pointer;
+          display: inline-block;
+          height: 20px;
+          list-style-type: none;
+          margin: 5px 1px;
+          padding: 0;
+          width: 20px;
+        }
+        #colors li {
+          border: 1px solid black;
+        }
+        #controls .selected {
+          box-shadow: 0 0 1px 1px #666666;
+        }
+        #pen:before {
+          background-color: pink;
+          border: 1px solid black;
+          content: "";
+          height: 2px;
+          left: -1px;
+          position: absolute;
+          top: -2px;
+          width: 4px;
+        }
+        #pen {
+          background-color: #FFF0AA;
+          border: 1px solid black;
+          border-bottom-width: 0;
+          display: block;
+          height: 12px;
+          margin: 2px 7px;
+          position: relative;
+          transform: rotate(30deg);
+          width: 4px;
+        }
+        #pen:after {
+          bottom: -6px;
+          border-left: 3px solid transparent;
+          border-right: 3px solid transparent;
+          border-top: 6px solid black;
+          content: "";
+          height: 0;
+          left: -1px;
+          position: absolute;
+          width: 0;
+        }
+        li#circle {
+          background-color: silver;
+          border: 2px solid black;
+          border-radius: 10px;
+          height: 16px;
+          margin: 6px 2px;
+          width: 16px;
+        }
+        li#rectangle {
+          background-color: silver;
+          border: 2px solid black;
+          height: 16px;
+          margin: 6px 2px;
+          width: 16px;
+        }
+        li#undo {
+          border-bottom: 10px solid transparent;
+          border-right: 20px solid #999999;
+          border-top: 10px solid transparent;
+          height: 0;
+          width: 0;
+        }
+        li#redo {
+          border-bottom: 10px solid transparent;
+          border-left: 20px solid #999999;
+          border-top: 10px solid transparent;
+          height: 0;
+          width: 0;
+        }
+        #stack .active {
+          border-left-color: black;
+          border-right-color: black;
+        }
+      </style>
+      <div id="controls">
+        <ul id="colors">
+          <li style="background-color: red;" title="Red"></li>
+          <li style="background-color: orange;" title="Orange"></li>
+          <li style="background-color: yellow;" title="Yellow"></li>
+          <li style="background-color: green;" title="Green"></li>
+          <li style="background-color: blue;" title="Blue"></li>
+          <li style="background-color: purple;" title="Purple"></li>
+          <li style="background-color: magenta;" title="Pink"></li>
+          <li style="background-color: black;" class="selected" title="Black"></li>
+          <li style="background-color: gray;" title="Gray"></li>
+          <li style="background-color: white;" title="White"></li>
+        </ul>
+        <ul id="brushes">
+          <li class="selected" title="Pencil" id="pencil"><span id="pen"></span></li>
+          <li title="Circle" id="circle"></li>
+          <li title="Rectangle" id="rectangle"></li>
+        </ul>
+        <ul id="stack">
+          <li id="undo" title="Undo"></li>
+          <li id="redo" title="Redo"></li>
+        </ul>
+      </div>
+      <canvas id="canvas" width="800" height="600">
+        Your browser does not support the &lt;canvas&gt; element!
+      </canvas>
+    </div> <!-- /content -->
+  </div> <!-- /main -->
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="../js/libraries/jquery-1.9.0.min.js"><\/script>')</script>
+
+  <script src="../js/boilerplate/core.js"></script>
+  <script src="../js/boilerplate/drawing.js"></script>
+  <script src="../js/boilerplate/mouse.js"></script>
+  <script src="../js/boilerplate/events.js"></script>
+  <script src="paint.js"></script>
+  <!-- Google Analytics: change UA-XXXXXXXX-X to be your site's ID. -->
+  <script>
+    var _gaq=[['_setAccount','UA-XXXXXXXX-X'],['_trackPageview']];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
+</body>
+</html>

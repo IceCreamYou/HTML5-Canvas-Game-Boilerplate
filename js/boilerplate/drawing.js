@@ -80,13 +80,13 @@ function Layer(options) {
    *   The width of the Layer.
    * @readonly
    */
-  this.width = options.width || world.width || canvas.width;
+  this.width = options.width || (options.canvas ? options.canvas.width : 0) || world.width || canvas.width;
   /**
    * @property {Number} height
    *   The height of the Layer.
    * @readonly
    */
-  this.height = options.height || world.height || canvas.height;
+  this.height = options.height || (options.canvas ? options.canvas.height : 0) || world.height || canvas.height;
   /**
    * @property {Number} x
    *   The x-coordinate on the {@link global#canvas global canvas} of the
@@ -118,8 +118,12 @@ function Layer(options) {
    *   movement.
    */
   this.parallax = options.parallax || 1;
-  this.canvas.width = this.width;
-  this.canvas.height = this.height;
+  if (this.canvas.width != this.width) {
+    this.canvas.width = this.width;
+  }
+  if (this.canvas.height != this.height) {
+    this.canvas.height = this.height;
+  }
   /**
    * @property {Number} xOffset
    *   The horizontal distance in pixels that the Layer has

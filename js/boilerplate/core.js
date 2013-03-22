@@ -483,7 +483,7 @@ var Caches = {
 };
 
 // Override the Sprite caching mechanisms.
-if (Sprite) {
+if (typeof Sprite !== 'undefined') {
   Sprite.getImageFromCache = function(src) {
     return Caches.images[src];
   };
@@ -658,7 +658,9 @@ function animate() {
      * @static
      */
     App.physicsDelta = Math.min(frameDelta, 1 / App.MAX_FPS);
-    update(App.physicsDelta, App.physicsTimeElapsed);
+    if (typeof update == 'function') {
+      update(App.physicsDelta, App.physicsTimeElapsed);
+    }
     frameDelta -= App.physicsDelta;
     App.physicsTimeElapsed += App.physicsDelta;
   }

@@ -1,13 +1,14 @@
 This project makes starting an interactive 2D Canvas application fast and easy,
-even for developers who have never used Canvas before. The goal is to let you
-focus on your application's logic rather than low-level boilerplate code that's
-the same for every project.
+even for developers who have never used Canvas before.
 
 The project includes a stripped-down version of
 [HTML5 Boilerplate](https://github.com/h5bp/html5-boilerplate) and adds some
-Canvas-specific boilerplate and JavaScript APIs that are useful for any game or
-interactive application. This framework is particularly useful for
-side-scrolling or top-down games.
+Canvas-specific boilerplate and a couple of useful JavaScript abstractions. In
+other words, it includes the code you were going to write for every canvas
+project anyway, plus a few tools for rapid prototyping of common features.
+
+Thorough documentation is an explicit goal of this project. It should be easy
+to learn, use, and get started.
 
 
 Getting Started
@@ -31,7 +32,7 @@ has a keyboard-controlled player who can wander around.
 At this point you can dive in and start building right away, explore more
 features, or dig deeper into the documentation:
 
- - **[API Overview (below)](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#api-overview)**
+ - **[API Overview (below)](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#whats-included-api-overview)**
  - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
  - **Walk-Through Guides** (coming soon!)
  - **Examples** (coming soon!): things you can build easily with this project
@@ -95,8 +96,8 @@ files and their dependencies:
    collections.js.
 
 
-API Overview
-------------
+What's Included / API Overview
+------------------------------
 
 Below is an overview of the functionality this project provides. To read the
 complete documentation for every function and class, view the
