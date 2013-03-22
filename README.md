@@ -32,7 +32,7 @@ has a keyboard-controlled player who can wander around.
 At this point you can dive in and start building right away, explore more
 features, or dig deeper into the documentation:
 
- - **[API Overview (below)](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#whats-included-api-overview)**
+ - **[API Overview (below)](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#whats-included--api-overview)**
  - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
  - **Walk-Through Guides** (coming soon!)
  - **Examples** (coming soon!): things you can build easily with this project
