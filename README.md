@@ -32,7 +32,7 @@ has a keyboard-controlled player who can wander around.
 At this point you can dive in and start building right away, explore more
 features, or dig deeper into the documentation:
 
- - **[API Overview (below)](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#whats-included--api-overview)**
+ - **[What's Included / API Overview](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#whats-included--api-overview)**
  - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
  - **Walk-Through Guides** (coming soon!)
  - **Examples** (coming soon!): things you can build easily with this project
@@ -323,8 +323,12 @@ Compatibility
 
 Officially supported in Firefox 16+, Chrome 22+, IE9+, Safari 5+.
 
-Probably works in Firefox 4+, Chrome 9+, Opera 11+. Might work in certain more
-advanced mobile browsers.
+Probably works in Firefox 4+, Chrome 9+, Opera 11+.
+
+Also works in newer iOS and Android browsers (and probably other mobile
+browsers too) as long as you accomodate mobile input methods. The
+[Paint demo](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
+is a good example of this.
 
 
 Credits
@@ -338,8 +342,9 @@ Isaac Sukin is the author of this project:
 
 I'd love to hear what you make!
 
-Many other people wrote jQuery, classes.js, and parts of jQuery.hotkeys; they
-are credited in their respective files. Additionally many people contributed to
+Many other people wrote jQuery, classes.js, console-extras.js, stats.js, and
+parts of jQuery.hotkeys; they are credited in their respective files.
+Additionally, many people contributed to
 [H5BP](https://github.com/h5bp/html5-boilerplate), from which most of the
 HTML and CSS, .htaccess, and robots.txt rules originated. Thanks also to
 [JSDuck](https://github.com/senchalabs/jsduck/) for providing the framework for

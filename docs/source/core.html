@@ -26,14 +26,6 @@
  * @ignore
  */
 
-<span id='global-property-'>/**
-</span> * HTML5 Canvas Game Boilerplate
- * Certain components copyright their respective authors.
- * @author Isaac Sukin
- * @license MIT License
- * @ignore
- */
-
 <span id='App'>/**
 </span> * The App object holds all the miscellaneous things that don't deserve to be
  * global.
@@ -166,7 +158,7 @@ var world;
  * However, you can force a specific canvas to be used by calling this
  * function. Currently the app can only manage one canvas at a time.
  *
- * @param c
+ * @param {Mixed} c
  *   An HTMLCanvasElement (&amp;lt;canvas&amp;gt; object) or a DOM ID belonging to a
  *   canvas. This is the canvas to which the app should switch.
  * @member App
@@ -183,7 +175,7 @@ App.setCanvas = function(c) {
   }
   if (!(c instanceof HTMLCanvasElement)) {
     // If no canvas was specified and we already have one set up, don't switch.
-    if (canvas instanceof HTMLCanvasElement) {
+    if (canvas instanceof HTMLCanvasElement &amp;&amp; typeof $canvas !== 'undefined') {
       return;
     }
     // Try to use the canvas with the ID &quot;canvas&quot;
@@ -508,7 +500,7 @@ var Caches = {
 };
 
 // Override the Sprite caching mechanisms.
-if (Sprite) {
+if (typeof Sprite !== 'undefined') {
   Sprite.getImageFromCache = function(src) {
     return Caches.images[src];
   };
@@ -683,7 +675,9 @@ function animate() {
      * @static
      */
     App.physicsDelta = Math.min(frameDelta, 1 / App.MAX_FPS);
-    update(App.physicsDelta, App.physicsTimeElapsed);
+    if (typeof update == 'function') {
+      update(App.physicsDelta, App.physicsTimeElapsed);
+    }
     frameDelta -= App.physicsDelta;
     App.physicsTimeElapsed += App.physicsDelta;
   }

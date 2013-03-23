@@ -42,11 +42,11 @@ var preloadables = [];
  *
  * @param {Number} delta
  *   The amount of time since the last update. Use this to smooth movement.
- *   This has the same value as the global App.physicsDelta.
+ *   This has the same value as the global `App.physicsDelta`.
  * @param {Number} timeElapsed
  *   The amount of time elapsed while animating. This is useful for time-based
  *   movement and limiting the frequency of events. This has the same value as
- *   the global App.physicsTimeElapsed.
+ *   the global `App.physicsTimeElapsed`.
  */
 function update(delta, timeElapsed) {
   player.update();

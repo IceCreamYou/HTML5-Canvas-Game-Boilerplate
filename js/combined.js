@@ -1458,7 +1458,7 @@ App.setCanvas = function(c) {
   }
   if (!(c instanceof HTMLCanvasElement)) {
     // If no canvas was specified and we already have one set up, don't switch.
-    if (canvas instanceof HTMLCanvasElement) {
+    if (canvas instanceof HTMLCanvasElement && typeof $canvas !== 'undefined') {
       return;
     }
     // Try to use the canvas with the ID "canvas"
@@ -1783,7 +1783,7 @@ var Caches = {
 };
 
 // Override the Sprite caching mechanisms.
-if (Sprite) {
+if (typeof Sprite !== 'undefined') {
   Sprite.getImageFromCache = function(src) {
     return Caches.images[src];
   };
@@ -1958,7 +1958,9 @@ function animate() {
      * @static
      */
     App.physicsDelta = Math.min(frameDelta, 1 / App.MAX_FPS);
-    update(App.physicsDelta, App.physicsTimeElapsed);
+    if (typeof update == 'function') {
+      update(App.physicsDelta, App.physicsTimeElapsed);
+    }
     frameDelta -= App.physicsDelta;
     App.physicsTimeElapsed += App.physicsDelta;
   }
@@ -2774,13 +2776,13 @@ function Layer(options) {
    *   The width of the Layer.
    * @readonly
    */
-  this.width = options.width || world.width || canvas.width;
+  this.width = options.width || (options.canvas ? options.canvas.width : 0) || world.width || canvas.width;
   /**
    * @property {Number} height
    *   The height of the Layer.
    * @readonly
    */
-  this.height = options.height || world.height || canvas.height;
+  this.height = options.height || (options.canvas ? options.canvas.height : 0) || world.height || canvas.height;
   /**
    * @property {Number} x
    *   The x-coordinate on the {@link global#canvas global canvas} of the
@@ -2812,8 +2814,12 @@ function Layer(options) {
    *   movement.
    */
   this.parallax = options.parallax || 1;
-  this.canvas.width = this.width;
-  this.canvas.height = this.height;
+  if (this.canvas.width != this.width) {
+    this.canvas.width = this.width;
+  }
+  if (this.canvas.height != this.height) {
+    this.canvas.height = this.height;
+  }
   /**
    * @property {Number} xOffset
    *   The horizontal distance in pixels that the Layer has
@@ -3535,27 +3541,44 @@ var Mouse = {
 
 // Track mouse events
 jQuery(document).ready(function() {
-
-  // Track mouse motion
-  $canvas.hover(function() {
-    var $this = jQuery(this);
-    $this.on('mousemove.coords, touchmove.coords', function(e) {
+  // Callback for mouse/touch-move event to track cursor location
+  var trackmove = function(e) {
+    try {
+      // Get the cursor location
+      var x = e.pageX || e.originalEvent.touches[0].pageX;
+      var y = e.pageY || e.originalEvent.touches[0].pageY;
+      // Prevent window scrolling on iPhone and display freeze on Android
       if (e.type == 'touchmove') {
-        // Prevent window scrolling on iPhone and display freeze on Android
         e.preventDefault();
       }
+      // The position we want is relative to the canvas
       Mouse.coords = {
-          x: e.pageX - $this.offset().left,
-          y: e.pageY - $this.offset().top,
+          x: x - $canvas.offset().left,
+          y: y - $canvas.offset().top,
       };
-    });
+    }
+    catch(ex) {
+      if (window.console && console.error) {
+        console.error('Unable to track cursor location. You are probably using an unusual touch-capable device.');
+      }
+    }
+  };
+
+  // Track cursor for touches
+  $canvas.on('touchmove.coords', trackmove);
+  // For mice, only track the cursor when it's over the canvas
+  $canvas.hover(function() {
+    jQuery(this).on('mousemove.coords', trackmove);
   }, function() {
-    jQuery(this).off('.coords');
+    jQuery(this).off('mousemove.coords');
     Mouse.coords = {x: -9999, y: -9999};
   });
 
   // Track and delegate click events
   $canvas.on('mousedown mouseup click touchstart touchend', function(e) {
+    if (e.type == 'touchstart') {
+      trackmove(e);
+    }
     if (isAnimating() && typeof App.Events !== 'undefined') {
       App.Events.trigger(e.type, e);
     }
