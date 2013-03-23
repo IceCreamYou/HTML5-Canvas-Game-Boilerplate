@@ -132,7 +132,8 @@ function setup(again) {
 
   // Draw
   $canvas.on('mousedown touchstart', function(e) {
-    if (e.which !== 1) return; // left click only
+    if (e.type == 'mousedown' && e.which !== 1) return; // left click only
+    if (mousedown) return;
     mousedown = true;
     // Clear the redo stack since we're taking a new drawing action
     if (redo.length) {
@@ -146,17 +147,13 @@ function setup(again) {
     brush.mousedown(activeLayer.context);
   });
   $canvas.on('mousemove touchmove', function(e) {
-    // Prevent iOS webkit from scrolling
-    if (e.type == 'touchmove') {
-      e.preventDefault();
-    }
     if (mousedown) {
       brush.mousemove(activeLayer.context);
     }
   });
   $canvas.on('mouseup mouseleave touchend', function(e) {
     if (e.type == 'mouseup' && e.which !== 1) return; // left click only
-    if (mousedown) {
+    if (mousedown && activeLayer) {
       brush.mouseup(activeLayer.context);
       layers.push(activeLayer); // Save the preview
       $('#undo').addClass('active');

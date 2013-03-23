@@ -46,7 +46,8 @@
           background-color: #DDDDDD;
           border: 1px solid #CCCCCC;
           border-bottom-width: 0;
-          height: 32px;
+          font-size: 0;
+          height: 52px;
           margin: 25px auto 0;
           padding: 0;
           text-align: center;
@@ -56,17 +57,17 @@
         #colors, #brushes, #stack {
           display: inline-block;
           margin: 0 auto;
-          padding: 0 20px;
+          padding: 0 25px;
           text-align: center;
         }
         #colors li, #brushes li, #stack li {
           cursor: pointer;
           display: inline-block;
-          height: 20px;
+          height: 30px;
           list-style-type: none;
-          margin: 5px 1px;
+          margin: 10px 4px;
           padding: 0;
-          width: 20px;
+          width: 30px;
         }
         #colors li {
           border: 1px solid black;
@@ -78,28 +79,28 @@
           background-color: pink;
           border: 1px solid black;
           content: "";
-          height: 2px;
+          height: 3px;
           left: -1px;
           position: absolute;
-          top: -2px;
-          width: 4px;
+          top: -3px;
+          width: 6px;
         }
         #pen {
           background-color: #FFF0AA;
           border: 1px solid black;
           border-bottom-width: 0;
           display: block;
-          height: 12px;
-          margin: 2px 7px;
+          height: 18px;
+          margin: 4px 12px;
           position: relative;
           transform: rotate(30deg);
-          width: 4px;
+          width: 6px;
         }
         #pen:after {
-          bottom: -6px;
-          border-left: 3px solid transparent;
-          border-right: 3px solid transparent;
+          border-left: 4px solid transparent;
+          border-right: 4px solid transparent;
           border-top: 6px solid black;
+          bottom: -6px;
           content: "";
           height: 0;
           left: -1px;
@@ -109,29 +110,29 @@
         li#circle {
           background-color: silver;
           border: 2px solid black;
-          border-radius: 10px;
-          height: 16px;
-          margin: 6px 2px;
-          width: 16px;
+          border-radius: 15px;
+          height: 26px;
+          margin: 10px 4px;
+          width: 26px;
         }
         li#rectangle {
           background-color: silver;
           border: 2px solid black;
-          height: 16px;
-          margin: 6px 2px;
-          width: 16px;
+          height: 26px;
+          margin: 10px 4px;
+          width: 26px;
         }
         li#undo {
-          border-bottom: 10px solid transparent;
-          border-right: 20px solid #999999;
-          border-top: 10px solid transparent;
+          border-bottom: 15px solid transparent;
+          border-right: 30px solid #999999;
+          border-top: 15px solid transparent;
           height: 0;
           width: 0;
         }
         li#redo {
-          border-bottom: 10px solid transparent;
-          border-left: 20px solid #999999;
-          border-top: 10px solid transparent;
+          border-bottom: 15px solid transparent;
+          border-left: 30px solid #999999;
+          border-top: 15px solid transparent;
           height: 0;
           width: 0;
         }

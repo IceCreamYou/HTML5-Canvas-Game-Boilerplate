@@ -158,7 +158,7 @@ App.setCanvas = function(c) {
   }
   if (!(c instanceof HTMLCanvasElement)) {
     // If no canvas was specified and we already have one set up, don't switch.
-    if (canvas instanceof HTMLCanvasElement) {
+    if (canvas instanceof HTMLCanvasElement && typeof $canvas !== 'undefined') {
       return;
     }
     // Try to use the canvas with the ID "canvas"
