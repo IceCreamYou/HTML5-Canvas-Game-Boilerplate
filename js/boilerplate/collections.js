@@ -182,6 +182,12 @@ Collection.prototype = {
     return this.items.pop();
   },
   /**
+   * Remove and return the first item in the Collection.
+   */
+  removeFirst: function() {
+    return this.items.shift();
+  },
+  /**
    * Return the number of items in the Collection.
    */
   count: function() {

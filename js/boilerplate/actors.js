@@ -36,12 +36,12 @@ var Box = Class.extend({
      * @property {Number} x
      *   The x-coordinate of the top-left corner of the Box.
      */
-    this.x = x || Math.floor((world.width-this.DEFAULT_WIDTH)/2);
+    this.x = typeof x !== 'undefined' ? x : Math.floor((world.width-this.DEFAULT_WIDTH)/2);
     /**
      * @property {Number} y
      *   The y-coordinate of the top-left corner of the Box.
      */
-    this.y = y || Math.floor((world.height-this.DEFAULT_HEIGHT)/2);
+    this.y = typeof y !== 'undefined' ? y : Math.floor((world.height-this.DEFAULT_HEIGHT)/2);
     /**
      * @property {Number} width
      *   The width of the Box.
@@ -249,7 +249,7 @@ var Box = Class.extend({
    * @param {Box} otherBox The other Box with which to check for collision.
    */
   overlapsX: function(otherBox) {
-    return this.x + this.width >= otherBox.x && otherBox.x + otherBox.width >= this.x;
+    return this.x + this.width > otherBox.x && otherBox.x + otherBox.width > this.x;
   },
   /**
    * Determine whether this Box intersects another Box on the y-axis.
@@ -259,7 +259,7 @@ var Box = Class.extend({
    * @param {Box} otherBox The other Box with which to check for collision.
    */
   overlapsY: function(otherBox) {
-    return this.y + this.height >= otherBox.y && otherBox.y + otherBox.height >= this.y;
+    return this.y + this.height > otherBox.y && otherBox.y + otherBox.height > this.y;
   },
   /**
    * Determine whether the mouse is hovering over this Box.
