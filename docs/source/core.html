@@ -537,7 +537,7 @@ window.requestAnimFrame = (function() {
  * @member global
  */
 window.startAnimating = function() {
-  if (!_animate) {
+  if (!_animate &amp;&amp; typeof App.timer !== 'undefined') {
     _animate = true;
 <span id='global-event-startAnimating'>    /**
 </span>     * @event startAnimating
@@ -558,7 +558,7 @@ window.startAnimating = function() {
  * @member global
  */
 window.stopAnimating = function() {
-  if (!_animate) {
+  if (!_animate || typeof App.timer === 'undefined') {
     return;
   }
   _animate = false;

@@ -198,6 +198,12 @@ Collection.prototype = {
   removeLast: function() {
     return this.items.pop();
   },
+<span id='Collection-method-removeFirst'>  /**
+</span>   * Remove and return the first item in the Collection.
+   */
+  removeFirst: function() {
+    return this.items.shift();
+  },
 <span id='Collection-method-count'>  /**
 </span>   * Return the number of items in the Collection.
    */

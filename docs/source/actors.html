@@ -53,12 +53,12 @@ var Box = Class.extend({
 </span>     * @property {Number} x
      *   The x-coordinate of the top-left corner of the Box.
      */
-    this.x = x || Math.floor((world.width-this.DEFAULT_WIDTH)/2);
+    this.x = typeof x !== 'undefined' ? x : Math.floor((world.width-this.DEFAULT_WIDTH)/2);
 <span id='Box-property-y'>    /**
 </span>     * @property {Number} y
      *   The y-coordinate of the top-left corner of the Box.
      */
-    this.y = y || Math.floor((world.height-this.DEFAULT_HEIGHT)/2);
+    this.y = typeof y !== 'undefined' ? y : Math.floor((world.height-this.DEFAULT_HEIGHT)/2);
 <span id='Box-property-width'>    /**
 </span>     * @property {Number} width
      *   The width of the Box.
@@ -266,7 +266,7 @@ var Box = Class.extend({
    * @param {Box} otherBox The other Box with which to check for collision.
    */
   overlapsX: function(otherBox) {
-    return this.x + this.width &gt;= otherBox.x &amp;&amp; otherBox.x + otherBox.width &gt;= this.x;
+    return this.x + this.width &gt; otherBox.x &amp;&amp; otherBox.x + otherBox.width &gt; this.x;
   },
 <span id='Box-method-overlapsY'>  /**
 </span>   * Determine whether this Box intersects another Box on the y-axis.
@@ -276,7 +276,7 @@ var Box = Class.extend({
    * @param {Box} otherBox The other Box with which to check for collision.
    */
   overlapsY: function(otherBox) {
-    return this.y + this.height &gt;= otherBox.y &amp;&amp; otherBox.y + otherBox.height &gt;= this.y;
+    return this.y + this.height &gt; otherBox.y &amp;&amp; otherBox.y + otherBox.height &gt; this.y;
   },
 <span id='Box-method-isHovered'>  /**
 </span>   * Determine whether the mouse is hovering over this Box.
