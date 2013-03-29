@@ -35,11 +35,15 @@ features, or dig deeper into the documentation:
  - **[What's Included / API Overview](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#whats-included--api-overview)**
  - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
  - **Walk-Through Guides** (coming soon!)
- - **Examples** (coming soon!): things you can build easily with this project
-     - **Demo Applications:** see what full-scale projects are possible and how
-       intuitive it is to make them
-     - **Feature Examples:** see specific features in action and learn how to
-       implement them
+ - **Examples**: things you can build easily with this project
+     - [Default project](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/)
+       ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/app/main.js))
+     - [Platformer](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
+       ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js))
+     - [Paint](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
+       ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/paint.js))
+     - [Snake](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/snake.html)
+       ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/snake.js))
 
 ### Modularity and Drop-In Library
 
