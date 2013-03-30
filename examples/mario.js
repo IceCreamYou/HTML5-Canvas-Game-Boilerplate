@@ -172,6 +172,7 @@ jQuery(document).keyup(keys.shoot.join(' '), function() {
 function update(delta, timeElapsed) {
   player.update();
   player.collideSolid(solid);
+  // Parallax
   hills.scroll(player.x - player.lastX, 0);
   hills2.scroll(player.x - player.lastX, 0);
 
@@ -275,7 +276,7 @@ function setup(again) {
     useTimer: false,
   });
 
-  // Add terrain.
+  // Define terrain types and initialize the level layout.
   var Grass = Box.extend({ src: 'images/grass2.png', });
   var GrassCorner = Box.extend({ src: 'images/grass2corner.png', });
   var gc2 = new Sprite('images/grass2corner.png', {flipped: {horizontal: true}});
@@ -292,6 +293,7 @@ function setup(again) {
   });
 
   // Add enemies and coins.
+  // We used the TileMap to initialize them but we want to track them separately
   coins = new Collection();
   enemies = new Collection();
   solid.forEach(function(o, i, j) {
@@ -336,7 +338,7 @@ function setup(again) {
   castle.src = 'images/castle.png';
   castle.draw(geo.context);
 
-  // Set up the foreground layer.
+  // Set up the Heads-Up Display layer.
   hud = new Layer({
     relative: 'canvas',
   });
@@ -349,6 +351,7 @@ function setup(again) {
   hud.context.strokeText('Score: 0', canvas.width - 15, 15);
   hud.context.fillText('Score: 0', canvas.width - 15, 15);
 
+  // Track the score.
   var score = 0;
   player.increaseScore = function(amount) {
     score += amount;
