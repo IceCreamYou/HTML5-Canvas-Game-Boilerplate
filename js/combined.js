@@ -485,12 +485,12 @@ SpriteMap.prototype = {
         squeeze:  typeof options.squeeze  !== 'undefined' ? options.squeeze  : false,
         flipped:  typeof options.flipped  !== 'undefined' ? options.flipped  : {horizontal: false, vertical: false}
     };
+    // Pre-render the flipped versions of the image we know we'll need to use.
     var f = this.maps[name].flipped,
         key = (f.horizontal ? '1' : '0') + (f.vertical ? '1' : '0');
-    if (typeof this.cachedImages[key] === 'undefined') {
-      this.cachedImages[key] = this.sprite._prerender(this.baseImage, f);
+    if (typeof this.sprite.cachedImages[key] === 'undefined') {
+      this.sprite.cachedImages[key] = this.sprite._prerender(this.baseImage, f);
     }
-    this.maps[name].image = this.cachedImages[key];
     return this;
   },
   /**
@@ -525,9 +525,6 @@ SpriteMap.prototype = {
     this.activeLoop = name;
     var m = this.maps[name];
     this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze, m.flipped);
-    if (m.image) {
-      this.sprite.image = m.image;
-    }
     return this;
   },
   /**
@@ -781,7 +778,6 @@ function Sprite(src, options) {
 Sprite.prototype = {
   // Calculates and stores initial values based on a loaded image.
   _init: function(img, options) {
-    this.image = img;
     this.width = img.width;
     this.height = img.height;
     this.frameW = options.frameW || img.width;
@@ -805,6 +801,13 @@ Sprite.prototype = {
     this.flipped = options.flipped || {horizontal: false, vertical: false};
     this.flipped.horizontal = this.flipped.horizontal || false;
     this.flipped.vertical = this.flipped.vertical || false;
+    this.cachedImages = {'00': img};
+    var f = this.flipped,
+        key = (f.horizontal ? '1' : '0') + (f.vertical ? '1' : '0');
+    if (typeof this.cachedImages[key] === 'undefined') {
+      this.cachedImages[key] = this._prerender(img, f);
+    }
+    this.image = this.cachedImages[key];
     this._runOnce = false;
     if (this.squeeze) {
       this.cols = this.endCol - this.startCol + 1;
@@ -974,10 +977,11 @@ Sprite.prototype = {
    *   column can be used (after startCol in startRow and before endCol in
    *   endRow). For more information on how this works, see the documentation
    *   for the {@link Sprite} constructor.
-   * @param {Object} [flipped={horizontal: false, vertical: false}]
+   * @param {Object} [flipped]
    *   An object with "horizontal" and "vertical" properties (both Booleans)
    *   indicating whether the Sprite should be drawn flipped along the
-   *   horizontal or vertical axes.
+   *   horizontal or vertical axes. Defaults to the flipped setting for the
+   *   current animation sequence.
    */
   setLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.stopLoop();
@@ -992,6 +996,12 @@ Sprite.prototype = {
     }
     if (typeof flipped !== 'undefined') {
       this.flipped = flipped;
+      var f = this.flipped,
+          key = (f.horizontal ? '1' : '0') + (f.vertical ? '1' : '0');
+      if (typeof this.cachedImages[key] === 'undefined') {
+        this.cachedImages[key] = this._prerender(this.image, f);
+      }
+      this.image = this.cachedImages[key];
     }
     this.startRow = startRow, this.startCol = startCol,
     this.endRow = endRow, this.endCol = endCol;
@@ -1036,8 +1046,7 @@ Sprite.prototype = {
    *   An object with "horizontal" and "vertical" properties (both Booleans)
    *   indicating whether the Sprite should be drawn flipped along the
    *   horizontal or vertical axes. Defaults to the flipped setting for the
-   *   current animation sequence unless startRow and startCol are specified,
-   *   in which case it defaults to {horizontal: false, vertical: false}.
+   *   current animation sequence.
    */
   startLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     if (typeof startRow !== 'undefined' && typeof startCol !== 'undefined') {

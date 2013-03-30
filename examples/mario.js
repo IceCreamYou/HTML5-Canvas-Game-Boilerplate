@@ -20,23 +20,37 @@ var keys = {
  * An array of image file paths to pre-load.
  */
 var preloadables = [
-                    'images/nature.jpg',
+                    'images/sky.png',
+                    'images/hills.png',
+                    'images/hills2.png',
                     'images/player.png',
-                    'images/grass.png',
-                    'images/dirt.png',
-                    'images/rock.png',
+                    'images/grass2.png',
+                    'images/grass2body.png',
+                    'images/grass2corner.png',
                     'images/centipede.png',
+                    'images/castle.png',
+                    'images/coin.png',
                     ];
 
 /**
  * Layers.
  */
-var bkgd, hud;
+var bkgd, hills, hills2, geo, hud;
+
+/**
+ * Win location.
+ */
+var castle;
 
 /**
  * A TileMap of level geometry.
  */
 var solid;
+
+/**
+ * All our coins.
+ */
+var coins;
 
 /**
  * All our enemies.
@@ -71,7 +85,7 @@ var Enemy = Actor.extend({
   reverse: function() {
     // To avoid any edge cases of endless reversal, add a minimum delay.
     var now = Date.now();
-    if (now > this.lastReversed + 52) {
+    if (now > this.lastReversed + this.width) {
       this.lastReversed = now;
       this.lastLooked = App.Utils.anyIn(keys.right, this.lastLooked) ? keys.left : keys.right;
     }
@@ -158,6 +172,8 @@ jQuery(document).keyup(keys.shoot.join(' '), function() {
 function update(delta, timeElapsed) {
   player.update();
   player.collideSolid(solid);
+  hills.scroll(player.x - player.lastX, 0);
+  hills2.scroll(player.x - player.lastX, 0);
 
   enemies.forEach(function(enemy) {
     // Reverse if we get to the edge of a platform.
@@ -177,7 +193,6 @@ function update(delta, timeElapsed) {
     }
     // The player dies if it touches an enemy.
     if (enemy.collides(player)) {
-      player.destroy();
       App.gameOver();
     }
   });
@@ -187,6 +202,7 @@ function update(delta, timeElapsed) {
     // Shoot enemies.
     var enemy = bullet.collides(enemies);
     if (enemy) {
+      player.increaseScore(10);
       enemies.remove(enemy);
       enemy.destroy();
     }
@@ -194,6 +210,17 @@ function update(delta, timeElapsed) {
     // This destroys the bullet if it hits a solid or goes out of the world.
     return enemy || bullet.collides(solid) || !world.isInWorld(bullet, true);
   });
+
+  coins.forEach(function(coin) {
+    if (coin.overlaps(player)) {
+      player.increaseScore(1);
+      return true;
+    }
+  });
+
+  if (castle.overlaps(player)) {
+    App.gameOver();
+  }
 }
 
 /**
@@ -201,6 +228,10 @@ function update(delta, timeElapsed) {
  */
 function draw() {
   bkgd.draw();
+  hills.draw();
+  hills2.draw();
+  geo.draw();
+  coins.draw();
   enemies.draw();
   player.draw();
   bullets.draw();
@@ -215,8 +246,13 @@ function draw() {
  *   it is being set up.
  */
 function setup(again) {
+  // The map layout
+  var grid =  "      F             F                                           FFF    C              \n" +
+              "      GGGGF         F     GGG              GCBBBBBBBDF     G          CB              \n" +
+              "          G    G        GCBBBDG E         CBBBB F BBB      B      E  CBB              \n" +
+              "            E  BD     GCBBBBBBBDG     GG       E         G F GGGGGGGCBBBDGGGGGGGGGGGGG";
   // Change the size of the playable area. Do this before placing items!
-  world.resize(canvas.width + 1200, canvas.height + 200);
+  world.resize(Math.max(canvas.width, grid.indexOf("\n")*80), Math.max(canvas.height + 200, 520));
 
   // Switch from top-down to side view.
   Actor.prototype.GRAVITY = true;
@@ -240,27 +276,65 @@ function setup(again) {
   });
 
   // Add terrain.
-  var Grass = Box.extend({ src: 'images/grass.png', });
-  var Dirt = Box.extend({ src: 'images/dirt.png', });
-  var Rock = Box.extend({ src: 'images/rock.png', });
-  var grid =  "         D      GG        \n" +
-              "              GGDDGG      \n" +
-              "      GG    GGRRRRRRGG  GG";
-  solid = new TileMap(grid, {D: Dirt, G: Grass, R: Rock});
+  var Grass = Box.extend({ src: 'images/grass2.png', });
+  var GrassCorner = Box.extend({ src: 'images/grass2corner.png', });
+  var gc2 = new Sprite('images/grass2corner.png', {flipped: {horizontal: true}});
+  var GrassCorner2 = Box.extend({src: gc2});
+  var GrassBody = Box.extend({ src: 'images/grass2body.png', });
+  var Coin = Box.extend({src: 'images/coin.png'});
+  solid = new TileMap(grid, {
+    B: GrassBody,
+    C: GrassCorner,
+    D: GrassCorner2,
+    E: Enemy,
+    F: Coin,
+    G: Grass,
+  });
 
-  // Add enemies.
+  // Add enemies and coins.
+  coins = new Collection();
   enemies = new Collection();
-  enemies.add(new Enemy(840, world.height-52, 52, 52));
-  enemies.add(new Enemy(1920, world.height-52-Box.prototype.DEFAULT_HEIGHT, 52, 52));
-  if (world.width > 2320) enemies.add(new Enemy(2240, world.height-52, 52, 52));
+  solid.forEach(function(o, i, j) {
+    if (o instanceof Enemy) {
+      solid.clearCell(i, j);
+      enemies.add(o);
+    }
+    else if (o instanceof Coin) {
+      solid.clearCell(i, j);
+      coins.add(o);
+    }
+  });
 
   // Set up bullets.
   bullets = new Collection();
 
-  // Set up the background layer.
-  bkgd = new Layer({src: 'images/nature.jpg'});
-  //bkgd.context.drawImage('images/nature.jpg', 0, world.height-Caches.images['images/nature.jpg'].height, world.width, Caches.images['images/nature.jpg'].height);
-  solid.draw(bkgd.context);
+  // Set up the background layers.
+  bkgd = new Layer({src: 'images/sky.png'});
+  var p = 0.018, w = world.width+player.x*p+(world.width-player.x)*p;
+  hills = new Layer({
+    src: 'images/hills.png',
+    x: (-player.x*p)|0,
+    y: (world.height-world.height*(w/world.width)/2)|0,
+    width: w,
+    height: (world.height*(w/world.width)/2)|0,
+    parallax: p,
+  });
+  p = 0.1;
+  hills2 = new Layer({
+    src: 'images/hills2.png',
+    x: (-player.x*p)|0,
+    y: world.height-64,
+    width: world.width+player.x*p+(world.width-player.x)*p,
+    height: 64,
+    parallax: p,
+  });
+  geo = new Layer();
+  solid.draw(geo.context);
+
+  // Set up the castle.
+  castle = new Box(grid.indexOf("\n")*80-320, world.height-320, 240, 240);
+  castle.src = 'images/castle.png';
+  castle.draw(geo.context);
 
   // Set up the foreground layer.
   hud = new Layer({
@@ -274,4 +348,12 @@ function setup(again) {
   hud.context.lineWidth = 3;
   hud.context.strokeText('Score: 0', canvas.width - 15, 15);
   hud.context.fillText('Score: 0', canvas.width - 15, 15);
+
+  var score = 0;
+  player.increaseScore = function(amount) {
+    score += amount;
+    hud.context.clear();
+    hud.context.strokeText('Score: ' + score, canvas.width - 15, 15);
+    hud.context.fillText('Score: ' + score, canvas.width - 15, 15);
+  };
 }
