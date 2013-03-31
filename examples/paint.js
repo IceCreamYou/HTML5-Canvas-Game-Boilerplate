@@ -93,7 +93,7 @@ function draw() {
 /**
  * A magic-named function for one-time setup.
  */
-function setup(again) {
+function setup() {
   // Make sure we have a brush to start with
   brush = new brushes[activeBrush]();
 

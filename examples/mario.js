@@ -242,11 +242,11 @@ function draw() {
 /**
  * A magic-named function for one-time setup.
  *
- * @param {Boolean} again
- *   true if the app has been reset and is starting over; false the first time
- *   it is being set up.
+ * @param {Boolean} first
+ *   true if the app is being set up for the first time; false if the app has
+ *   been reset and is starting over.
  */
-function setup(again) {
+function setup(first) {
   // The map layout
   var grid =  "      F             F                                           FFF    C              \n" +
               "      GGGGF         F     GGG              GCBBBBBBBDF     G          CB              \n" +
@@ -359,4 +359,16 @@ function setup(again) {
     hud.context.strokeText('Score: ' + score, canvas.width - 15, 15);
     hud.context.fillText('Score: ' + score, canvas.width - 15, 15);
   };
+
+  // Provide instructions the first time the game is run.
+  if (first) {
+    var a = $('<div style="background-color: rgba(255, 255, 255, 0.9); border: 2px solid #999999; border-radius: 42px; display: inline-block; font-size: 24px; height: 34px; left: 50%; margin: -69px 0 0 -343px; overflow-x: auto; overflow-y: hidden; padding: 50px; position: absolute; text-align: center; top: 50%; width: 542px; z-index: 10;">Use the arrow keys to move and &lt;space&gt; to shoot.</div>');
+    $canvas.after(a);
+    a.click(function(e) {
+      if (e.which == 1) { // Left click only
+        a.remove();
+      }
+    });
+    a.animate({opacity: 1}, 2500).fadeOut(1000);
+  }
 }

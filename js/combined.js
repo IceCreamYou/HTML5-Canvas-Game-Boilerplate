@@ -6464,11 +6464,12 @@ var Actor = Box.extend({
 /**
  * The Player object controlled by the user.
  *
+ * Multiple Players are supported. If you instantiate multiple Players, you
+ * will usually want to set different {@link Actor#keys keys} for them.
+ *
  * If the world is bigger than the canvas, the viewport will shift as a Player
- * moves toward an edge of the viewport. This behavior is usually desirable for
- * situations where a Player is desired, and in other cases (e.g. when the
- * viewport should shift based on the mouse's location) generally a Player
- * should not be used.
+ * moves toward an edge of the viewport. Sane viewport shifting is not
+ * guaranteed with multiple Players.
  *
  * @extends Actor
  */

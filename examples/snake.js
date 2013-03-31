@@ -140,11 +140,11 @@ function draw() {
 /**
  * A magic-named function for one-time setup.
  *
- * @param {Boolean} again
- *   true if the app has been reset and is starting over; false the first time
- *   it is being set up.
+ * @param {Boolean} first
+ *   true if the app is being set up for the first time; false if the app has
+ *   been reset and is starting over.
  */
-function setup(again) {
+function setup(first) {
   // Switch from top-down to side view.
   Actor.prototype.GRAVITY = false;
 
