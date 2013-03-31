@@ -213,7 +213,7 @@ function update(delta, timeElapsed) {
   });
 
   coins.forEach(function(coin) {
-    if (coin.overlaps(player)) {
+    if (player.overlaps(coin)) {
       player.increaseScore(1);
       return true;
     }
@@ -278,19 +278,13 @@ function setup(first) {
   });
 
   // Define terrain types and initialize the level layout.
-  var Grass = Box.extend({ src: 'images/grass2.png', });
-  var GrassCorner = Box.extend({ src: 'images/grass2corner.png', });
-  var gc2 = new Sprite('images/grass2corner.png', {flipped: {horizontal: true}});
-  var GrassCorner2 = Box.extend({src: gc2});
-  var GrassBody = Box.extend({ src: 'images/grass2body.png', });
-  var Coin = Box.extend({src: 'images/coin.png'});
   solid = new TileMap(grid, {
-    B: GrassBody,
-    C: GrassCorner,
-    D: GrassCorner2,
+    B: 'images/grass2body.png',
+    C: 'images/grass2corner.png',
+    D: new Sprite('images/grass2corner.png', {flipped: {horizontal: true}}),
     E: Enemy,
-    F: Coin,
-    G: Grass,
+    F: 'images/coin.png',
+    G: 'images/grass2.png',
   });
 
   // Add enemies and coins.
@@ -302,7 +296,7 @@ function setup(first) {
       solid.clearCell(i, j);
       enemies.add(o);
     }
-    else if (o instanceof Coin) {
+    else if (o.src == 'images/coin.png') {
       solid.clearCell(i, j);
       coins.add(o);
     }

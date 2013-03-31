@@ -1171,7 +1171,7 @@ var Actor = Box.extend({
    */
   collideSolid: function(collideWith) {
     var collided = {x: 0, y: 0};
-    if (collideWith instanceof Box) {
+    if (collideWith instanceof Box || collideWith instanceof ImageWrapper) {
       collided = this._collideSolidBox(collideWith);
     }
     else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
