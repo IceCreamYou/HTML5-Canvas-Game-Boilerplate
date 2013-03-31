@@ -260,6 +260,7 @@ function setup(first) {
 
   // Initialize the player.
   player = new Player(200, 200, 60, 80);
+  player.MOVEWORLD = 0.33;
   player.src = new SpriteMap('images/player.png', {
     stand: [0, 5, 0, 5],
     fall: [0, 5, 1, 5, true],
@@ -312,9 +313,11 @@ function setup(first) {
 
   // Set up the background layers.
   bkgd = new Layer({src: 'images/sky.png'});
+  geo = new Layer();
+  solid.draw(geo.context);
   var p = 0.018, w = world.width+player.x*p+(world.width-player.x)*p;
   hills = new Layer({
-    src: 'images/hills.png',
+    src: 'images/hills2.png',
     x: (-player.x*p)|0,
     y: (world.height-world.height*(w/world.width)/2)|0,
     width: w,
@@ -323,15 +326,24 @@ function setup(first) {
   });
   p = 0.1;
   hills2 = new Layer({
-    src: 'images/hills2.png',
     x: (-player.x*p)|0,
-    y: world.height-64,
+    y: world.height-480,
     width: world.width+player.x*p+(world.width-player.x)*p,
-    height: 64,
+    height: 480,
     parallax: p,
   });
-  geo = new Layer();
-  solid.draw(geo.context);
+  // Magnify the background pipes
+  var ca = document.createElement('canvas');
+  ca.width = 1920;
+  ca.height = 480;
+  co = ca.getContext('2d');
+  co.drawImage('images/hills.png', 0, 0, 960, 480); // first half
+  co.save();
+  co.translate(ca.width, 0);
+  co.scale(-1, 1);
+  co.drawImage('images/hills.png', 0, 0, 960, 480); // flipped and translated
+  co.restore();
+  hills2.context.drawPattern(ca, 0, 0, hills2.width, hills2.height, 'repeat-x');
 
   // Set up the castle.
   castle = new Box(grid.indexOf("\n")*80-320, world.height-320, 240, 240);
