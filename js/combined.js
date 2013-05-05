@@ -4427,10 +4427,10 @@ Collection.prototype = {
    * @param {Function} [callback]
    *   A function to call for each pair of items in this Collection that
    *   collide.
-   * @param {Box} [callback.a]
-   *   A Box in the Collection that overlaps.
-   * @param {Box} [callback.b]
-   *   A Box in the Collection that overlaps.
+   * @param {Mixed} [callback.a]
+   *   An item in the Collection that overlaps.
+   * @param {Mixed} [callback.b]
+   *   An item in the Collection that overlaps.
    *
    * @return {Boolean}
    *   Whether items in this Collection collide.
@@ -4458,21 +4458,14 @@ Collection.prototype = {
    * This method works exactly the same way as
    * [Array#splice](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/splice).
    */
-  splice: function() {
-    return Array.prototype.splice.apply(this, arguments);
-  },
+  splice: Array.prototype.splice,
   /**
    * Add an item to the Collection.
    *
-   * @param {Arguments} ...
-   *   Box(es) to add to the Collection.
-   *
-   * @return {Number}
-   *   The number of items in the Collection.
+   * This method works exactly the same way as
+   * [Array#push](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/push).
    */
-  add: function() {
-    return Array.prototype.push.apply(this, arguments);
-  },
+  add: Array.prototype.push,
   /**
    * Add the items in an Array or another Collection to this Collection.
    *
@@ -4500,27 +4493,27 @@ Collection.prototype = {
    *
    * See Collection#removeLast() to pop the last item in the collection.
    *
-   * @param {Box} item
-   *   The Box to remove from the Collection.
+   * @param {Mixed} item
+   *   The item to remove from the Collection.
    *
    * @return Array
    *   An Array containing the removed element, if any.
    */
-  remove: function(item) {
-    return Array.prototype.remove.call(this, item);
-  },
+  remove: Array.prototype.remove,
   /**
    * Remove and return the last item in the Collection.
+   *
+   * This method works exactly the same way as
+   * [Array#pop](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/pop).
    */
-  removeLast: function() {
-    return Array.prototype.pop.call(this);
-  },
+  removeLast: Array.prototype.pop,
   /**
    * Remove and return the first item in the Collection.
+   *
+   * This method works exactly the same way as
+   * [Array#shift](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/shift).
    */
-  removeFirst: function() {
-    return Array.prototype.shift.call(this);
-  },
+  removeFirst: Array.prototype.shift,
   /**
    * Remove all items in the Collection.
    */
@@ -4528,6 +4521,13 @@ Collection.prototype = {
     Array.prototype.splice.call(this, 0, this.length);
     return this;
   },
+  /**
+   * Returns index of the specified item in the Collection.
+   *
+   * This method works exactly the same way as
+   * [Array#indexOf](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/indexOf).
+   */
+  indexOf: Array.prototype.indexOf,
 };
 
 /**
@@ -5169,8 +5169,7 @@ var Box = Class.extend({
       return this.overlaps(collideWith) ? collideWith : false;
     }
     var items = collideWith, found = [];
-    if ((typeof Collection !== 'undefined' && collideWith instanceof Collection) ||
-        (typeof TileMap !== 'undefined' && collideWith instanceof TileMap)) {
+    if (typeof TileMap !== 'undefined' && collideWith instanceof TileMap) {
       items = collideWith.getAll();
     }
     for (var i = 0, l = items.length; i < l; i++) {

@@ -230,8 +230,7 @@ var Box = Class.extend({
       return this.overlaps(collideWith) ? collideWith : false;
     }
     var items = collideWith, found = [];
-    if ((typeof Collection !== 'undefined' &amp;&amp; collideWith instanceof Collection) ||
-        (typeof TileMap !== 'undefined' &amp;&amp; collideWith instanceof TileMap)) {
+    if (typeof TileMap !== 'undefined' &amp;&amp; collideWith instanceof TileMap) {
       items = collideWith.getAll();
     }
     for (var i = 0, l = items.length; i &lt; l; i++) {
