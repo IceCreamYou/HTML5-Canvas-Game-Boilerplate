@@ -220,7 +220,7 @@ function update(delta, timeElapsed) {
   });
 
   if (castle.overlaps(player)) {
-    App.gameOver();
+    App.gameOver("YOU WIN!");
   }
 }
 

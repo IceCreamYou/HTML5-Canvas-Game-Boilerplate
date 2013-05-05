@@ -1275,14 +1275,17 @@ App.Utils.positionOverCanvas = function(elem, x, y) {
 };
 
 /**
- * End the game, display "GAME OVER," and allow clicking to restart.
+ * End the game, display a message, and allow clicking to restart.
  *
  * To disable clicking to restart, run `$canvas.off('.gameover');`
+ *
+ * @param {String} [text="GAME OVER"]
+ *   Text to overlay on the screen.
  *
  * @member App
  * @static
  */
-App.gameOver = function() {
+App.gameOver = function(text) {
   if (App.isGameOver) {
     return;
   }
@@ -1290,6 +1293,9 @@ App.gameOver = function() {
   stopAnimating();
   if (player) {
     player.destroy();
+  }
+  if (typeof text != 'string') {
+    text = "GAME OVER";
   }
   // This runs during update() before the final draw(), so we have to delay it.
   setTimeout(function() {
@@ -1304,8 +1310,8 @@ App.gameOver = function() {
     context.lineWidth = 5;
     var x = Math.round(world.xOffset+canvas.width/2);
     var y = Math.round(world.yOffset+canvas.height/2);
-    context.strokeText("GAME OVER", x, y);
-    context.fillText("GAME OVER", x, y);
+    context.strokeText(text, x, y);
+    context.fillText(text, x, y);
     context.restore();
   }, 100);
   $canvas.css('cursor', 'pointer');

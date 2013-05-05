@@ -2584,14 +2584,17 @@ App.Utils.positionOverCanvas = function(elem, x, y) {
 };
 
 /**
- * End the game, display "GAME OVER," and allow clicking to restart.
+ * End the game, display a message, and allow clicking to restart.
  *
  * To disable clicking to restart, run `$canvas.off('.gameover');`
+ *
+ * @param {String} [text="GAME OVER"]
+ *   Text to overlay on the screen.
  *
  * @member App
  * @static
  */
-App.gameOver = function() {
+App.gameOver = function(text) {
   if (App.isGameOver) {
     return;
   }
@@ -2599,6 +2602,9 @@ App.gameOver = function() {
   stopAnimating();
   if (player) {
     player.destroy();
+  }
+  if (typeof text != 'string') {
+    text = "GAME OVER";
   }
   // This runs during update() before the final draw(), so we have to delay it.
   setTimeout(function() {
@@ -2613,8 +2619,8 @@ App.gameOver = function() {
     context.lineWidth = 5;
     var x = Math.round(world.xOffset+canvas.width/2);
     var y = Math.round(world.yOffset+canvas.height/2);
-    context.strokeText("GAME OVER", x, y);
-    context.fillText("GAME OVER", x, y);
+    context.strokeText(text, x, y);
+    context.fillText(text, x, y);
     context.restore();
   }, 100);
   $canvas.css('cursor', 'pointer');
@@ -4312,18 +4318,30 @@ App.Storage = (function(window, undefined) {
  */
 
 /**
- * A container to keep track of multiple Boxes/Box descendants.
+ * An Array-like container to keep track of multiple Boxes/Box descendants.
+ *
+ * The main reason to use Collections instead of Arrays is that Collections
+ * have utility methods to easily process Box objects without manually
+ * iterating over each one. Collection objects can be treated as arrays in
+ * many respects; for example, they have a dynamic `length` property, and they
+ * can be read and modified using square-bracket notation (e.g. `a[0]`)
+ * although new elements should not be added using square brackets (use the
+ * `add()` method instead to make sure the `length` is correctly updated).
  *
  * @constructor
  *   Creates a new Collection instance.
  *
- * @param {Array} [items]
- *   An Array of Boxes that the Collection should hold.
+ * @param {Arguments} ...
+ *   An Array of items that the Collection should hold.
  */
-function Collection(items) {
-  this.items = items || [];
+function Collection() {
+  this.concat.apply(this, arguments);
 }
 Collection.prototype = {
+  /**
+   * The number of items in the Collection.
+   */
+  length: 0,
   /**
    * Draw every object in the Collection.
    *
@@ -4336,8 +4354,8 @@ Collection.prototype = {
    */
   draw: function(ctx) {
     ctx = ctx || context;
-    for (var i = 0; i < this.items.length; i++) {
-      this.items[i].draw(ctx);
+    for (var i = 0; i < this.length; i++) {
+      this[i].draw(ctx);
     }
     return this;
   },
@@ -4355,12 +4373,12 @@ Collection.prototype = {
     if (typeof f == 'string') {
       return this._executeMethod.apply(this, arguments);
     }
-    for (var i = this.items.length-1; i >= 0; i--) {
-      if (f(this.items[i])) {
-        if (typeof this.items[i].destroy == 'function') {
-          this.items[i].destroy();
+    for (var i = this.length-1; i >= 0; i--) {
+      if (f(this[i])) {
+        if (typeof this[i].destroy == 'function') {
+          this[i].destroy();
         }
-        this.items.splice(i, 1);
+        this.splice(i, 1);
       }
     }
     return this;
@@ -4381,19 +4399,22 @@ Collection.prototype = {
    */
   _executeMethod: function(name) {
     Array.prototype.shift.call(arguments);
-    for (var i = 0; i < this.items.length; i++) {
-      this.items[i][name].apply(this.items[i], arguments);
+    for (var i = 0; i < this.length; i++) {
+      this[i][name].apply(this[i], arguments);
     }
     return this;
   },
   /**
    * Check each pair of items in this Collection for collision.
    *
+   * This method assumes every item in the Collection has an "overlaps"
+   * method.
+   *
    * To check all items in a Collection against a single Box, use the
    * Box#collides() method. To check all items in a Collection against all
    * items in another Collection, use the following pattern:
    *
-   *     collection1.foreach(function(item) {
+   *     collection1.forEach(function(item) {
    *       if (item.collides(collection2)) {
    *         // do something
    *       }
@@ -4404,19 +4425,23 @@ Collection.prototype = {
    * return value.
    *
    * @param {Function} [callback]
-   *   A function to call when two items in this Collection collide.
+   *   A function to call for each pair of items in this Collection that
+   *   collide.
    * @param {Box} [callback.a]
    *   A Box in the Collection that overlaps.
    * @param {Box} [callback.b]
    *   A Box in the Collection that overlaps.
+   *
+   * @return {Boolean}
+   *   Whether items in this Collection collide.
    */
   collideAll: function(callback) {
     var collision = false;
-    for (var i = 0, l = this.items.length; i < l; i++) {
+    for (var i = 0, l = this.length; i < l; i++) {
       for (var j = i+1; j < l; j++) {
-        if (this.items[i].overlaps(this.items[j])) {
+        if (this[i].overlaps(this[j])) {
           if (typeof callback == 'function') {
-            callback.call(this, this.items[i], this.items[j]);
+            callback.call(this, this[i], this[j]);
             collision = true;
           }
           else {
@@ -4428,40 +4453,46 @@ Collection.prototype = {
     return collision;
   },
   /**
+   * Changes the content of a Collection by adding and/or removing elements.
+   *
+   * This method works exactly the same way as
+   * [Array#splice](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/splice).
+   */
+  splice: function() {
+    return Array.prototype.splice.apply(this, arguments);
+  },
+  /**
    * Add an item to the Collection.
    *
-   * @param {Box} item
-   *   The Box to add to the Collection.
+   * @param {Arguments} ...
+   *   Box(es) to add to the Collection.
    *
    * @return {Number}
    *   The number of items in the Collection.
    */
-  add: function(item) {
-    return this.items.push(item);
+  add: function() {
+    return Array.prototype.push.apply(this, arguments);
   },
   /**
-   * Add the items in an Array to the Collection.
+   * Add the items in an Array or another Collection to this Collection.
    *
    * See Collection#combine() to add the items in another Collection to this
    * Collection.
    *
-   * @param {Array} items
-   *   An Array of Boxes to add to the Collection.
+   * @param {Arguments} ...
+   *   Array(s) or Collection(s) of Boxes to add to the Collection.
    */
-  concat: function(items) {
-    this.items = this.items.concat(items);
-    return this;
-  },
-  /**
-   * Add the items in another Collection to this Collection.
-   *
-   * See Collection#concat() to add the items in an Array to this Collection.
-   *
-   * @param {Collection} otherCollection
-   *   A Collection whose items should be added to this Collection.
-   */
-  combine: function(otherCollection) {
-    this.items = this.items.concat(otherCollection.items);
+  concat: function() {
+    for (var i = 0, l = arguments.length; i < l; i++) {
+      if (arguments[i] instanceof Array || arguments[i] instanceof Collection) {
+        for (var j = 0, m = arguments[i].length; j < m; j++) {
+          Array.prototype.push.call(this, arguments[i][j]);
+        }
+      }
+      else {
+        Array.prototype.push.call(this, arguments[i]);
+      }
+    }
     return this;
   },
   /**
@@ -4476,37 +4507,25 @@ Collection.prototype = {
    *   An Array containing the removed element, if any.
    */
   remove: function(item) {
-    return this.items.remove(item);
+    return Array.prototype.remove.call(this, item);
   },
   /**
    * Remove and return the last item in the Collection.
    */
   removeLast: function() {
-    return this.items.pop();
+    return Array.prototype.pop.call(this);
   },
   /**
    * Remove and return the first item in the Collection.
    */
   removeFirst: function() {
-    return this.items.shift();
-  },
-  /**
-   * Return the number of items in the Collection.
-   */
-  count: function() {
-    return this.items.length;
-  },
-  /**
-   * Return an Array containing all items in the Collection.
-   */
-  getAll: function() {
-    return this.items;
+    return Array.prototype.shift.call(this);
   },
   /**
    * Remove all items in the Collection.
    */
   removeAll: function() {
-    this.items = [];
+    Array.prototype.splice.call(this, 0, this.length);
     return this;
   },
 };
@@ -5131,8 +5150,9 @@ var Box = Class.extend({
    * simulation (for example to model springs) consider using the
    * [Box2D library](https://github.com/kripken/box2d.js/).
    *
-   * @param {Box/Collection/TileMap} collideWith
-   *   A Box, Collection of Boxes, or TileMap with which to check for overlap.
+   * @param {Box/Box[]/Collection/TileMap} collideWith
+   *   A Box, Collection or Array of Boxes, or TileMap with which to check for
+   *   overlap.
    * @param {Boolean} [returnAll=false]
    *   If this method is passed a Collection or TileMap, whether to return all
    *   items in the group that collide (true) or just the first one (false).
@@ -5148,21 +5168,23 @@ var Box = Class.extend({
     if (collideWith instanceof Box && (collideWith !== this || !collideWithSelf)) {
       return this.overlaps(collideWith) ? collideWith : false;
     }
-    else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
-      var items = collideWith.getAll(), found = [];
-      for (var i = 0, l = items.length; i < l; i++) {
-        if (this.overlaps(items[i]) && (items[i] !== this || !collideWithSelf)) {
-          if (returnAll) {
-            found.push(items[i]);
-          }
-          else {
-            return items[i];
-          }
+    var items = collideWith, found = [];
+    if ((typeof Collection !== 'undefined' && collideWith instanceof Collection) ||
+        (typeof TileMap !== 'undefined' && collideWith instanceof TileMap)) {
+      items = collideWith.getAll();
+    }
+    for (var i = 0, l = items.length; i < l; i++) {
+      if (this.overlaps(items[i]) && (items[i] !== this || !collideWithSelf)) {
+        if (returnAll) {
+          found.push(items[i]);
+        }
+        else {
+          return items[i];
         }
       }
-      if (found.length) {
-        return found;
-      }
+    }
+    if (found.length) {
+      return found;
     }
     return false;
   },
@@ -5450,7 +5472,7 @@ var Actor = Box.extend({
   isBeingDragged: false,
 
   /**
-   * A {@link Collection} of target Boxes onto which this Actor can be dropped.
+   * An Array of target Boxes onto which this Actor can be dropped.
    *
    * You must call Actor#setDraggable(true) to enable dragging the Actor.
    *
@@ -5460,7 +5482,7 @@ var Actor = Box.extend({
    * perform some action when a draggable object is dropped onto them by
    * listening for the {@link Box#event-canvasdrop canvasdrop event}.
    */
-  dropTargets: new Collection(),
+  dropTargets: [],
 
   /**
    * The horizontal component of the velocity.
@@ -5531,6 +5553,7 @@ var Actor = Box.extend({
     this.lastDirection = [];
     this.lastLooked = [];
     this.jumpDirection = {right: false, left: false};
+    this.dropTargets = [];
   },
 
   /**
@@ -6066,10 +6089,11 @@ var Actor = Box.extend({
   /**
    * Check whether this Actor is standing on top of a Box.
    *
-   * @param {Box} box The Box to check.
+   * @param {Box/Collection/TileMap} box The Box or set of Boxes to check.
    */
   standingOn: function(box) {
-    if (box instanceof Collection || box instanceof TileMap) {
+    if ((typeof Collection !== 'undefined' && box instanceof Collection) ||
+        (typeof TileMap !== 'undefined' && box instanceof TileMap)) {
       var items = box.getAll();
       for (var i = 0, l = items.length; i < l; i++) {
         if (this.standingOn(items[i])) {
@@ -6111,7 +6135,8 @@ var Actor = Box.extend({
     if (collideWith instanceof Box || collideWith instanceof ImageWrapper) {
       collided = this._collideSolidBox(collideWith);
     }
-    else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
+    else if ((typeof Collection !== 'undefined' && collideWith instanceof Collection) ||
+        (typeof TileMap !== 'undefined' && collideWith instanceof TileMap)) {
       var items = collideWith.getAll();
       for (var i = 0, l = items.length; i < l; i++) {
         var c = this._collideSolidBox(items[i]);
@@ -6415,7 +6440,7 @@ var Actor = Box.extend({
       // If there are drop targets and we're not over one, snap back to the
       // starting point.
       var target = this.collides(this.dropTargets);
-      if (this.dropTargets.count() && !target) {
+      if (this.dropTargets.length && !target) {
         this.x = this.dragStartX;
         this.y = this.dragStartY;
       }
@@ -6562,7 +6587,7 @@ var Player = Actor.extend({
     if (on && !this.isDraggable && App.Events && window.Mouse) {
       this.listen('canvasdragstop.drag', function() {
         if (this.isBeingDragged &&
-            (!this.dropTargets.count() || this.collides(this.dropTargets))) {
+            (!this.dropTargets.length || this.collides(this.dropTargets))) {
           world.centerViewportAround(this.x, this.y);
         }
       }, -1);

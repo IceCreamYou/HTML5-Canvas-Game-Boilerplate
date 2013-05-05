@@ -194,8 +194,9 @@ var Box = Class.extend({
    * simulation (for example to model springs) consider using the
    * [Box2D library](https://github.com/kripken/box2d.js/).
    *
-   * @param {Box/Collection/TileMap} collideWith
-   *   A Box, Collection of Boxes, or TileMap with which to check for overlap.
+   * @param {Box/Box[]/Collection/TileMap} collideWith
+   *   A Box, Collection or Array of Boxes, or TileMap with which to check for
+   *   overlap.
    * @param {Boolean} [returnAll=false]
    *   If this method is passed a Collection or TileMap, whether to return all
    *   items in the group that collide (true) or just the first one (false).
@@ -211,21 +212,23 @@ var Box = Class.extend({
     if (collideWith instanceof Box && (collideWith !== this || !collideWithSelf)) {
       return this.overlaps(collideWith) ? collideWith : false;
     }
-    else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
-      var items = collideWith.getAll(), found = [];
-      for (var i = 0, l = items.length; i < l; i++) {
-        if (this.overlaps(items[i]) && (items[i] !== this || !collideWithSelf)) {
-          if (returnAll) {
-            found.push(items[i]);
-          }
-          else {
-            return items[i];
-          }
+    var items = collideWith, found = [];
+    if ((typeof Collection !== 'undefined' && collideWith instanceof Collection) ||
+        (typeof TileMap !== 'undefined' && collideWith instanceof TileMap)) {
+      items = collideWith.getAll();
+    }
+    for (var i = 0, l = items.length; i < l; i++) {
+      if (this.overlaps(items[i]) && (items[i] !== this || !collideWithSelf)) {
+        if (returnAll) {
+          found.push(items[i]);
+        }
+        else {
+          return items[i];
         }
       }
-      if (found.length) {
-        return found;
-      }
+    }
+    if (found.length) {
+      return found;
     }
     return false;
   },
@@ -513,7 +516,7 @@ var Actor = Box.extend({
   isBeingDragged: false,
 
   /**
-   * A {@link Collection} of target Boxes onto which this Actor can be dropped.
+   * An Array of target Boxes onto which this Actor can be dropped.
    *
    * You must call Actor#setDraggable(true) to enable dragging the Actor.
    *
@@ -523,7 +526,7 @@ var Actor = Box.extend({
    * perform some action when a draggable object is dropped onto them by
    * listening for the {@link Box#event-canvasdrop canvasdrop event}.
    */
-  dropTargets: new Collection(),
+  dropTargets: [],
 
   /**
    * The horizontal component of the velocity.
@@ -594,6 +597,7 @@ var Actor = Box.extend({
     this.lastDirection = [];
     this.lastLooked = [];
     this.jumpDirection = {right: false, left: false};
+    this.dropTargets = [];
   },
 
   /**
@@ -1129,10 +1133,11 @@ var Actor = Box.extend({
   /**
    * Check whether this Actor is standing on top of a Box.
    *
-   * @param {Box} box The Box to check.
+   * @param {Box/Collection/TileMap} box The Box or set of Boxes to check.
    */
   standingOn: function(box) {
-    if (box instanceof Collection || box instanceof TileMap) {
+    if ((typeof Collection !== 'undefined' && box instanceof Collection) ||
+        (typeof TileMap !== 'undefined' && box instanceof TileMap)) {
       var items = box.getAll();
       for (var i = 0, l = items.length; i < l; i++) {
         if (this.standingOn(items[i])) {
@@ -1174,7 +1179,8 @@ var Actor = Box.extend({
     if (collideWith instanceof Box || collideWith instanceof ImageWrapper) {
       collided = this._collideSolidBox(collideWith);
     }
-    else if (collideWith instanceof Collection || collideWith instanceof TileMap) {
+    else if ((typeof Collection !== 'undefined' && collideWith instanceof Collection) ||
+        (typeof TileMap !== 'undefined' && collideWith instanceof TileMap)) {
       var items = collideWith.getAll();
       for (var i = 0, l = items.length; i < l; i++) {
         var c = this._collideSolidBox(items[i]);
@@ -1478,7 +1484,7 @@ var Actor = Box.extend({
       // If there are drop targets and we're not over one, snap back to the
       // starting point.
       var target = this.collides(this.dropTargets);
-      if (this.dropTargets.count() && !target) {
+      if (this.dropTargets.length && !target) {
         this.x = this.dragStartX;
         this.y = this.dragStartY;
       }
@@ -1625,7 +1631,7 @@ var Player = Actor.extend({
     if (on && !this.isDraggable && App.Events && window.Mouse) {
       this.listen('canvasdragstop.drag', function() {
         if (this.isBeingDragged &&
-            (!this.dropTargets.count() || this.collides(this.dropTargets))) {
+            (!this.dropTargets.length || this.collides(this.dropTargets))) {
           world.centerViewportAround(this.x, this.y);
         }
       }, -1);

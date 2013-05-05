@@ -59,8 +59,8 @@ var Dot = Box.extend({
   },
   // Return whether the dot overlaps any pieces of the snake
   overlapsPieces: function() {
-    for (var i = pieces.items.length-1; i >= 0; i--) {
-      if (this.overlaps(pieces.items[i])) {
+    for (var i = pieces.length-1; i >= 0; i--) {
+      if (this.overlaps(pieces[i])) {
         return true;
       }
     }
@@ -87,6 +87,13 @@ var Dot = Box.extend({
 });
 
 /**
+ * Record the last key pressed so the player moves in the correct direction.
+ */
+jQuery(document).keydown(keys.up.concat(keys.down, keys.left, keys.right).join(' '), function(e) {
+  player.queuedMoves.push(e.keyPressed);
+});
+
+/**
  * A magic-named function where all updates should occur.
  *
  * @param {Number} delta
@@ -100,8 +107,13 @@ var Dot = Box.extend({
 function update(delta, timeElapsed) {
   player.update();
   // Game over if the player hits the edge of the world or gets the max score
-  if (!world.isInWorld(player) || score >= ((world.width/UNIT)|0)*((world.height/UNIT)|0)) {
-    App.gameOver();
+  var maxScore = score >= ((world.width/UNIT)|0)*((world.height/UNIT)|0)-1;
+  if (!world.isInWorld(player) || maxScore) {
+    App.gameOver(maxScore ? "YOU WIN!" : "GAME OVER");
+    if (score > App.Storage.get('snake_highscore', 0)) {
+      App.Storage.set('snake_highscore', score);
+      alert(score + ': New high score!');
+    }
     score = 0;
   }
 
@@ -109,6 +121,10 @@ function update(delta, timeElapsed) {
   pieces.forEach(function(piece) {
     if (player.collides(piece)) {
       App.gameOver();
+      if (score > App.Storage.get('snake_highscore', 0)) {
+        App.Storage.set('snake_highscore', score);
+        alert(score + ': New high score!');
+      }
       score = 0;
     }
   });
@@ -148,6 +164,9 @@ function setup(first) {
   // Switch from top-down to side view.
   Actor.prototype.GRAVITY = false;
 
+  // Determine the grid unit size.
+  UNIT = Math.sqrt(world.width*world.height / 400) | 0;
+
   // Initialize the player.
   var x = (world.width/2-5)|0, y = (world.height/2-5)|0;
   x = x-x%UNIT;
@@ -156,25 +175,30 @@ function setup(first) {
   player.CONTINUOUS_MOVEMENT = true; // Keep going in the last direction
   player.STAY_IN_WORLD = false; // Let the player walk off the edge and die
   player.fillStyle = 'darkGray';
+  player.queuedMoves = [];
   player.lastMove = App.physicsTimeElapsed;
   Player.prototype.drawDefault = Box.prototype.drawDefault;
   Player.prototype.move = function() {
-    if (App.physicsTimeElapsed > player.lastMove + 0.005*UNIT) {
+    if (App.physicsTimeElapsed > player.lastMove + 0.0015*UNIT) {
       player.lastMove = App.physicsTimeElapsed;
       // The snake's body should follow the head
       pieces.add(new Box(player.x, player.y, UNIT, UNIT));
 
-      // The section below this is adapted from the normal move() method
-      var d2 = App.physicsDelta / 2;
-      // Apply half acceleration (first half of midpoint formula)
-      this.xVelocity += this.xAcceleration*d2;
-      this.yVelocity += this.yAcceleration*d2;
-      // Apply thrust (the snake moves specific distances; no smoothing)
-      this.x += this.xVelocity.sign()*UNIT;
-      this.y += this.yVelocity.sign()*UNIT;
-      // Apply half acceleration (second half of midpoint formula)
-      this.xVelocity += this.xAcceleration*d2;
-      this.yVelocity += this.yAcceleration*d2;
+      if (player.queuedMoves.length) {
+        player.lastKey = player.queuedMoves.shift();
+      }
+      if (keys.right.indexOf(player.lastKey)) {
+        this.x -= UNIT;
+      }
+      if (keys.left.indexOf(player.lastKey)) {
+        this.x += UNIT;
+      }
+      if (keys.down.indexOf(player.lastKey)) {
+        this.y -= UNIT;
+      }
+      if (keys.up.indexOf(player.lastKey)) {
+        this.y += UNIT;
+      }
 
       // Remove the trailing piece unless we're growing
       if (!player.addedDot) {
