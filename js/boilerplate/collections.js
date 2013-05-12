@@ -313,6 +313,7 @@ function TileMap(grid, map, options) {
   this.options = {
       cellSize: [Box.prototype.DEFAULT_WIDTH, Box.prototype.DEFAULT_HEIGHT],
       gridSize: null,
+      startCoords: options.startCoords,
   };
   if (options && options.cellSize instanceof Array && options.cellSize.length > 1) {
     this.options.cellSize = options.cellSize;
@@ -472,7 +473,7 @@ function TileMap(grid, map, options) {
    * @param {Number} col The column of the tile being cleared.
    */
   this.clearCell = function(row, col) {
-    if (this.grid[row] && typeof this.grid[row][col] !== 'undefined') {
+    if (this.grid[row]) {
       this.grid[row][col] = null;
     }
     return this;

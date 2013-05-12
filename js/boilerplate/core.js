@@ -706,7 +706,7 @@ function animate() {
  * @ignore
  */
 jQuery(window).on('focus.animFocus', function() {
-  if (_blurred) {
+  if (_blurred && !App.isGameOver) {
     _blurred = false;
     startAnimating();
   }

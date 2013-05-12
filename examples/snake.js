@@ -171,10 +171,9 @@ function setup(first) {
   var x = (world.width/2-5)|0, y = (world.height/2-5)|0;
   x = x-x%UNIT;
   y = y-y%UNIT;
-  player = new Player(x, y, UNIT, UNIT);
+  player = new Player(x, y, UNIT, UNIT, 'darkGray');
   player.CONTINUOUS_MOVEMENT = true; // Keep going in the last direction
   player.STAY_IN_WORLD = false; // Let the player walk off the edge and die
-  player.fillStyle = 'darkGray';
   player.queuedMoves = [];
   player.lastMove = App.physicsTimeElapsed;
   Player.prototype.drawDefault = Box.prototype.drawDefault;
