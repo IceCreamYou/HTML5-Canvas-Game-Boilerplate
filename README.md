@@ -35,7 +35,8 @@ features, or dig deeper into the documentation:
  - **[What's Included / API Overview](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate#whats-included--api-overview)**
  - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
  - **Walk-Through Guide** (coming soon!)
- - **Examples**: things you can build easily with this project
+ - **Examples**: things you can build easily with this project. Currently Paint
+   and Breakout support mobile controls.
      - [Platformer (Mario)](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js))
      - [Paint](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
