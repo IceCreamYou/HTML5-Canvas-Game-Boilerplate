@@ -45,6 +45,8 @@ features, or dig deeper into the documentation:
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/snake.js))
      - [Breakout](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/breakout.html)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/breakout.js))
+     - [Pacman](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/examples/pacman.html)
+       ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/pacman.js))
      - [Default project](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/app/main.js))
 
