@@ -71,6 +71,7 @@ function update(delta, timeElapsed) {
         Ball.prototype.MOVEAMOUNT+BALL_SPEED_LEVEL_INCREASE, MAX_BALL_SPEED);
     player.increaseScore(LEVEL_SCORE);
     stopAnimating();
+    player.destroy();
     setTimeout(App.reset, PAUSE);
   }
 }
@@ -260,12 +261,13 @@ var Ball = Actor.extend({
      this.lifeTaken = true;
      if (player.hasLivesLeft()) {
        player.takeLife();
+       player.destroy();
        stopAnimating();
        setTimeout(App.reset, PAUSE);
      }
      else {
        player.takeLife();
-       App.gameOver('Game over!');
+       App.gameOver();
      }
    }
    this._super.apply(this, arguments);

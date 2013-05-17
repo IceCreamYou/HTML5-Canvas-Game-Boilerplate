@@ -597,6 +597,9 @@ var Actor = Box.extend({
     this.lastLooked = [];
     this.jumpDirection = {right: false, left: false};
     this.dropTargets = [];
+    if (arguments.length < 5) {
+      this.fillStyle = 'lightBlue';
+    }
   },
 
   /**
@@ -622,7 +625,7 @@ var Actor = Box.extend({
     r = (w+h)/4;
 
     // Circle
-    ctx.circle(x, y, r, 'lightBlue', 'black');
+    ctx.circle(x, y, r, this.fillStyle, 'black');
 
     // Smile
     ctx.beginPath();

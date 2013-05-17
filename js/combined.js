@@ -4954,6 +4954,45 @@ function TileMap(grid, map, options) {
     }
     return s;
   };
+  /**
+   * Return the cell coordinates of a pixel location.
+   *
+   * @param {Number} x
+   *   The x-coordinate in pixels.
+   * @param {Number} y
+   *   The y-coordinate in pixels.
+   *
+   * @return {Object}
+   *   An object with `row` and `col` attributes containing the row and column
+   *   number of the cell containing the specified coordinates. Rows and
+   *   columns are zero-indexed and the returned value can be outside of the
+   *   TileMap.
+   */
+  this.getCellCoords = function(x, y) {
+    return {
+      row: Math.round((y - this.options.startCoords[1])/this.options.cellSize[1]),
+      col: Math.round((x - this.options.startCoords[0])/this.options.cellSize[0]),
+    };
+  };
+  /**
+   * Return the pixel coordinates of a cell location.
+   *
+   * @param {Number} col
+   *   The column number (zero-indexed).
+   * @param {Number} row
+   *   The row number (zero-indexed).
+   *
+   * @return {Object}
+   *   An object with `x` and `y` attributes containing the pixel values of the
+   *   upper-left corner of the cell at the specified row and column. The
+   *   returned value can be outside of the TileMap.
+   */
+  this.getPixelCoords = function(col, row) {
+    return {
+      x: this.options.startCoords[0]+this.options.cellSize[0]*col,
+      y: this.options.startCoords[1]+this.options.cellSize[1]*row,
+    };
+  };
 }
 /**
  * Defines useful classes for actors in the world.
@@ -5554,6 +5593,9 @@ var Actor = Box.extend({
     this.lastLooked = [];
     this.jumpDirection = {right: false, left: false};
     this.dropTargets = [];
+    if (arguments.length < 5) {
+      this.fillStyle = 'lightBlue';
+    }
   },
 
   /**
@@ -5579,7 +5621,7 @@ var Actor = Box.extend({
     r = (w+h)/4;
 
     // Circle
-    ctx.circle(x, y, r, 'lightBlue', 'black');
+    ctx.circle(x, y, r, this.fillStyle, 'black');
 
     // Smile
     ctx.beginPath();
