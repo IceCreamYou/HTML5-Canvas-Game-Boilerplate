@@ -4622,7 +4622,7 @@ function TileMap(grid, map, options) {
   this.options = {
       cellSize: [Box.prototype.DEFAULT_WIDTH, Box.prototype.DEFAULT_HEIGHT],
       gridSize: null,
-      startCoords: options.startCoords,
+      startCoords: options ? options.startCoords : undefined,
   };
   if (options && options.cellSize instanceof Array && options.cellSize.length > 1) {
     this.options.cellSize = options.cellSize;
