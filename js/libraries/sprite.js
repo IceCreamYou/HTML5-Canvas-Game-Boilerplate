@@ -192,7 +192,7 @@ SpriteMap.prototype = {
    * Stop the currently running animation sequence.
    */
   stop: function() {
-    this.sprite.stop();
+    this.sprite.stopLoop();
     return this;
   },
   /**
@@ -372,7 +372,7 @@ this.SpriteMap = SpriteMap;
  *   and you draw() the Sprite before this callback is invoked, nothing will be
  *   drawn because the image won't be loaded yet.
  * @param {Sprite} [options.postInitCallback.sprite]
- *   The Sprite that was loaded. 
+ *   The Sprite that was loaded.
  */
 function Sprite(src, options) {
   // String image file path
@@ -889,7 +889,7 @@ this.Sprite = Sprite;
 
   /**
    * Save an image to the cache.
-   * 
+   *
    * @param {String} src
    *   The file path of the image.
    * @param {Image} image
@@ -903,7 +903,7 @@ this.Sprite = Sprite;
 
   /**
    * Preload a list of images asynchronously.
-   * 
+   *
    * @param {String[]} files
    *   An Array of paths to images to preload.
    * @param {Object} [options]
