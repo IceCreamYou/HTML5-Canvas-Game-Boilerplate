@@ -96,7 +96,7 @@ function draw() {
  */
 function setup(first) {
   // Initialize the paddle.
-  player = new Player(world.width/2-PADDLE_WIDTH/2, world.height-60, PADDLE_WIDTH, 20);
+  player = new Player(world.width/2-PADDLE_WIDTH/2, world.height-60, PADDLE_WIDTH, 20, 'black');
   player.MOVEAMOUNT = 800; // Speed up arrow-key movement.
   player.drawDefault = function(ctx, x, y, w, h) {
     // Draw as a box, not as a smiley face.
@@ -131,6 +131,7 @@ function setup(first) {
 
   // Initialize the ball. (We could use a Collection for multiple balls...)
   ball = new Ball(25 + BALL_RADIUS, world.height / 2);
+  ball.fillStyle = '#F48D55';
 
   if (first) {
     // Make the paddle follow the mouse.
