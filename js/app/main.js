@@ -1,12 +1,20 @@
 // The main logic for your project goes in this file.
 
 /**
- * The Player object; an Actor controlled by user input.
+ * The {@link Player} object; an {@link Actor} controlled by user input.
  */
 var player;
 
 /**
  * Keys used for various directions.
+ *
+ * The property names of this object indicate actions, and the values are lists
+ * of keyboard keys or key combinations that will invoke these actions. Valid
+ * keys include anything that {@link jQuery.hotkeys} accepts. The up, down,
+ * left, and right properties are required if the `keys` variable exists; if
+ * you don't want to use them, just set them to an empty array. {@link Actor}s
+ * can have their own {@link Actor#keys keys} which will override the global
+ * set.
  */
 var keys = {
   up: ['up', 'w'],
@@ -22,16 +30,8 @@ var preloadables = [];
 
 /**
  * A magic-named function where all updates should occur.
- *
- * @param {Number} delta
- *   The amount of time since the last update. Use this to smooth movement.
- *   This has the same value as the global `App.physicsDelta`.
- * @param {Number} timeElapsed
- *   The amount of time elapsed while animating. This is useful for time-based
- *   movement and limiting the frequency of events. This has the same value as
- *   the global `App.physicsTimeElapsed`.
  */
-function update(delta, timeElapsed) {
+function update() {
   player.update();
 }
 
