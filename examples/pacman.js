@@ -19,7 +19,7 @@ var keys = {
 var preloadables = [];
 
 // Constants
-var UNIT = 30, // Size of each square in the map
+var UNIT = Math.max(30, (jQuery(window).innerHeight()/22)|0), // Size of each square in the map
     WIGGLE = 1, // Room between Pacman and the wall
     PAUSE = 1500, // Pause between levels and after death
     INITIAL_LIVES = 3,
@@ -28,6 +28,8 @@ var UNIT = 30, // Size of each square in the map
     LEVEL_SCORE = 0, // Points for eating all dots in a level
     GHOST_SCORE = 200, // Points for eating the first scared ghost
     GHOST_MULTIPLIER = 2, // Increase GHOST_SCORE for each additional ghost
+    GHOST_UNSCARED_WARNING = 2000, // Milliseconds of warning before becoming un-scared
+    GHOST_REGEN_TIME = 3000, // Time ghosts spend regenerating before leaving their home
     POWERUP_LENGTH = function() { // Multiplier for Power Dot duration
       return Math.max(1, 5 - (level-1)%5)*(1-0.15*Math.min(5, (level/5)|0));
     };
@@ -128,6 +130,13 @@ function draw() {
  *   been reset and is starting over.
  */
 function setup(first) {
+  // Scale the canvas proportionately to fill the window as much as possible.
+  if (first) {
+    // 19 and 22 are determined by the layout in setupMap().
+    canvas.width = world.width = UNIT * 19;
+    canvas.height = world.height = UNIT * 22;
+  }
+
   // Initialize the map (walls and dots/powerups).
   // Make sure not to reset dots/powerups when losing a life.
   if (first || (!dots.length && !powerups.length) || lives === 0) {
@@ -168,7 +177,7 @@ function setup(first) {
 
     // Add the countdown element.
     jQuery('#countdown').remove();
-    jQuery('body').append('<div id="countdown" style="background-color: rgba(255, 255, 255, 0); font-size: 60px; height: 90px; left: 0; overflow: hidden; pointer-events: none; text-align: center; z-index: 10;"><span class="countdown" style="background-color: rgba(240, 240, 240, 0.9); border: 1px solid black; box-shadow: 0 0 10px 1px white; display: inline-block; padding: 2px 20px; width: 108px;">0</span><span class="instructions" style=" display: block; font-size: 10px; margin-top: -18px;">Arrow keys or WASD to move</span></div>');
+    jQuery('body').append('<div id="countdown" style="background-color: rgba(255, 255, 255, 0); font-size: ' + (UNIT * 2) + 'px; height: ' + (UNIT * 3) + 'px; left: 0; overflow: hidden; pointer-events: none; text-align: center; z-index: 10;"><span class="countdown" style="background-color: rgba(240, 240, 240, 0.9); border: 1px solid black; box-shadow: 0 0 10px 1px white; display: inline-block; height: ' + ((UNIT - 2) * 3) + 'px; padding: 2px 20px; width: ' + (UNIT * 5 - 42) + 'px;">0</span><span class="instructions" style=" display: block; font-size: ' + (UNIT/3) + 'px; margin-top: -' + (UNIT*0.6) + 'px;">Arrow keys or WASD to move</span></div>');
     // I don't know why, but in combination with $(window).load() below, this
     // fixes $canvas.offset().left being wrong on windows with low height.
     setTimeout(function() {
@@ -363,6 +372,39 @@ var Pacman = Player.extend({
     // Apply velocity in the specified direction.
     Actor.prototype.processInput.call(this, this.lastLooked);
   },
+  /**
+   * Add an upper bound on the player's movement per frame.
+   *
+   * Normally, Actors' movement is linearly interpolated, meaning the distance
+   * moved is consistent over time. However, this leads to a problem where the
+   * player can miss turns due to passing a tunnel without aligning to it
+   * closely enough to enter. The most common (naive) alternative approach to
+   * movement is to move a specific distance per frame, but this can cause
+   * movement speeds to vary wildly over time depending on the frame rate, and
+   * to solve the missed-turn problem it also requires choosing a movement
+   * speed that evenly divides the unit size of the map. Here we implement a
+   * hybrid approach where the Actor's movement is linearly interpolated with
+   * an upper bound, so that if the frame rate is too low the Actor will not
+   * move more than a specific distance per frame. This solves the missed-turn
+   * problem because it keeps the Actor from skipping over a junction and also
+   * keeps most of the consistency and flexibility of linear interpolation.
+   * However, it has the trade-off that at high movement speeds or low frame
+   * rates the Actor will move slower than it would with other techniques. For
+   * Pac-man in particular this means that Pac-man can be slower than the
+   * ghosts because the ghosts do not have an upper bound on their movement
+   * speed.
+   */
+  move: function() {
+    this._super.apply(this, arguments);
+    var xd = this.x - this.lastX,
+        yd = this.y - this.lastY;
+    if (Math.abs(xd) > WIGGLE*2 && Math.abs(xd) < UNIT) {
+      this.x = this.lastX + WIGGLE*2*xd.sign();
+    }
+    if (Math.abs(yd) > WIGGLE*2 && Math.abs(yd) < UNIT) {
+      this.y = this.lastY + WIGGLE*2*yd.sign();
+    }
+  },
   stayInWorld: function() {
     // Teleport to the other side of the map.
     if (!world.isInWorld(this, true)) {
@@ -429,13 +471,13 @@ var Ghost = Actor.extend({
   // Draw in different colors depending on whether the player is powered up
   drawDefault: function() {
     var scared = player.isPoweredUp();
-    this.fillStyle = scared ? (scared < 2000 ? 'darkGreen' : 'lightGreen') : 'red';
+    this.fillStyle = scared ? (scared < GHOST_UNSCARED_WARNING ? 'darkGreen' : 'lightGreen') : 'red';
     this._super.apply(this, arguments);
   },
   // Override movement controls.
   processInput: function() {
     // Don't leave the regeneration area for a few seconds.
-    if (this.initialized > Date.now() - 3000*this.ghostNum) return;
+    if (this.initialized > Date.now() - GHOST_REGEN_TIME*this.ghostNum) return;
 
     // If the ghost can turn, select available directions.
     var dirs = getAvailableDirections(this);
@@ -453,12 +495,16 @@ var Ghost = Actor.extend({
           availDirs.push(dir);
         }
       }
-      // For brevity, choose an available direction randomly.
-      // Good AI algorithms are not the focus of this demo...
-      this.lastLooked = [availDirs[App.Utils.getRandIntBetween(0, availDirs.length-1)]];
+      this.lastLooked = [this.chooseDirection(availDirs)];
     }
     // Apply velocity in the specified direction.
     Actor.prototype.processInput.call(this, this.lastLooked);
+  },
+  // Make the AI choose an available direction.
+  chooseDirection: function(availDirs) {
+    // For brevity, choose an available direction randomly.
+    // Good AI algorithms are not the focus of this demo...
+    return availDirs[App.Utils.getRandIntBetween(0, availDirs.length-1)];
   },
   // Teleport to the other side of the map.
   stayInWorld: function() {
