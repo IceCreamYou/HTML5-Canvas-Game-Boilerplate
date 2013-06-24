@@ -35,8 +35,7 @@ features, or dig deeper into the documentation:
  - **[What's Included & API Overview](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/wiki/What%27s-Included-&-API-Overview)**
  - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
  - **Walk-Through Guide** (coming soon!)
- - **Examples**: things you can build easily with this project. Currently Paint
-   and Breakout support mobile controls.
+ - **Examples**
      - [Platformer (Mario)](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js))
      - [Paint](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
@@ -81,6 +80,7 @@ H5CGB is not a game engine -- it provides boilerplate HTML, CSS, and JavaScript,
 as well as some lightweight, easy-to-learn, rapid prototyping tools for any 2D
 canvas-based project. Because it's a boilerplate, you can edit all the files
 and use this project as a base rather than include a monolithic magic library.
+Or, if you want, you can also drop in a game engine on top of this project.
 It's also standards-compliant, modular, and thoroughly documented.
 
 H5CGB is a good choice if you just want to get going quickly without learning a
@@ -93,9 +93,9 @@ just overkill, or too overwhelming to learn, or try to do too much for you.
 H5CGB takes care of a lot of code you'd be writing yourself, and doesn't add
 much that you wouldn't need to write yourself. This includes standards-compliant
 HTML, CSS, and other web files in addition to the JavaScript code that sets up
-the canvas, animation loop, physics timing, image caching, etc. In any case,
-the JavaScript is quite modular, so you can always edit or delete anything you
-don't want from the project.
+the canvas, animation loop, image caching, etc. In any case, the JavaScript is
+quite modular, so you can always edit or delete anything you don't want from
+the project.
 
 
 Notes

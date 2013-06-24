@@ -1018,10 +1018,10 @@ function World(w, h) {
    * @param {Number} factor
    *   The percent amount to scale the resolution on each dimension as a
    *   fraction of the &lt;em&gt;current&lt;/em&gt; resolution (typically between zero and
-   *   one). In other words, if the original resolution is 1024*768, scaling
-   *   the resolution by a factor of 0.5 will result in a resolution of 512*384
+   *   one). In other words, if the original resolution is 1024x768, scaling
+   *   the resolution by a factor of 0.5 will result in a resolution of 512x384
    *   (showing 25% as many pixels on the screen). If scaled again by a factor
-   *   of 2, the result is 1024*768 again. Use the `scale` property to detect
+   *   of 2, the result is 1024x768 again. Use the `scale` property to detect
    *   the factor by which the resolution is currently scaled.
    * @param {Number} [x=0]
    *   The x-coordinate of a location to center the viewport around after
@@ -1037,6 +1037,11 @@ function World(w, h) {
     $canvas.css({
       width: (canvas.width/this.scale) + 'px',
       height: (canvas.height/this.scale) + 'px',
+      // Force hardware accelerated rendering
+      mozTransform: 'scale3d(1, 1, 1)',
+      msTransform: 'scale3d(1, 1, 1)',
+      oTransform: 'scale3d(1, 1, 1)',
+      webkitTransform: 'scale3d(1, 1, 1)',
     });
     canvas.width = (canvas.width*factor)|0;
     canvas.height = (canvas.height*factor)|0;
