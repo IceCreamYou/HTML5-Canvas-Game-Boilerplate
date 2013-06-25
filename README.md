@@ -34,9 +34,10 @@ features, or dig deeper into the documentation:
 
  - **[What's Included & API Overview](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/wiki/What%27s-Included-&-API-Overview)**
  - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
- - **Walk-Through Guide** (coming soon!)
+ - **[Walk-Through Guide/Tutorial](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/walkthrough)** -
+   Build a Mario-style platformer game
  - **Examples**
-     - [Platformer (Mario)](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
+     - [Mario-style platformer](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js))
      - [Paint](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/paint.js))

@@ -53,7 +53,7 @@ lines of code sans comments and blank lines:
 
 If you go ahead and open index.html, here's what it will look like:
 
-![The default index.html](screen00.png)
+![The default index.html](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen00.png)
 
 You can see the movement keys specified in the code -- use WASD or the arrow
 keys to move around and try it. Already you've got a player character that can
@@ -62,6 +62,8 @@ We've written no code and we have a top-down RPG. If there was some grass on
 the ground instead of the checkerboard, we'd practically have
 [Pokémon](https://en.wikipedia.org/wiki/Pok%C3%A9mon_%28video_game_series%29).
 But I'm getting ahead of myself.
+
+*[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough00-default.js)*
 
 ## Side-Scrolling
 
@@ -87,6 +89,8 @@ ground. Try jumping around a bit and moving to the sides so you can see that
 the world still scrolls. Cool! (Note that all the movement mechanics are
 [configurable](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor).)
 
+*[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough01-scrolling.js)*
+
 ## Boxes, Collision, and Images
 
 Mario would be no fun if he just ran around on flat terrain all the time. We
@@ -104,7 +108,7 @@ we're not drawing it yet. In the `draw()` function, add:
 
 We have a box!
 
-![Mario plus a Box](screen01.png)
+![Mario plus a Box](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen01.png)
 
 Sadly, if you try running around, you'll notice that your player doesn't
 collide with the box. Let's fix that. Replace the contents of update() with
@@ -123,7 +127,7 @@ Plain black boxes are okay, but let's spice it up a little by using an image. Ju
 
 Here's the image I used:
 
-![Grass](../../examples/images/grass2.png)
+![Grass](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/examples/images/grass2.png)
 
 You should also add the image to the `preloadables` array at the top of main.js
 so that it is cached before animation starts:
@@ -131,6 +135,8 @@ so that it is cached before animation starts:
     var preloadables = ['path/to/image.png'];
 
 Voilà!
+
+*[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough02-boxes.js)*
 
 ## TileMaps
 
@@ -165,13 +171,15 @@ Box-like objects using that image.
 
     solid = new TileMap(grid, {B: 'path/to/image.png'});
 
-![Textured TileMap](screen02.png)
+![Textured TileMap](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen02.png)
 
 There are lots of fun things we can do with TileMaps; this is just a taste.
 
 **Quick recap:** we've only added or changed around a dozen lines of code, and
 we already have a character who can run/jump around and collide with textured
 objects in a map layout.
+
+*[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough03-tilemaps.js)*
 
 ## Sprites and SpriteMaps
 
@@ -181,7 +189,7 @@ with *moves*. A hero like... *StickMan!*
 
 Here's a simple sprite we'll use for testing sprite animation:
 
-![StickMan](../../examples/images/player.png)
+![StickMan](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/examples/images/player.png)
 
 Whatever image you use, remember to add it to the `preloadables` array at the
 top of main.js so that it will be loaded and cached before animation starts.
@@ -252,7 +260,7 @@ version as well:
 
 Much shorter, and still not to bad to read. Hooray, StickMan!
 
-![StickMan has arrived](screen03.png)
+![StickMan has arrived](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/screen03.png)
 
 If you copied the code above, you may be surprised to see that your animations
 already work. That's because there are certain magic-named animation sequences
@@ -263,6 +271,8 @@ times, you can override the
 method from the Actor class (that link goes to the documentation for that
 method, which lists the magic animation sequence names). More on inheritance
 below.
+
+*[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough04-sprites.js)*
 
 ## Inheritance, Keyboard Input, Collections, and Fireballs
 
@@ -423,7 +433,7 @@ and if not, we're returning `true` to destroy it.
 That's it &mdash; we can now shoot bullets when we press the right key, and our
 bullets collide with our world geometry.
 
-![Fireballs](screen04.png)
+![Fireballs](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen04.png)
 
 **Quick recap:** At this point we've got around 180 lines of code. We've got a
 player animated with sprites, a side-scrolling game world with gravity, level
@@ -432,6 +442,8 @@ when we press keys on the keyboard. We've learned how to manage Boxes,
 Collections, TileMaps, drawing and updating, collision, classes and
 inheritance, gravity, keyboard input, and scrolling. In other words, we've
 learned pretty much everything we need to make most games!
+
+*[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough05-inheritance.js)*
 
 ## Layers
 
@@ -502,10 +514,12 @@ of many independently-drawn entities needs to move together at once. You can
 simply draw them one time onto a Layer and then draw that Layer as a single
 image rather than rendering all its components again.
 
-![Layers](screen05.png)
+![Layers](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen05.png)
 
 Layers also support [parallax](https://en.wikipedia.org/wiki/Parallax)
 scrolling.
+
+*[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough06-layers.js)*
 
 ## Exercises for the Reader
 
@@ -519,7 +533,7 @@ yourself. If you get stuck or want to see the end product, you can
 [read the code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js)
 of a more complete example.
 
-![Complete game](screen06.png)
+![Complete game](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen06.png)
 
 ## Recap
 
