@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Site</title>
+
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Display full-screen in standalone mode -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="apple-touch-icon" href="../../apple-touch-icon.png"/>
+  <link rel="icon" href="../../favicon.ico"/>
+  <!-- <link rel="author" href="humans.txt" /> -->
+
+  <link rel="stylesheet" media="all" href="../../css/reset.css" />
+  <link rel="stylesheet" media="all" href="../../css/main.css" />
+  <link rel="stylesheet" media="all" href="../../css/utilities.css" />
+  <link rel="stylesheet" media="screen" href="../../css/media.css" />
+  <link rel="stylesheet" media="print" href="../../css/print.css" />
+</head>
+<body>
+  <!-- Prompt IE 6/7/8 users to install Chrome Frame.
+    Earlier IE doesn't have good enough Canvas support.
+    Flash libraries that claim to add Canvas support back don't support some of
+    the tricks we use like context.transform(). -->
+  <!--[if lt IE 9 ]>
+    <p class="chromeframe">
+      You are using an <strong>outdated</strong> browser.
+      <a href="http://browsehappy.com/">Upgrade to a different browser</a> or
+      <a href="http://www.google.com/chromeframe/?redirect=true">install Google
+        Chrome Frame</a> to experience this site.
+    </p>
+  <![endif]-->
+  <div id="main">
+    <div id="content">
+      <noscript>You must have JavaScript enabled to use this site.</noscript>
+      <canvas id="canvas" width="800" height="600" data-resize="full">
+        Your browser does not support the &lt;canvas&gt; element!
+      </canvas>
+    </div> <!-- /content -->
+  </div> <!-- /main -->
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="../../js/libraries/jquery-1.9.0.min.js"><\/script>')</script>
+
+  <script src="../../js/combined.min.js"></script>
+  <script src="walkthrough06-layers.js"></script>
+  <!-- Google Analytics: change UA-XXXXXXXX-X to be your site's ID. -->
+  <script>
+    var _gaq=[['_setAccount','UA-XXXXXXXX-X'],['_trackPageview']];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
+</body>
+</html>

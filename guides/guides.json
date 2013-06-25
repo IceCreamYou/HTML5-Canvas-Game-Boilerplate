@@ -1,0 +1,13 @@
+[
+  {
+    "title": "HTML5 Canvas Game Boilerplate Guides",
+    "items": [
+      {
+        "name": "walkthrough",
+        "url": "walkthrough",
+        "title": "Walkthrough: Basics",
+        "description": "Learn the rapid prototyping tools H5CGB provides by building a Mario-style platformer game."
+      }
+    ]
+  }
+]
