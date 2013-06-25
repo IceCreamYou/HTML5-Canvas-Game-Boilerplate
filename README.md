@@ -1,14 +1,14 @@
-This project makes starting an interactive 2D Canvas application fast and easy,
+**This project makes starting an interactive 2D Canvas application fast and easy**,
 even for developers who have never used Canvas before.
 
 The project includes a stripped-down version of
 [HTML5 Boilerplate](https://github.com/h5bp/html5-boilerplate) and adds some
-Canvas-specific boilerplate and a couple of useful JavaScript abstractions. In
-other words, it includes the code you were going to write for every canvas
-project anyway, plus a few tools for rapid prototyping of common features.
+Canvas-specific **boilerplate** and a couple of useful JavaScript abstractions.
+In other words, it includes the code you were going to write for every canvas
+project anyway, plus a few tools for **rapid prototyping** of common features.
 
-Thorough documentation is an explicit goal of this project. It should be easy
-to learn, use, and get started.
+Thorough **documentation** is an explicit goal of this project. It should be
+easy to learn, use, and get started.
 
 
 Getting Started
@@ -94,8 +94,7 @@ H5CGB takes care of a lot of code you'd be writing yourself, and doesn't add
 much that you wouldn't need to write yourself. This includes standards-compliant
 HTML, CSS, and other web files in addition to the JavaScript code that sets up
 the canvas, animation loop, image caching, etc. In any case, the JavaScript is
-quite modular, so you can always edit or delete anything you don't want from
-the project.
+quite modular, so you can always edit or delete anything you don't want.
 
 
 Notes
@@ -114,11 +113,8 @@ is a good example of this.
 Credits
 -------
 
-Isaac Sukin is the author of this project:
-
- - [Contact](http://www.isaacsukin.com/contact)
- - [Github](https://github.com/IceCreamYou)
- - [Twitter](https://twitter.com/IceCreamYou)
+[Isaac Sukin](http://www.isaacsukin.com/contact)
+([@IceCreamYou](https://twitter.com/IceCreamYou)) is the author of this project.
 
 I'd love to hear what you make!
 
