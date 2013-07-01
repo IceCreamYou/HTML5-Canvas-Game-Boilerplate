@@ -53,7 +53,7 @@ jQuery(document).ready(function() {
     }
     catch(ex) {
       if (window.console && console.error) {
-        console.error('Unable to track cursor location. You are probably using an unusual touch-capable device.');
+        console.error('Unable to track cursor location. ' + ex);
       }
     }
   };
@@ -127,6 +127,9 @@ App.isHovered = function(obj) {
 /**
  * @class Mouse.Scroll
  *   Encapsulates mouse position scrolling.
+ *
+ * Note that mouse scrolling will be temporarily paused while the mouse is down
+ * to avoid scrolling while the user is trying to select something.
  *
  * @static
  */
@@ -240,6 +243,13 @@ Mouse.Scroll = (function() {
           jQuery(document).trigger('mousescrolloff');
         }
       });
+      var mousedown = false;
+      $canvas.on('mousedown.translate touchstart.translate', function() {
+        mousedown = true;
+      });
+      $canvas.on('mouseup.translate touchend.translate', function() {
+        mousedown = false;
+      });
     },
     /**
      * Disable mouse position scrolling.
@@ -260,6 +270,11 @@ Mouse.Scroll = (function() {
     },
     /**
      * Test whether the viewport is currently mouse-scrolling.
+     *
+     * There is one weird edge case: this will return true if the user is in
+     * the middle of a click-and-drag action that was started while the
+     * viewport was scrolling.
+     *
      * @static
      */
     isScrolling: function() {
@@ -267,7 +282,8 @@ Mouse.Scroll = (function() {
     },
     // Called in the core animation loop.
     _update: function() {
-      if (hovered) {
+      // Don't scroll while dragging.
+      if (hovered && !mousedown) {
         return translate();
       }
     },
