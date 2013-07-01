@@ -259,3 +259,60 @@ var Soldier = Actor.extend({
     this.unlisten('.select');
   },
 });
+
+(function() {
+var resolution = 1.0, lastZoom = App.physicsTimeElapsed, numScrollEvents = 0;
+Mouse.Zoom = {
+  // A value slightly above the minimum zoom factor
+  MIN_ZOOM: 0.51,
+  // A value slightly below the maximum zoom factor
+  MAX_ZOOM: 0.99,
+  // The amount by which to change the zoom factor when scrolling the wheel
+  ZOOM_STEP: 0.10,
+  // The minimum number of seconds between changing zoom factors
+  ZOOM_TIMEOUT: 0.25,
+  // The minimum number of wheel events that must fire before changing zoom factors
+  MIN_SCROLL_EVENTS: 2,
+  /**
+   * Enable zooming in response to mouse wheel scrolling.
+   */
+  enable: function() {
+    // wheel is a standard (IE and FF); mousewheel is legacy (Chrome)
+    $canvas.on('wheel.zoom mousewheel.zoom', function(e) {
+      // Avoid overzealous scrolling causing unexpected zooming
+      if (lastZoom + Mouse.Zoom.ZOOM_TIMEOUT > App.physicsTimeElapsed) return;
+      if (++numScrollEvents < Mouse.Zoom.MIN_SCROLL_EVENTS) return;
+      lastZoom = App.physicsTimeElapsed;
+      numScrollEvents = 0;
+
+      // Get an indication of the direction of the scroll.
+      // Depending on the browser, OS, and device settings, the actual value
+      // could be in pixels, lines, pages, degrees, or arbitrary units, so all
+      // we can reliably deduce from this is the direction.
+      var delta = e.originalEvent.deltaY || e.originalEvent.wheelDelta;
+      // Scroll up; zoom in
+      if (delta.sign() < 0) {
+        if (resolution > Mouse.Zoom.MIN_ZOOM) {
+          //world.scaleResolution((resolution-Mouse.Zoom.ZOOM_STEP)/resolution);
+          resolution -= Mouse.Zoom.ZOOM_STEP;
+          console.log('Resolution: ' + resolution.round(3));
+        }
+      }
+      // Scroll down; zoom out
+      else {
+        if (resolution < Mouse.Zoom.MAX_ZOOM) {
+          //world.scaleResolution((resolution+Mouse.Zoom.ZOOM_STEP)/resolution);
+          resolution += Mouse.Zoom.ZOOM_STEP;
+          console.log('Resolution: ' + resolution.round(3));
+        }
+      }
+    });
+  },
+  /**
+   * Disable zooming in response to mouse wheel scrolling.
+   */
+  disable: function() {
+    $canvas.off('.zoom');
+  },
+};
+})();

@@ -52,9 +52,9 @@ jQuery(document).ready(function() {
       };
     }
     catch(ex) {
-      if (window.console && console.error) {
-        console.error('Unable to track cursor location. ' + ex);
-      }
+      // Don't report anything. Probably the reason we had an error is because
+      // the mouse moved off the document so neither the pageX/Y nor the
+      // touches properties have meaningful values.
     }
   };
 
