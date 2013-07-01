@@ -88,8 +88,8 @@ Collection.prototype = {
    *
    * @ignore
    */
-  _executeMethod: function(name) {
-    Array.prototype.shift.call(arguments);
+  _executeMethod: function() {
+    var name = Array.prototype.shift.call(arguments);
     for (var i = 0; i < this.length; i++) {
       this[i][name].apply(this[i], arguments);
     }

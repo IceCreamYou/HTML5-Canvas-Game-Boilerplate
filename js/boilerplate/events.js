@@ -195,11 +195,12 @@ App.Events = {
    * @param {String} eventName
    *   The name of the event to trigger, e.g. "click."
    * @param {Arguments} ...
-   *   Additional arguments to pass to the relevant callbacks.
+   *   Additional arguments to pass to the relevant callbacks. Usually the
+   *   first argument is the event object.
    *
    * @static
    */
-  trigger: function(eventName) {
+  trigger: function() {
     eventName = Array.prototype.shift.call(arguments);
     var e = _listeners[eventName]; // All listeners for this event
     if (e) {

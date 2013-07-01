@@ -42,10 +42,12 @@ var Mouse = {
 <span id='Mouse-static-property-coords'>    /**
 </span>     * @property
      *   The coordinates of the mouse relative to the upper-left corner of the
-     *   canvas.
+     *   canvas. If you want the coordinates of the mouse relative to the
+     *   world, add `world.xOffset` and `world.yOffset` to the `x` and `y`
+     *   coordinates, respectively.
      * @static
      */
-    coords: {x: 9999, y: 9999},
+    coords: {x: -9999, y: -9999},
 };
 
 // Track mouse events
@@ -147,79 +149,84 @@ App.isHovered = function(obj) {
  */
 Mouse.Scroll = (function() {
   var THRESHOLD = 0.2, MOVEAMOUNT = 350;
-  var translating = false, scrolled = {x: 0, y: 0}, enabled = false;
-  function translate(doOffset) {
-    var t = false, ma;
-    if (doOffset === undefined) doOffset = true;
+  // Whether we're allowed to mouse scroll
+  var enabled = false;
+  // If enabled is true, then whether the mouse is over the canvas
+  var hovered = false;
+  // Whether we're currently scrolling
+  var translating = false;
+  // How far we scrolled last time
+  var scrolled = {x: 0, y: 0};
+  // Available easing functions
+  var easings = {
+      THRESHOLD: function() { return 1; },
+      LINEAR: function(val) { return 1-val; },
+      SMOOTH: function(val) { return 0.5 - Math.cos( (1-val)*Math.PI ) / 2; },
+      EXPONENTIAL: function(val) { return Math.sqrt(1-val); },
+  }
+  // The currently active easing function
+  var easing = easings.SMOOTH;
+
+  function translate() {
+    var ma, gradient, initialTranslationState = translating;
 
     // Left
     if (Mouse.coords.x &lt; canvas.width * THRESHOLD) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
-        world.xOffset -= ma;
-        scrolled.x -= ma;
-        context.translate(ma, 0);
-      }
-      t = true;
+      gradient = easing(Mouse.coords.x / (canvas.width * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
+      world.xOffset -= ma;
+      scrolled.x -= ma;
+      context.translate(ma, 0);
     }
     // Right
     else if (Mouse.coords.x &gt; canvas.width * (1-THRESHOLD)) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
-        world.xOffset += ma;
-        scrolled.x += ma;
-        context.translate(-ma, 0);
-      }
-      t = true;
+      gradient = easing((canvas.width - Mouse.coords.x) / (canvas.width * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
+      world.xOffset += ma;
+      scrolled.x += ma;
+      context.translate(-ma, 0);
     }
 
     // Up
     if (Mouse.coords.y &lt; canvas.height * THRESHOLD) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
-        world.yOffset -= ma;
-        scrolled.y -= ma;
-        context.translate(0, ma);
-      }
-      t = true;
+      gradient = easing(Mouse.coords.y / (canvas.height * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
+      world.yOffset -= ma;
+      scrolled.y -= ma;
+      context.translate(0, ma);
     }
     // Down
     else if (Mouse.coords.y &gt; canvas.height * (1-THRESHOLD)) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
-        world.yOffset += ma;
-        scrolled.y += ma;
-        context.translate(0, -ma);
-      }
-      t = true;
+      gradient = easing((canvas.height - Mouse.coords.y) / (canvas.height * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
+      world.yOffset += ma;
+      scrolled.y += ma;
+      context.translate(0, -ma);
     }
 
     // We're not translating if we're not moving.
-    if (doOffset &amp;&amp; scrolled.x === 0 &amp;&amp; scrolled.y === 0) {
-      t = false;
-    }
+    translating = scrolled.x !== 0 &amp;&amp; scrolled.y !== 0;
 
-    if (doOffset &amp;&amp; translating != t) {
-      if (translating) { // We were scrolling. Now we're not.
-<span id='Mouse-Scroll-event-mousescrollon'>        /**
-</span>         * @event mousescrollon
-         *   Fires on the document when the viewport starts scrolling. Binding
-         *   to this event may be useful if you want to pause animation or
-         *   display something while the viewport is moving.
-         */
-        jQuery(document).trigger('mousescrollon');
-      }
-      else { // We weren't scrolling. Now we are.
-<span id='Mouse-Scroll-event-mousescrolloff'>        /**
-</span>         * @event mousescrolloff
-         *   Fires on the document when the viewport stops scrolling. Binding
-         *   to this event may be useful if you want to pause animation or
-         *   display something while the viewport is moving.
-         */
-        jQuery(document).trigger('mousescrolloff');
-      }
+    // We weren't scrolling. Now we are. Fire the relevant event.
+    if (!initialTranslationState &amp;&amp; translating) {
+<span id='Mouse-Scroll-event-mousescrollon'>      /**
+</span>       * @event mousescrollon
+       *   Fires on the document when the viewport starts scrolling. Binding
+       *   to this event may be useful if you want to pause animation or
+       *   display something while the viewport is moving.
+       */
+      jQuery(document).trigger('mousescrollon');
     }
-    translating = t;
+    // We were scrolling. Now we're not. Fire the relevant event.
+    else if (initialTranslationState &amp;&amp; !translating) {
+<span id='Mouse-Scroll-event-mousescrolloff'>      /**
+</span>       * @event mousescrolloff
+       *   Fires on the document when the viewport stops scrolling. Binding
+       *   to this event may be useful if you want to pause animation or
+       *   display something while the viewport is moving.
+       */
+      jQuery(document).trigger('mousescrolloff');
+    }
     return scrolled;
   }
   return {
@@ -232,14 +239,23 @@ Mouse.Scroll = (function() {
         return;
       }
       enabled = true;
+      $canvas.one('mousemove.translate', function() {
+        // Enable translating if we're over the canvas
+        if (Mouse.coords.x &gt;= 0 &amp;&amp; Mouse.coords.y &gt;= 0) {
+          hovered = true;
+          translate();
+        }
+      });
       $canvas.on('mouseenter.translate touchstart.translate', function() {
-        jQuery(this).on('mousemove.translate', function() {
-          translate(false);
-        });
+        hovered = true;
+        translate();
       });
       $canvas.on('mouseleave.translate touchleave.translate', function() {
-        translating = false;
-        jQuery(this).off('.translate');
+        hovered = false;
+        if (translating) {
+          translating = false;
+          jQuery(document).trigger('mousescrolloff');
+        }
       });
     },
 <span id='Mouse-Scroll-static-method-disable'>    /**
@@ -248,8 +264,9 @@ Mouse.Scroll = (function() {
      */
     disable: function() {
       $canvas.off('.translate');
-      translating = false;
+      hovered = false;
       enabled = false;
+      translating = false;
     },
 <span id='Mouse-Scroll-static-method-isEnabled'>    /**
 </span>     * Test whether mouse position scrolling is enabled.
@@ -265,10 +282,41 @@ Mouse.Scroll = (function() {
     isScrolling: function() {
       return translating;
     },
+    // Called in the core animation loop.
     _update: function() {
-      if (translating) {
+      if (hovered) {
         return translate();
       }
+    },
+<span id='Mouse-Scroll-property-easings'>    /**
+</span>     * Available easing modes for scroll movement speed.
+     *
+     * Modes include:
+     * - THRESHOLD: Scroll at max speed when the mouse is past the threshold
+     * - LINEAR: Increase scroll speed linearly as the mouse approaches an edge
+     * - SMOOTH: S-curve &quot;swing&quot; easing (default)
+     * - EXPONENTIAL: Increase scroll speed inverse-exponentially as the mouse
+     *   approaches an edge (increase quickly at first, then plateau)
+     */
+    easings: easings,
+<span id='Mouse-Scroll-method-setEasingFunction'>    /**
+</span>     * Set the easing function used to determine scroll speed.
+     *
+     * The `easings` property contains the possible easing functions, or you
+     * can define your own.
+     */
+    setEasingFunction: function(e) {
+      easing = e;
+    },
+<span id='Mouse-Scroll-static-method-getEasingFunction'>    /**
+</span>     * Get the easing function used to determine scroll speed.
+     *
+     * The `easings` property contains the possible easing functions.
+     *
+     * @static
+     */
+    getEasingFunction: function() {
+      return easing;
     },
 <span id='Mouse-Scroll-static-method-setThreshold'>    /**
 </span>     * Set how close to the edge of the canvas the mouse triggers scrolling.
@@ -303,6 +351,9 @@ Mouse.Scroll = (function() {
 <span id='Mouse-Scroll-static-method-setScrollDistance'>    /**
 </span>     * Set how fast the mouse will cause the viewport to scroll.
      *
+     * The actual scrolling speed also depends on the easing function. The
+     * scroll speed set here is actually the maximum scroll speed.
+     *
      * @param {Number} a
      *   The maximum distance in pixels that the viewport will move each second
      *   while scrolling (the movement can be less when the viewport is very
@@ -315,6 +366,9 @@ Mouse.Scroll = (function() {
     },
 <span id='Mouse-Scroll-static-method-getScrollDistance'>    /**
 </span>     * Get how fast the mouse will cause the viewport to scroll.
+     *
+     * The actual scrolling speed also depends on the easing function. The
+     * scroll speed retrieved here is actually the maximum scroll speed.
      *
      * @return {Number}
      *   The maximum distance in pixels that the viewport will move each second

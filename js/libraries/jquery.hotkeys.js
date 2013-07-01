@@ -3,6 +3,9 @@
  *
  * Dual licensed under the MIT or GPLv2 licenses.
  *
+ * The full project and documentation are available at
+ * https://github.com/IceCreamYou/jquery.hotkeys
+ *
  * Credits:
  * - [Isaac Sukin](https://github.com/IceCreamYou) wrote this revision
  * - [John Resig](https://github.com/jeresig/jquery.hotkeys)
@@ -16,7 +19,7 @@
 (function(jQuery){
   /**
    * @class jQuery.hotkeys
-   *   Provides easy, literal handling for keyboard input.
+   *   Provides easy, human-friendly handling for keyboard input.
    *
    * USAGE:
    *
@@ -28,19 +31,30 @@
    *
    *   Separate key combinations that should trigger the callback with spaces.
    *   In the examples above, the callback would fire if `ctrl+a` or `down` was
-   *   pressed. You can specify keys in combination with the control keys: alt,
-   *   ctrl, meta, and shift. In the event callback, `event.keyPressed` holds
-   *   the combination that actually triggered the callback.
+   *   pressed. In the event callback, `event.keyPressed` holds the combination
+   *   that actually triggered the callback.
+   *
+   * - You can specify keys in combination with the control keys: `alt`,
+   *   `ctrl`, `meta`, and `shift`. If you use multiple control keys in a
+   *   combination, specify them in alphabetical order.
    *
    * - Instead of binding to key events, you can also just call
    *   `jQuery.hotkeys.areKeysDown()` to determine whether a set of keys is
    *   currently being pressed, or examine the list of currently pressed keys
-   *   yourself in `jQuery.hotkeys.keysDown`.
+   *   yourself in `jQuery.hotkeys.keysDown`. This is useful if you want to
+   *   bind to key events for all keys since `event.keyPressed` does not exist
+   *   in this scenario:
+   *
+   *       $(selector).keypress(function(event) {});
    *
    * - If you only care about keys that were pressed (and released) instead of
    *   which keys are being held down, you can call
    *   `jQuery.hotkeys.lastKeyPressed()` or examine the last 5 keys pressed in
    *   `jQuery.hotkeys.lastKeysPressed`.
+   *
+   * Hotkeys aren't tracked if you're inside of an input element (unless you
+   * explicitly bind the hotkey directly to the input). This helps avoid
+   * conflicts with normal user typing.
    *
    * NOTE: Firefox is the only major browser that will reliably let you override
    * all key shortcuts built into the browser. This won't be a problem for most
@@ -51,32 +65,38 @@
   jQuery.hotkeys = {
     version: "0.9",
 
-    keysDown: [], // keys currently held down
+    // Keys currently held down
+    keysDown: [],
 
-    // the last 5 keys pressed and released (most recent key at the end)
+    // The last 5 keys pressed and released (most recent key at the end)
     lastKeysPressed: [],
 
+    // HTML elements that support text input
     textTypes: [
-                'text', 'search', 'tel', 'url', 'email', 'password', 'number', 'range',
-                'date', 'month', 'week', 'time', 'datetime', 'datetime-local', 'color'
-    ], // HTML elements that support text input
+      'text', 'search', 'tel', 'url', 'email', 'password', 'number', 'range',
+      'date', 'month', 'week', 'time', 'datetime', 'datetime-local', 'color'
+    ],
 
+    // Charcodes for when String.fromCharCode() doesn't work
     specialKeys: {
-      8: "backspace", 9: "tab", 13: "return", 16: "shift", 17: "ctrl", 18: "alt", 19: "pause",
-      20: "capslock", 27: "esc", 32: "space", 33: "pageup", 34: "pagedown", 35: "end", 36: "home",
-      37: "left", 38: "up", 39: "right", 40: "down", 45: "insert", 46: "del", 59: ";",
-      96: "0", 97: "1", 98: "2", 99: "3", 100: "4", 101: "5", 102: "6", 103: "7",
-      104: "8", 105: "9", 106: "*", 107: "+", 109: "-", 110: ".", 111 : "/",
-      112: "f1", 113: "f2", 114: "f3", 115: "f4", 116: "f5", 117: "f6", 118: "f7", 119: "f8",
-      120: "f9", 121: "f10", 122: "f11", 123: "f12", 144: "numlock", 145: "scroll",
-      186: ";", 187: "=", 188: ",", 189: "-", 190: ".",
-      191: "/", 219: "[", 220: "\\", 221: "]", 222: "'", 224: "meta"
-    }, // charcodes for when String.fromCharCode() doesn't work
+      8: "backspace", 9: "tab", 10: "return", 13: "return", 16: "shift",
+      17: "ctrl", 18: "alt", 19: "pause", 20: "capslock", 27: "esc",
+      32: "space", 33: "pageup", 34: "pagedown", 35: "end", 36: "home",
+      37: "left", 38: "up", 39: "right", 40: "down", 45: "insert", 46: "del",
+      59: ";", 96: "0", 97: "1", 98: "2", 99: "3", 100: "4", 101: "5",
+      102: "6", 103: "7", 104: "8", 105: "9", 106: "*", 107: "+", 109: "-",
+      110: ".", 111 : "/", 112: "f1", 113: "f2", 114: "f3", 115: "f4",
+      116: "f5", 117: "f6", 118: "f7", 119: "f8", 120: "f9", 121: "f10",
+      122: "f11", 123: "f12", 144: "numlock", 145: "scroll", 186: ";",
+      187: "=", 188: ",", 189: "-", 190: ".", 191: "/", 219: "[", 220: "\\",
+      221: "]", 222: "'", 224: "meta"
+    },
 
+    // Map of characters to the character they upshift to
     shiftNums: {
-      "`": "~", "1": "!", "2": "@", "3": "#", "4": "$", "5": "%", "6": "^", "7": "&",
-      "8": "*", "9": "(", "0": ")", "-": "_", "=": "+", ";": ":", "'": "\"", ",": "<",
-      ".": ">",  "/": "?",  "\\": "|", "[": "{", "]": "}"
+      "`": "~", "1": "!", "2": "@", "3": "#", "4": "$", "5": "%", "6": "^",
+      "7": "&", "8": "*", "9": "(", "0": ")", "-": "_", "=": "+", ";": ":",
+      "'": "\"", ",": "<", ".": ">",  "/": "?",  "\\": "|", "[": "{", "]": "}"
     },
 
     /**
@@ -156,54 +176,55 @@
     }
   };
 
-  function keyHandler( handleObj ) {
+  // Respond to bound keyboard events.
+  function keyHandler(handleObj) {
     // Only care when a possible input has been specified
-    if ( typeof handleObj.data !== "string" ) {
+    if (typeof handleObj.data !== "string") {
       return;
     }
 
     var origHandler = handleObj.handler,
         keys = handleObj.data.toLowerCase().split(" ");
 
-    handleObj.handler = function( event ) {
+    handleObj.handler = function(event) {
       // Don't fire in text-accepting inputs that we didn't directly bind to
-      if ( this !== event.target && (/textarea|select/i.test( event.target.nodeName ) ||
-          jQuery.inArray(event.target.type, jQuery.hotkeys.textTypes) > -1 ) ) {
+      if (this !== event.target && (/textarea|select/i.test(event.target.nodeName) ||
+          jQuery.inArray(event.target.type, jQuery.hotkeys.textTypes) > -1)) {
         return;
       }
 
       // Keypress represents characters, not special keys
-      var special = event.type !== "keypress" && jQuery.hotkeys.specialKeys[ event.which ],
-          character = String.fromCharCode( event.which ).toLowerCase(),
+      var special = event.type !== "keypress" && jQuery.hotkeys.specialKeys[event.which],
+          character = String.fromCharCode(event.which).toLowerCase(),
           modif = "", possible = {};
 
-      // Check combinations (alt|ctrl|shift+anything)
-      if ( event.altKey && special !== "alt" ) {
+      // Check combinations (alt|ctrl|command|shift+anything)
+      if (event.altKey && special !== "alt") {
         modif += "alt+";
       }
 
-      if ( event.ctrlKey && special !== "ctrl" ) {
+      if (event.ctrlKey && special !== "ctrl") {
         modif += "ctrl+";
       }
 
-      if ( event.metaKey && !event.ctrlKey && special !== "meta" ) {
+      if (event.metaKey && !event.ctrlKey && special !== "meta") {
         modif += "meta+";
       }
 
-      if ( event.shiftKey && special !== "shift" ) {
+      if (event.shiftKey && special !== "shift") {
         modif += "shift+";
       }
 
-      if ( special ) {
-        possible[ modif + special ] = true;
+      if (special) {
+        possible[modif + special] = true;
       }
       else {
-        possible[ modif + character ] = true;
-        possible[ modif + jQuery.hotkeys.shiftNums[ character ] ] = true;
+        possible[modif + character] = true;
+        possible[modif + jQuery.hotkeys.shiftNums[character]] = true;
 
         // "$" can be triggered as "Shift+4" or "Shift+$" or just "$"
-        if ( modif === "shift+" ) {
-          possible[ jQuery.hotkeys.shiftNums[ character ] ] = true;
+        if (modif === "shift+") {
+          possible[jQuery.hotkeys.shiftNums[character]] = true;
         }
       }
 
@@ -229,21 +250,22 @@
         }
       }
 
-      for ( i = 0, l = keys.length; i < l; i++ ) {
-        if ( possible[ keys[i] ] ) {
+      for (i = 0, l = keys.length; i < l; i++) {
+        if (possible[keys[i]]) {
           event.keyPressed = keys[i]; // note which key combination was actually pressed
-          return origHandler.apply( this, arguments );
+          return origHandler.apply(this, arguments);
         }
       }
     };
   }
 
-  jQuery.each([ "keydown", "keyup", "keypress" ], function() {
-    jQuery.event.special[ this ] = { add: keyHandler };
+  // Intercept keyboard events
+  jQuery.each(["keydown", "keyup", "keypress"], function() {
+    jQuery.event.special[this] = { add: keyHandler };
   });
 
   // Listen to every keydown/keyup event so we can record them.
   jQuery(document).keydown('na', function() {});
   jQuery(document).keyup('na', function() {});
 
-})( jQuery );
+})(this.jQuery);

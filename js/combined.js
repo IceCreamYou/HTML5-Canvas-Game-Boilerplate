@@ -10,6 +10,9 @@
  *
  * Dual licensed under the MIT or GPLv2 licenses.
  *
+ * The full project and documentation are available at
+ * https://github.com/IceCreamYou/jquery.hotkeys
+ *
  * Credits:
  * - [Isaac Sukin](https://github.com/IceCreamYou) wrote this revision
  * - [John Resig](https://github.com/jeresig/jquery.hotkeys)
@@ -23,7 +26,7 @@
 (function(jQuery){
   /**
    * @class jQuery.hotkeys
-   *   Provides easy, literal handling for keyboard input.
+   *   Provides easy, human-friendly handling for keyboard input.
    *
    * USAGE:
    *
@@ -35,19 +38,30 @@
    *
    *   Separate key combinations that should trigger the callback with spaces.
    *   In the examples above, the callback would fire if `ctrl+a` or `down` was
-   *   pressed. You can specify keys in combination with the control keys: alt,
-   *   ctrl, meta, and shift. In the event callback, `event.keyPressed` holds
-   *   the combination that actually triggered the callback.
+   *   pressed. In the event callback, `event.keyPressed` holds the combination
+   *   that actually triggered the callback.
+   *
+   * - You can specify keys in combination with the control keys: `alt`,
+   *   `ctrl`, `meta`, and `shift`. If you use multiple control keys in a
+   *   combination, specify them in alphabetical order.
    *
    * - Instead of binding to key events, you can also just call
    *   `jQuery.hotkeys.areKeysDown()` to determine whether a set of keys is
    *   currently being pressed, or examine the list of currently pressed keys
-   *   yourself in `jQuery.hotkeys.keysDown`.
+   *   yourself in `jQuery.hotkeys.keysDown`. This is useful if you want to
+   *   bind to key events for all keys since `event.keyPressed` does not exist
+   *   in this scenario:
+   *
+   *       $(selector).keypress(function(event) {});
    *
    * - If you only care about keys that were pressed (and released) instead of
    *   which keys are being held down, you can call
    *   `jQuery.hotkeys.lastKeyPressed()` or examine the last 5 keys pressed in
    *   `jQuery.hotkeys.lastKeysPressed`.
+   *
+   * Hotkeys aren't tracked if you're inside of an input element (unless you
+   * explicitly bind the hotkey directly to the input). This helps avoid
+   * conflicts with normal user typing.
    *
    * NOTE: Firefox is the only major browser that will reliably let you override
    * all key shortcuts built into the browser. This won't be a problem for most
@@ -58,32 +72,38 @@
   jQuery.hotkeys = {
     version: "0.9",
 
-    keysDown: [], // keys currently held down
+    // Keys currently held down
+    keysDown: [],
 
-    // the last 5 keys pressed and released (most recent key at the end)
+    // The last 5 keys pressed and released (most recent key at the end)
     lastKeysPressed: [],
 
+    // HTML elements that support text input
     textTypes: [
-                'text', 'search', 'tel', 'url', 'email', 'password', 'number', 'range',
-                'date', 'month', 'week', 'time', 'datetime', 'datetime-local', 'color'
-    ], // HTML elements that support text input
+      'text', 'search', 'tel', 'url', 'email', 'password', 'number', 'range',
+      'date', 'month', 'week', 'time', 'datetime', 'datetime-local', 'color'
+    ],
 
+    // Charcodes for when String.fromCharCode() doesn't work
     specialKeys: {
-      8: "backspace", 9: "tab", 13: "return", 16: "shift", 17: "ctrl", 18: "alt", 19: "pause",
-      20: "capslock", 27: "esc", 32: "space", 33: "pageup", 34: "pagedown", 35: "end", 36: "home",
-      37: "left", 38: "up", 39: "right", 40: "down", 45: "insert", 46: "del", 59: ";",
-      96: "0", 97: "1", 98: "2", 99: "3", 100: "4", 101: "5", 102: "6", 103: "7",
-      104: "8", 105: "9", 106: "*", 107: "+", 109: "-", 110: ".", 111 : "/",
-      112: "f1", 113: "f2", 114: "f3", 115: "f4", 116: "f5", 117: "f6", 118: "f7", 119: "f8",
-      120: "f9", 121: "f10", 122: "f11", 123: "f12", 144: "numlock", 145: "scroll",
-      186: ";", 187: "=", 188: ",", 189: "-", 190: ".",
-      191: "/", 219: "[", 220: "\\", 221: "]", 222: "'", 224: "meta"
-    }, // charcodes for when String.fromCharCode() doesn't work
+      8: "backspace", 9: "tab", 10: "return", 13: "return", 16: "shift",
+      17: "ctrl", 18: "alt", 19: "pause", 20: "capslock", 27: "esc",
+      32: "space", 33: "pageup", 34: "pagedown", 35: "end", 36: "home",
+      37: "left", 38: "up", 39: "right", 40: "down", 45: "insert", 46: "del",
+      59: ";", 96: "0", 97: "1", 98: "2", 99: "3", 100: "4", 101: "5",
+      102: "6", 103: "7", 104: "8", 105: "9", 106: "*", 107: "+", 109: "-",
+      110: ".", 111 : "/", 112: "f1", 113: "f2", 114: "f3", 115: "f4",
+      116: "f5", 117: "f6", 118: "f7", 119: "f8", 120: "f9", 121: "f10",
+      122: "f11", 123: "f12", 144: "numlock", 145: "scroll", 186: ";",
+      187: "=", 188: ",", 189: "-", 190: ".", 191: "/", 219: "[", 220: "\\",
+      221: "]", 222: "'", 224: "meta"
+    },
 
+    // Map of characters to the character they upshift to
     shiftNums: {
-      "`": "~", "1": "!", "2": "@", "3": "#", "4": "$", "5": "%", "6": "^", "7": "&",
-      "8": "*", "9": "(", "0": ")", "-": "_", "=": "+", ";": ":", "'": "\"", ",": "<",
-      ".": ">",  "/": "?",  "\\": "|", "[": "{", "]": "}"
+      "`": "~", "1": "!", "2": "@", "3": "#", "4": "$", "5": "%", "6": "^",
+      "7": "&", "8": "*", "9": "(", "0": ")", "-": "_", "=": "+", ";": ":",
+      "'": "\"", ",": "<", ".": ">",  "/": "?",  "\\": "|", "[": "{", "]": "}"
     },
 
     /**
@@ -163,54 +183,55 @@
     }
   };
 
-  function keyHandler( handleObj ) {
+  // Respond to bound keyboard events.
+  function keyHandler(handleObj) {
     // Only care when a possible input has been specified
-    if ( typeof handleObj.data !== "string" ) {
+    if (typeof handleObj.data !== "string") {
       return;
     }
 
     var origHandler = handleObj.handler,
         keys = handleObj.data.toLowerCase().split(" ");
 
-    handleObj.handler = function( event ) {
+    handleObj.handler = function(event) {
       // Don't fire in text-accepting inputs that we didn't directly bind to
-      if ( this !== event.target && (/textarea|select/i.test( event.target.nodeName ) ||
-          jQuery.inArray(event.target.type, jQuery.hotkeys.textTypes) > -1 ) ) {
+      if (this !== event.target && (/textarea|select/i.test(event.target.nodeName) ||
+          jQuery.inArray(event.target.type, jQuery.hotkeys.textTypes) > -1)) {
         return;
       }
 
       // Keypress represents characters, not special keys
-      var special = event.type !== "keypress" && jQuery.hotkeys.specialKeys[ event.which ],
-          character = String.fromCharCode( event.which ).toLowerCase(),
+      var special = event.type !== "keypress" && jQuery.hotkeys.specialKeys[event.which],
+          character = String.fromCharCode(event.which).toLowerCase(),
           modif = "", possible = {};
 
-      // Check combinations (alt|ctrl|shift+anything)
-      if ( event.altKey && special !== "alt" ) {
+      // Check combinations (alt|ctrl|command|shift+anything)
+      if (event.altKey && special !== "alt") {
         modif += "alt+";
       }
 
-      if ( event.ctrlKey && special !== "ctrl" ) {
+      if (event.ctrlKey && special !== "ctrl") {
         modif += "ctrl+";
       }
 
-      if ( event.metaKey && !event.ctrlKey && special !== "meta" ) {
+      if (event.metaKey && !event.ctrlKey && special !== "meta") {
         modif += "meta+";
       }
 
-      if ( event.shiftKey && special !== "shift" ) {
+      if (event.shiftKey && special !== "shift") {
         modif += "shift+";
       }
 
-      if ( special ) {
-        possible[ modif + special ] = true;
+      if (special) {
+        possible[modif + special] = true;
       }
       else {
-        possible[ modif + character ] = true;
-        possible[ modif + jQuery.hotkeys.shiftNums[ character ] ] = true;
+        possible[modif + character] = true;
+        possible[modif + jQuery.hotkeys.shiftNums[character]] = true;
 
         // "$" can be triggered as "Shift+4" or "Shift+$" or just "$"
-        if ( modif === "shift+" ) {
-          possible[ jQuery.hotkeys.shiftNums[ character ] ] = true;
+        if (modif === "shift+") {
+          possible[jQuery.hotkeys.shiftNums[character]] = true;
         }
       }
 
@@ -236,24 +257,25 @@
         }
       }
 
-      for ( i = 0, l = keys.length; i < l; i++ ) {
-        if ( possible[ keys[i] ] ) {
+      for (i = 0, l = keys.length; i < l; i++) {
+        if (possible[keys[i]]) {
           event.keyPressed = keys[i]; // note which key combination was actually pressed
-          return origHandler.apply( this, arguments );
+          return origHandler.apply(this, arguments);
         }
       }
     };
   }
 
-  jQuery.each([ "keydown", "keyup", "keypress" ], function() {
-    jQuery.event.special[ this ] = { add: keyHandler };
+  // Intercept keyboard events
+  jQuery.each(["keydown", "keyup", "keypress"], function() {
+    jQuery.event.special[this] = { add: keyHandler };
   });
 
   // Listen to every keydown/keyup event so we can record them.
   jQuery(document).keydown('na', function() {});
   jQuery(document).keyup('na', function() {});
 
-})( jQuery );
+})(this.jQuery);
 /**
  * Simple JavaScript Inheritance
  * By [John Resig](http://ejohn.org/)
@@ -546,7 +568,7 @@ SpriteMap.prototype = {
    * Stop the currently running animation sequence.
    */
   stop: function() {
-    this.sprite.stop();
+    this.sprite.stopLoop();
     return this;
   },
   /**
@@ -726,7 +748,7 @@ this.SpriteMap = SpriteMap;
  *   and you draw() the Sprite before this callback is invoked, nothing will be
  *   drawn because the image won't be loaded yet.
  * @param {Sprite} [options.postInitCallback.sprite]
- *   The Sprite that was loaded. 
+ *   The Sprite that was loaded.
  */
 function Sprite(src, options) {
   // String image file path
@@ -1243,7 +1265,7 @@ this.Sprite = Sprite;
 
   /**
    * Save an image to the cache.
-   * 
+   *
    * @param {String} src
    *   The file path of the image.
    * @param {Image} image
@@ -1257,7 +1279,7 @@ this.Sprite = Sprite;
 
   /**
    * Preload a list of images asynchronously.
-   * 
+   *
    * @param {String[]} files
    *   An Array of paths to images to preload.
    * @param {Object} [options]
@@ -2310,10 +2332,10 @@ function World(w, h) {
    * @param {Number} factor
    *   The percent amount to scale the resolution on each dimension as a
    *   fraction of the <em>current</em> resolution (typically between zero and
-   *   one). In other words, if the original resolution is 1024*768, scaling
-   *   the resolution by a factor of 0.5 will result in a resolution of 512*384
+   *   one). In other words, if the original resolution is 1024x768, scaling
+   *   the resolution by a factor of 0.5 will result in a resolution of 512x384
    *   (showing 25% as many pixels on the screen). If scaled again by a factor
-   *   of 2, the result is 1024*768 again. Use the `scale` property to detect
+   *   of 2, the result is 1024x768 again. Use the `scale` property to detect
    *   the factor by which the resolution is currently scaled.
    * @param {Number} [x=0]
    *   The x-coordinate of a location to center the viewport around after
@@ -2329,6 +2351,11 @@ function World(w, h) {
     $canvas.css({
       width: (canvas.width/this.scale) + 'px',
       height: (canvas.height/this.scale) + 'px',
+      // Force hardware accelerated rendering
+      mozTransform: 'scale3d(1, 1, 1)',
+      msTransform: 'scale3d(1, 1, 1)',
+      oTransform: 'scale3d(1, 1, 1)',
+      webkitTransform: 'scale3d(1, 1, 1)',
     });
     canvas.width = (canvas.width*factor)|0;
     canvas.height = (canvas.height*factor)|0;
@@ -3548,10 +3575,12 @@ var Mouse = {
     /**
      * @property
      *   The coordinates of the mouse relative to the upper-left corner of the
-     *   canvas.
+     *   canvas. If you want the coordinates of the mouse relative to the
+     *   world, add `world.xOffset` and `world.yOffset` to the `x` and `y`
+     *   coordinates, respectively.
      * @static
      */
-    coords: {x: 9999, y: 9999},
+    coords: {x: -9999, y: -9999},
 };
 
 // Track mouse events
@@ -3653,79 +3682,84 @@ App.isHovered = function(obj) {
  */
 Mouse.Scroll = (function() {
   var THRESHOLD = 0.2, MOVEAMOUNT = 350;
-  var translating = false, scrolled = {x: 0, y: 0}, enabled = false;
-  function translate(doOffset) {
-    var t = false, ma;
-    if (doOffset === undefined) doOffset = true;
+  // Whether we're allowed to mouse scroll
+  var enabled = false;
+  // If enabled is true, then whether the mouse is over the canvas
+  var hovered = false;
+  // Whether we're currently scrolling
+  var translating = false;
+  // How far we scrolled last time
+  var scrolled = {x: 0, y: 0};
+  // Available easing functions
+  var easings = {
+      THRESHOLD: function() { return 1; },
+      LINEAR: function(val) { return 1-val; },
+      SMOOTH: function(val) { return 0.5 - Math.cos( (1-val)*Math.PI ) / 2; },
+      EXPONENTIAL: function(val) { return Math.sqrt(1-val); },
+  }
+  // The currently active easing function
+  var easing = easings.SMOOTH;
+
+  function translate() {
+    var ma, gradient, initialTranslationState = translating;
 
     // Left
     if (Mouse.coords.x < canvas.width * THRESHOLD) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
-        world.xOffset -= ma;
-        scrolled.x -= ma;
-        context.translate(ma, 0);
-      }
-      t = true;
+      gradient = easing(Mouse.coords.x / (canvas.width * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
+      world.xOffset -= ma;
+      scrolled.x -= ma;
+      context.translate(ma, 0);
     }
     // Right
     else if (Mouse.coords.x > canvas.width * (1-THRESHOLD)) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
-        world.xOffset += ma;
-        scrolled.x += ma;
-        context.translate(-ma, 0);
-      }
-      t = true;
+      gradient = easing((canvas.width - Mouse.coords.x) / (canvas.width * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
+      world.xOffset += ma;
+      scrolled.x += ma;
+      context.translate(-ma, 0);
     }
 
     // Up
     if (Mouse.coords.y < canvas.height * THRESHOLD) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
-        world.yOffset -= ma;
-        scrolled.y -= ma;
-        context.translate(0, ma);
-      }
-      t = true;
+      gradient = easing(Mouse.coords.y / (canvas.height * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
+      world.yOffset -= ma;
+      scrolled.y -= ma;
+      context.translate(0, ma);
     }
     // Down
     else if (Mouse.coords.y > canvas.height * (1-THRESHOLD)) {
-      if (doOffset) {
-        ma = Math.round(Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
-        world.yOffset += ma;
-        scrolled.y += ma;
-        context.translate(0, -ma);
-      }
-      t = true;
+      gradient = easing((canvas.height - Mouse.coords.y) / (canvas.height * THRESHOLD));
+      ma = Math.round(gradient*Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
+      world.yOffset += ma;
+      scrolled.y += ma;
+      context.translate(0, -ma);
     }
 
     // We're not translating if we're not moving.
-    if (doOffset && scrolled.x === 0 && scrolled.y === 0) {
-      t = false;
-    }
+    translating = scrolled.x !== 0 && scrolled.y !== 0;
 
-    if (doOffset && translating != t) {
-      if (translating) { // We were scrolling. Now we're not.
-        /**
-         * @event mousescrollon
-         *   Fires on the document when the viewport starts scrolling. Binding
-         *   to this event may be useful if you want to pause animation or
-         *   display something while the viewport is moving.
-         */
-        jQuery(document).trigger('mousescrollon');
-      }
-      else { // We weren't scrolling. Now we are.
-        /**
-         * @event mousescrolloff
-         *   Fires on the document when the viewport stops scrolling. Binding
-         *   to this event may be useful if you want to pause animation or
-         *   display something while the viewport is moving.
-         */
-        jQuery(document).trigger('mousescrolloff');
-      }
+    // We weren't scrolling. Now we are. Fire the relevant event.
+    if (!initialTranslationState && translating) {
+      /**
+       * @event mousescrollon
+       *   Fires on the document when the viewport starts scrolling. Binding
+       *   to this event may be useful if you want to pause animation or
+       *   display something while the viewport is moving.
+       */
+      jQuery(document).trigger('mousescrollon');
     }
-    translating = t;
+    // We were scrolling. Now we're not. Fire the relevant event.
+    else if (initialTranslationState && !translating) {
+      /**
+       * @event mousescrolloff
+       *   Fires on the document when the viewport stops scrolling. Binding
+       *   to this event may be useful if you want to pause animation or
+       *   display something while the viewport is moving.
+       */
+      jQuery(document).trigger('mousescrolloff');
+    }
     return scrolled;
   }
   return {
@@ -3738,14 +3772,23 @@ Mouse.Scroll = (function() {
         return;
       }
       enabled = true;
+      $canvas.one('mousemove.translate', function() {
+        // Enable translating if we're over the canvas
+        if (Mouse.coords.x >= 0 && Mouse.coords.y >= 0) {
+          hovered = true;
+          translate();
+        }
+      });
       $canvas.on('mouseenter.translate touchstart.translate', function() {
-        jQuery(this).on('mousemove.translate', function() {
-          translate(false);
-        });
+        hovered = true;
+        translate();
       });
       $canvas.on('mouseleave.translate touchleave.translate', function() {
-        translating = false;
-        jQuery(this).off('.translate');
+        hovered = false;
+        if (translating) {
+          translating = false;
+          jQuery(document).trigger('mousescrolloff');
+        }
       });
     },
     /**
@@ -3754,8 +3797,9 @@ Mouse.Scroll = (function() {
      */
     disable: function() {
       $canvas.off('.translate');
-      translating = false;
+      hovered = false;
       enabled = false;
+      translating = false;
     },
     /**
      * Test whether mouse position scrolling is enabled.
@@ -3771,10 +3815,41 @@ Mouse.Scroll = (function() {
     isScrolling: function() {
       return translating;
     },
+    // Called in the core animation loop.
     _update: function() {
-      if (translating) {
+      if (hovered) {
         return translate();
       }
+    },
+    /**
+     * Available easing modes for scroll movement speed.
+     *
+     * Modes include:
+     * - THRESHOLD: Scroll at max speed when the mouse is past the threshold
+     * - LINEAR: Increase scroll speed linearly as the mouse approaches an edge
+     * - SMOOTH: S-curve "swing" easing (default)
+     * - EXPONENTIAL: Increase scroll speed inverse-exponentially as the mouse
+     *   approaches an edge (increase quickly at first, then plateau)
+     */
+    easings: easings,
+    /**
+     * Set the easing function used to determine scroll speed.
+     *
+     * The `easings` property contains the possible easing functions, or you
+     * can define your own.
+     */
+    setEasingFunction: function(e) {
+      easing = e;
+    },
+    /**
+     * Get the easing function used to determine scroll speed.
+     *
+     * The `easings` property contains the possible easing functions.
+     *
+     * @static
+     */
+    getEasingFunction: function() {
+      return easing;
     },
     /**
      * Set how close to the edge of the canvas the mouse triggers scrolling.
@@ -3809,6 +3884,9 @@ Mouse.Scroll = (function() {
     /**
      * Set how fast the mouse will cause the viewport to scroll.
      *
+     * The actual scrolling speed also depends on the easing function. The
+     * scroll speed set here is actually the maximum scroll speed.
+     *
      * @param {Number} a
      *   The maximum distance in pixels that the viewport will move each second
      *   while scrolling (the movement can be less when the viewport is very
@@ -3821,6 +3899,9 @@ Mouse.Scroll = (function() {
     },
     /**
      * Get how fast the mouse will cause the viewport to scroll.
+     *
+     * The actual scrolling speed also depends on the easing function. The
+     * scroll speed retrieved here is actually the maximum scroll speed.
      *
      * @return {Number}
      *   The maximum distance in pixels that the viewport will move each second
@@ -4031,11 +4112,12 @@ App.Events = {
    * @param {String} eventName
    *   The name of the event to trigger, e.g. "click."
    * @param {Arguments} ...
-   *   Additional arguments to pass to the relevant callbacks.
+   *   Additional arguments to pass to the relevant callbacks. Usually the
+   *   first argument is the event object.
    *
    * @static
    */
-  trigger: function(eventName) {
+  trigger: function() {
     eventName = Array.prototype.shift.call(arguments);
     var e = _listeners[eventName]; // All listeners for this event
     if (e) {
@@ -4397,8 +4479,8 @@ Collection.prototype = {
    *
    * @ignore
    */
-  _executeMethod: function(name) {
-    Array.prototype.shift.call(arguments);
+  _executeMethod: function() {
+    var name = Array.prototype.shift.call(arguments);
     for (var i = 0; i < this.length; i++) {
       this[i][name].apply(this[i], arguments);
     }
