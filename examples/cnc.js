@@ -45,6 +45,11 @@ function draw() {
   bkgd.draw();
   base.draw();
   soldiers.draw();
+  soldiers.forEach(function(soldier) {
+    if (soldier.isHovered()) {
+      soldier.drawBoundingBox();
+    }
+  });
   dragOverlay.draw();
 }
 
@@ -288,8 +293,8 @@ Mouse.Zoom = {
       // Get an indication of the direction of the scroll.
       // Depending on the browser, OS, and device settings, the actual value
       // could be in pixels, lines, pages, degrees, or arbitrary units, so all
-      // we can reliably deduce from this is the direction.
-      var delta = e.originalEvent.deltaY || e.originalEvent.wheelDelta;
+      // we can consistently deduce from this is the direction.
+      var delta = e.originalEvent.deltaY || -e.originalEvent.wheelDelta;
       // Scroll up; zoom in
       if (delta.sign() < 0) {
         if (resolution > Mouse.Zoom.MIN_ZOOM) {
