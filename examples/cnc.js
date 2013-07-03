@@ -47,7 +47,7 @@ function draw() {
   soldiers.draw();
   soldiers.forEach(function(soldier) {
     if (soldier.isHovered()) {
-      soldier.drawBoundingBox();
+      soldier.drawHovered();
     }
   });
   dragOverlay.draw();
@@ -63,6 +63,7 @@ function draw() {
 function setup(first) {
   world.resize(3200, 3200);
 
+  Mouse.Zoom.enable();
   Mouse.Scroll.enable();
   Mouse.Scroll.setThreshold(0.3);
   Mouse.Scroll.setScrollDistance(800);
@@ -139,18 +140,17 @@ function setup(first) {
     if (mousedown) {
       // Stop drawing the overlay rect
       dragOverlay.context.clear();
-      var x = Math.min(dragOverlay.startX, Mouse.coords.x),
-          y = Math.min(dragOverlay.startY, Mouse.coords.y);
-      var selectBox = new Box(
-          x + world.xOffset,
-          y + world.yOffset,
-          Math.abs(Mouse.coords.x - dragOverlay.startX),
-          Math.abs(Mouse.coords.y - dragOverlay.startY)
-      );
-      var toSelect = selectBox.collides(soldiers, true);
-      if (toSelect) {
-        for (var i = 0; i < toSelect.length; i++) {
-          toSelect[i].toggleSelected();
+      var x = Math.min(dragOverlay.startX, Mouse.coords.x) + world.xOffset,
+          y = Math.min(dragOverlay.startY, Mouse.coords.y) + world.yOffset,
+          w = Math.abs(Mouse.coords.x - dragOverlay.startX),
+          h = Math.abs(Mouse.coords.y - dragOverlay.startY);
+      if (w && h) {
+        var selectBox = new Box(x, y, w, h);
+        var toSelect = selectBox.collides(soldiers, true);
+        if (toSelect) {
+          for (var i = 0; i < toSelect.length; i++) {
+            toSelect[i].toggleSelected();
+          }
         }
       }
     }
@@ -242,6 +242,14 @@ var Soldier = Actor.extend({
       this._super.apply(this, arguments);
     }
   },
+  drawHovered: function() {
+    if (!this.selected) {
+      var t = this.fillStyle;
+      this.fillStyle = 'lightGreen';
+      this.draw();
+      this.fillStyle = t;
+    }
+  },
   toggleSelected: function() {
     this.selected = !this.selected;
     this.moveToX = this.xC();
@@ -266,20 +274,42 @@ var Soldier = Actor.extend({
 });
 
 (function() {
-var resolution = 1.0, lastZoom = App.physicsTimeElapsed, numScrollEvents = 0;
+var lastZoom = App.physicsTimeElapsed, numScrollEvents = 0;
+/**
+ * @class Mouse.Zoom
+ *   Allows zooming in and out by scrolling the mouse wheel.
+ *
+ * @static
+ */
 Mouse.Zoom = {
-  // A value slightly above the minimum zoom factor
-  MIN_ZOOM: 0.51,
-  // A value slightly below the maximum zoom factor
-  MAX_ZOOM: 0.99,
-  // The amount by which to change the zoom factor when scrolling the wheel
-  ZOOM_STEP: 0.10,
-  // The minimum number of seconds between changing zoom factors
-  ZOOM_TIMEOUT: 0.25,
-  // The minimum number of wheel events that must fire before changing zoom factors
+  /**
+   * A value slightly above the minimum zoom factor.
+   * @static
+   */
+  MIN_ZOOM: 0.61,
+  /**
+   * A value slightly below the maximum zoom factor.
+   * @static
+   */
+  MAX_ZOOM: 1.29,
+  /**
+   * The amount by which to change the zoom factor when scrolling the wheel.
+   * @static
+   */
+  ZOOM_STEP: 0.05,
+  /**
+   * The minimum number of seconds between changing zoom factors.
+   * @static
+   */
+  ZOOM_TIMEOUT: 0.125,
+  /**
+   * The minimum number of wheel events that must fire before zooming.
+   * @static
+   */
   MIN_SCROLL_EVENTS: 2,
   /**
    * Enable zooming in response to mouse wheel scrolling.
+   * @static
    */
   enable: function() {
     // wheel is a standard (IE and FF); mousewheel is legacy (Chrome)
@@ -295,26 +325,26 @@ Mouse.Zoom = {
       // could be in pixels, lines, pages, degrees, or arbitrary units, so all
       // we can consistently deduce from this is the direction.
       var delta = e.originalEvent.deltaY || -e.originalEvent.wheelDelta;
+      // We want to scroll in around the mouse coordinates.
+      var mx = Mouse.coords.x + world.xOffset,
+          my = Mouse.coords.y + world.yOffset;
       // Scroll up; zoom in
       if (delta.sign() < 0) {
-        if (resolution > Mouse.Zoom.MIN_ZOOM) {
-          //world.scaleResolution((resolution-Mouse.Zoom.ZOOM_STEP)/resolution);
-          resolution -= Mouse.Zoom.ZOOM_STEP;
-          console.log('Resolution: ' + resolution.round(3));
+        if (world.scale > Mouse.Zoom.MIN_ZOOM) {
+          world.scaleResolution(world.scale - Mouse.Zoom.ZOOM_STEP, mx, my);
         }
       }
       // Scroll down; zoom out
       else {
-        if (resolution < Mouse.Zoom.MAX_ZOOM) {
-          //world.scaleResolution((resolution+Mouse.Zoom.ZOOM_STEP)/resolution);
-          resolution += Mouse.Zoom.ZOOM_STEP;
-          console.log('Resolution: ' + resolution.round(3));
+        if (world.scale < Mouse.Zoom.MAX_ZOOM) {
+          world.scaleResolution(world.scale + Mouse.Zoom.ZOOM_STEP, mx, my);
         }
       }
     });
   },
   /**
    * Disable zooming in response to mouse wheel scrolling.
+   * @static
    */
   disable: function() {
     $canvas.off('.zoom');

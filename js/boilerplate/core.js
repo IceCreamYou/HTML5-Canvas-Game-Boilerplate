@@ -363,14 +363,36 @@ App.reset = function(first) {
  * Note that using CSS to resize the canvas causes it to scale the graphics as
  * well; it changes the size of each virtual "pixel" on the canvas rather than
  * changing the number of pixels inside the canvas. Unless you want to stretch
- * the canvas display, using CSS to resize the canvas is not recommended.
+ * the canvas display, using CSS to resize the canvas is not recommended. (If
+ * you do want to stretch the canvas display, for example to zoom in or reduce
+ * the number of pixels to render, take a look at World#scaleResolution.)
  *
  * @member App
  * @static
  */
 App.setDefaultCanvasSize = function() {
+  // Set the canvas size in CSS. This fixes the size of the canvas on the
+  // screen, so from here forward if we change canvas.width or canvas.height
+  // (for example, using World#scaleResolution) we will actually be changing
+  // the render size; and then CSS will scale the rendered buffer to the
+  // display size. (That's right; the width/height attributes mean something
+  // different than the width/height CSS properties.) We're also setting the
+  // scale3d transform which enables GPU rendering.
+  var ensureCanvasSize = function() {
+    $canvas.css({
+      width: canvas.width + 'px',
+      height: canvas.height + 'px',
+      // Force hardware accelerated rendering
+      transform: 'scale3d(1, 1, 1)',
+      mozTransform: 'scale3d(1, 1, 1)',
+      msTransform: 'scale3d(1, 1, 1)',
+      oTransform: 'scale3d(1, 1, 1)',
+      webkitTransform: 'scale3d(1, 1, 1)',
+    });
+  }
   // Do not resize if data-resize is false (fall back to CSS).
   if ($canvas.attr('data-resize') == 'false') {
+    ensureCanvasSize();
     return;
   }
   var $window = jQuery(window);
@@ -413,6 +435,7 @@ App.setDefaultCanvasSize = function() {
       canvas.width = Math.floor(canvas.height * aspectRatio);
     }
   }
+  ensureCanvasSize();
 };
 
 // CACHES ---------------------------------------------------------------------
@@ -910,7 +933,11 @@ function Timer(autoStart, whileAnimating) {
 function World(w, h) {
   /**
    * @property {Number} scale
-   *   The percent amount (as a fraction) the canvas resolution is scaled.
+   *   The percent amount (as a fraction) the canvas resolution is linearly
+   *   scaled relative to its original size. For example, if the canvas started
+   *   at 1024x768 and it is now rendering at 512x384, then the scale will be
+   *   0.5. Notice that the number of virtual pixels rendered on the canvas
+   *   changes with the square of the scale.
    */
   this.scale = 1;
   /**
@@ -923,6 +950,24 @@ function World(w, h) {
    *   The height of the world.
    */
   this.height = h || parseInt($canvas.attr('data-worldheight'), 10) || canvas.height;
+
+  /**
+   * @property {Number} originalCanvasWidth
+   *   The width of the canvas when the world was initialized.
+   *
+   * This is used to keep the canvas size consistent when scaling resolution.
+   * @ignore
+   */
+  this.originalCanvasWidth = canvas.width;
+
+  /**
+   * @property {Number} originalCanvasHeight
+   *   The height of the canvas when the world was initialized.
+   *
+   * This is used to keep the canvas size consistent when scaling resolution.
+   * @ignore
+   */
+  this.originalCanvasHeight = canvas.height;
 
   /**
    * @property {Number} xOffset
@@ -1000,36 +1045,30 @@ function World(w, h) {
    *
    * @param {Number} factor
    *   The percent amount to scale the resolution on each dimension as a
-   *   fraction of the <em>current</em> resolution (typically between zero and
+   *   fraction of the <em>original</em> resolution (typically between zero and
    *   one). In other words, if the original resolution is 1024x768, scaling
    *   the resolution by a factor of 0.5 will result in a resolution of 512x384
    *   (showing 25% as many pixels on the screen). If scaled again by a factor
-   *   of 2, the result is 1024x768 again. Use the `scale` property to detect
+   *   of 2, the result will be 2048x1536. Use the `scale` property to detect
    *   the factor by which the resolution is currently scaled.
-   * @param {Number} [x=0]
+   * @param {Number} [x]
    *   The x-coordinate of a location to center the viewport around after
-   *   resizing the canvas. A common use is `player.x`.
-   * @param {Number} [y=0]
+   *   resizing the canvas. A common use is `player.x`. Defaults to centering
+   *   around the current view.
+   * @param {Number} [y]
    *   The y-coordinate of a location to center the viewport around after
-   *   resizing the canvas. A common use is `player.y`.
+   *   resizing the canvas. A common use is `player.y`. Defaults to centering
+   *   around the current view.
    */
   this.scaleResolution = function(factor, x, y) {
-    if (factor === 1) {
-      return;
-    }
-    $canvas.css({
-      width: (canvas.width/this.scale) + 'px',
-      height: (canvas.height/this.scale) + 'px',
-      // Force hardware accelerated rendering
-      mozTransform: 'scale3d(1, 1, 1)',
-      msTransform: 'scale3d(1, 1, 1)',
-      oTransform: 'scale3d(1, 1, 1)',
-      webkitTransform: 'scale3d(1, 1, 1)',
-    });
-    canvas.width = (canvas.width*factor)|0;
-    canvas.height = (canvas.height*factor)|0;
-    x = x || 0;
-    y = y || 0;
+    // Default to centering around the current center of the viewport.
+    x = x || this.xOffset + canvas.width / 2;
+    y = y || this.yOffset + canvas.height / 2;
+    // The original canvas size is pre-set using App.setDefaultCanvasSize() so
+    // changing the value of the attributes just changes the number of pixels
+    // to render. CSS then scales that buffer to the original canvas size.
+    canvas.width = (this.originalCanvasWidth*factor)|0;
+    canvas.height = (this.originalCanvasHeight*factor)|0;
     this.xOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0;
     this.yOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0;
     context.translate(-this.xOffset, -this.yOffset);
