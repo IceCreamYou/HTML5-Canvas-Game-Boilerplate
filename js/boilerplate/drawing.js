@@ -80,13 +80,13 @@ function Layer(options) {
    *   The width of the Layer.
    * @readonly
    */
-  this.width = options.width || (options.canvas ? options.canvas.width : 0) || world.width || canvas.width;
+  this.width = options.width || (options.canvas ? options.canvas.width : 0) || (options.relative == 'canvas' ? canvas.width : world.width);
   /**
    * @property {Number} height
    *   The height of the Layer.
    * @readonly
    */
-  this.height = options.height || (options.canvas ? options.canvas.height : 0) || world.height || canvas.height;
+  this.height = options.height || (options.canvas ? options.canvas.height : 0) || (options.relative == 'canvas' ? canvas.height : world.height);
   /**
    * @property {Number} x
    *   The x-coordinate on the {@link global#canvas global canvas} of the
@@ -213,6 +213,42 @@ function Layer(options) {
     this.xOffset += -x*p;
     this.yOffset += -y*p;
     return this;
+  };
+  /**
+   * Position the Layer's canvas over the primary canvas.
+   *
+   * This is an alternative to drawing the Layer directly onto the primary
+   * canvas. It is mostly useful when the `relative` property is `"canvas"`.
+   * It is also useful when the primary canvas is scaled with
+   * World#scaleResolution but this Layer should stay a consistent size.
+   * However, since it is literally in front of the primary canvas, any other
+   * Layers that need to be drawn in front of this one must also be positioned
+   * over the primary canvas instead of drawn directly onto it.
+   */
+  this.positionOverCanvas = function() {
+    var $d = jQuery('<div></div>');
+    var o = $canvas.offset();
+    $d.css({
+      height: '100%',
+      left: o.left,
+      overflow: 'hidden',
+      pointerEvents: 'none',
+      position: 'absolute',
+      top: o.top,
+      width: '100%',
+    });
+    var $c = jQuery(this.canvas);
+    $c.css({
+      backgroundColor: 'transparent',
+      margin: '0 auto',
+      overflow: 'hidden',
+      pointerEvents: 'none',
+      position: 'absolute',
+      'z-index': 50,
+    });
+    $d.append($c);
+    jQuery('body').append($d);
+    return $d;
   };
   /**
    * Display this Layer's canvas in an overlay (for debugging purposes).

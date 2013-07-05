@@ -2371,7 +2371,7 @@ function World(w, h) {
   };
 
   /**
-   * Scale the canvas resolution.
+   * Scale the resolution of the primary canvas.
    *
    * Passing a factor smaller than 1 allows reducing the resolution of the
    * canvas, which should improve performance (since there is less to render in
@@ -2381,6 +2381,14 @@ function World(w, h) {
    * size. It is your responsibility to change the size of any fixed-size
    * entities in the world after resizing, if applicable; if you don't do this,
    * calling this function works much like zooming in or out.
+   *
+   * Note that this method only scales the primary canvas, not any
+   * {@link Layer}s that may be drawn onto it. Drawing non-scaled Layers onto a
+   * scaled primary canvas will make the result appear scaled, but the spacing
+   * may be off depending on how you are positioning the items you are drawing
+   * onto the relevant Layers. Of course, you can manually resize your Layers
+   * after scaling, or only scale the primary canvas during initalization and
+   * then create all Layers subsequently at appropriate sizes.
    *
    * You may want to call this in a listener for the
    * {@link global#low_fps Low FPS event}.
@@ -2452,7 +2460,7 @@ function World(w, h) {
    * The returned canvas position will be in displayed pixels from the
    * upper-left corner of the canvas. This is useful when positioning DOM
    * elements over the canvas, for example with
-   * {@link App.Utils.positionOverCanvas}.
+   * {@link App.Utils#positionOverCanvas}.
    *
    * If you instead want the position relative to the rendered canvas, which
    * may be useful for example if you want to transition something from
@@ -2461,6 +2469,13 @@ function World(w, h) {
    * position is only relevant when the canvas has been scaled with
    * {@link World#scaleResolution}, causing the canvas to be rendered at one
    * size and then scaled to another for display using CSS.
+   *
+   * @param {Number} x The x-position over the canvas to convert.
+   * @param {Number} y The y-position over the canvas to convert.
+   *
+   * @return {Object}
+   *   An object with `x` and `y` properties representing x- and y-coordinates
+   *   over the canvas.
    */
   this.worldToCanvasPosition = function(x, y) {
     return {
@@ -2890,13 +2905,13 @@ function Layer(options) {
    *   The width of the Layer.
    * @readonly
    */
-  this.width = options.width || (options.canvas ? options.canvas.width : 0) || world.width || canvas.width;
+  this.width = options.width || (options.canvas ? options.canvas.width : 0) || (options.relative == 'canvas' ? canvas.width : world.width);
   /**
    * @property {Number} height
    *   The height of the Layer.
    * @readonly
    */
-  this.height = options.height || (options.canvas ? options.canvas.height : 0) || world.height || canvas.height;
+  this.height = options.height || (options.canvas ? options.canvas.height : 0) || (options.relative == 'canvas' ? canvas.height : world.height);
   /**
    * @property {Number} x
    *   The x-coordinate on the {@link global#canvas global canvas} of the
@@ -3023,6 +3038,42 @@ function Layer(options) {
     this.xOffset += -x*p;
     this.yOffset += -y*p;
     return this;
+  };
+  /**
+   * Position the Layer's canvas over the primary canvas.
+   *
+   * This is an alternative to drawing the Layer directly onto the primary
+   * canvas. It is mostly useful when the `relative` property is `"canvas"`.
+   * It is also useful when the primary canvas is scaled with
+   * World#scaleResolution but this Layer should stay a consistent size.
+   * However, since it is literally in front of the primary canvas, any other
+   * Layers that need to be drawn in front of this one must also be positioned
+   * over the primary canvas instead of drawn directly onto it.
+   */
+  this.positionOverCanvas = function() {
+    var $d = jQuery('<div></div>');
+    var o = $canvas.offset();
+    $d.css({
+      height: '100%',
+      left: o.left,
+      overflow: 'hidden',
+      pointerEvents: 'none',
+      position: 'absolute',
+      top: o.top,
+      width: '100%',
+    });
+    var $c = jQuery(this.canvas);
+    $c.css({
+      backgroundColor: 'transparent',
+      margin: '0 auto',
+      overflow: 'hidden',
+      pointerEvents: 'none',
+      position: 'absolute',
+      'z-index': 50,
+    });
+    $d.append($c);
+    jQuery('body').append($d);
+    return $d;
   };
   /**
    * Display this Layer's canvas in an overlay (for debugging purposes).
@@ -3642,10 +3693,12 @@ App.isSomethingBeingDragged = false;
 /**
  * Handles mouse motion and scrolling.
  * @static
+ * @ignore
  */
 var Mouse = {
     /**
-     * Handles mouse coordinates.
+     * @class Mouse.Coords
+     *   Handles mouse coordinates.
      * @static
      */
     Coords: {
@@ -3969,11 +4022,14 @@ Mouse.Scroll = (function() {
      * Available easing modes for scroll movement speed.
      *
      * Modes include:
+     *
      * - THRESHOLD: Scroll at max speed when the mouse is past the threshold
      * - LINEAR: Increase scroll speed linearly as the mouse approaches an edge
      * - SMOOTH: S-curve "swing" easing (default)
      * - EXPONENTIAL: Increase scroll speed inverse-exponentially as the mouse
      *   approaches an edge (increase quickly at first, then plateau)
+     *
+     * @static
      */
     easings: easings,
     /**
@@ -3981,6 +4037,8 @@ Mouse.Scroll = (function() {
      *
      * The `easings` property contains the possible easing functions, or you
      * can define your own.
+     *
+     * @static
      */
     setEasingFunction: function(e) {
       easing = e;

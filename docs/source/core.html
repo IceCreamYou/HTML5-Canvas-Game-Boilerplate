@@ -1057,7 +1057,7 @@ function World(w, h) {
   };
 
 <span id='World-method-scaleResolution'>  /**
-</span>   * Scale the canvas resolution.
+</span>   * Scale the resolution of the primary canvas.
    *
    * Passing a factor smaller than 1 allows reducing the resolution of the
    * canvas, which should improve performance (since there is less to render in
@@ -1067,6 +1067,14 @@ function World(w, h) {
    * size. It is your responsibility to change the size of any fixed-size
    * entities in the world after resizing, if applicable; if you don't do this,
    * calling this function works much like zooming in or out.
+   *
+   * Note that this method only scales the primary canvas, not any
+   * {@link Layer}s that may be drawn onto it. Drawing non-scaled Layers onto a
+   * scaled primary canvas will make the result appear scaled, but the spacing
+   * may be off depending on how you are positioning the items you are drawing
+   * onto the relevant Layers. Of course, you can manually resize your Layers
+   * after scaling, or only scale the primary canvas during initalization and
+   * then create all Layers subsequently at appropriate sizes.
    *
    * You may want to call this in a listener for the
    * {@link global#low_fps Low FPS event}.

@@ -44,6 +44,7 @@ function update() {
 function draw() {
   bkgd.draw();
   base.draw();
+  enemyBase.draw();
   soldiers.draw();
   soldiers.forEach(function(soldier) {
     if (soldier.isHovered()) {
@@ -63,7 +64,8 @@ function draw() {
 function setup(first) {
   world.resize(3200, 3200);
 
-  Mouse.Zoom.enable();
+  Mouse.Zoom.enable(true);
+
   Mouse.Scroll.enable();
   Mouse.Scroll.setThreshold(0.3);
   Mouse.Scroll.setScrollDistance(800);
@@ -108,9 +110,12 @@ function setup(first) {
     }
     // Touch or left click -> Deselect all
     else {
-      soldiers.forEach(function(soldier) {
-        soldier.selected = false;
-      });
+      // Holding down CTRL allows selecting multiple soldiers.
+      if (!jQuery.hotkeys.areKeysDown('ctrl')) {
+        soldiers.forEach(function(soldier) {
+          soldier.selected = false;
+        });
+      }
       if (e.type == 'mousedown' && e.which !== 1) return; // no middle click
       if (mousedown) return;
       mousedown = true;
@@ -166,6 +171,8 @@ function setup(first) {
 
   base = new Base(Team.BLUE, 400, 400);
   world.centerViewportAround(440, 440);
+
+  enemyBase = new Base(Team.RED, 2720, 2720);
 }
 
 var spawnLocations = [-40, 30, 100];
@@ -219,6 +226,7 @@ var Soldier = Actor.extend({
   selected: false,
   moveToX: 0,
   moveToY: 0,
+  health: 100,
   init: function() {
     this._super.apply(this, arguments);
     var t = this;
@@ -227,20 +235,34 @@ var Soldier = Actor.extend({
       if (typeof e !== 'undefined' && e.type == 'mousedown' && e.which !== 1) {
         return;
       }
+      // Holding down CTRL allows selecting multiple soldiers.
+      if (!jQuery.hotkeys.areKeysDown('ctrl')) {
+        soldiers.forEach(function(soldier) {
+          soldier.selected = false;
+        });
+      }
       e.stopPropagation();
       t.toggleSelected.call(t);
     });
   },
-  drawDefault: function() {
+  drawDefault: function(ctx, x, y, w, h) {
     if (this.selected) {
       var t = this.fillStyle;
       this.fillStyle = 'yellow';
-      this._super.apply(this, arguments);
+      this._super.call(this, ctx, x, y, w, h);
       this.fillStyle = t;
     }
     else {
-      this._super.apply(this, arguments);
+      this._super.call(this, ctx, x, y, w, h);
     }
+    ctx.lineWidth = 1;
+    var healthPct = this.health/100;
+    ctx.fillStyle = '#00DA00';
+    ctx.fillRect(x, y - 10, w*healthPct, 6);
+    ctx.fillStyle = '#EA3311';
+    ctx.fillRect(x+w*healthPct, y - 10, w*(1-healthPct), 6);
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(x, y - 10, w, 6);
   },
   drawHovered: function() {
     if (!this.selected) {
@@ -267,87 +289,11 @@ var Soldier = Actor.extend({
     else if (this.yC() > this.moveToY + 1) dir.push(keys.up[0]);
     return dir;
   },
+  damage: function(dmg) {
+    this.health -= dmg;
+  },
   destroy: function() {
     this._super.apply(this, arguments);
     this.unlisten('.select');
   },
 });
-
-(function() {
-var lastZoom = App.physicsTimeElapsed, numScrollEvents = 0;
-/**
- * @class Mouse.Zoom
- *   Allows zooming in and out by scrolling the mouse wheel.
- *
- * @static
- */
-Mouse.Zoom = {
-  /**
-   * A value slightly above the minimum zoom factor.
-   * @static
-   */
-  MIN_ZOOM: 0.61,
-  /**
-   * A value slightly below the maximum zoom factor.
-   * @static
-   */
-  MAX_ZOOM: 1.29,
-  /**
-   * The amount by which to change the zoom factor when scrolling the wheel.
-   * @static
-   */
-  ZOOM_STEP: 0.05,
-  /**
-   * The minimum number of seconds between changing zoom factors.
-   * @static
-   */
-  ZOOM_TIMEOUT: 0.125,
-  /**
-   * The minimum number of wheel events that must fire before zooming.
-   * @static
-   */
-  MIN_SCROLL_EVENTS: 2,
-  /**
-   * Enable zooming in response to mouse wheel scrolling.
-   * @static
-   */
-  enable: function() {
-    // wheel is a standard (IE and FF); mousewheel is legacy (Chrome)
-    $canvas.on('wheel.zoom mousewheel.zoom', function(e) {
-      // Avoid overzealous scrolling causing unexpected zooming
-      if (lastZoom + Mouse.Zoom.ZOOM_TIMEOUT > App.physicsTimeElapsed) return;
-      if (++numScrollEvents < Mouse.Zoom.MIN_SCROLL_EVENTS) return;
-      lastZoom = App.physicsTimeElapsed;
-      numScrollEvents = 0;
-
-      // Get an indication of the direction of the scroll.
-      // Depending on the browser, OS, and device settings, the actual value
-      // could be in pixels, lines, pages, degrees, or arbitrary units, so all
-      // we can consistently deduce from this is the direction.
-      var delta = e.originalEvent.deltaY || -e.originalEvent.wheelDelta;
-      // We want to scroll in around the mouse coordinates.
-      var mx = Mouse.Coords.x + world.xOffset,
-          my = Mouse.Coords.y + world.yOffset;
-      // Scroll up; zoom in
-      if (delta.sign() < 0) {
-        if (world.scale > Mouse.Zoom.MIN_ZOOM) {
-          world.scaleResolution(world.scale - Mouse.Zoom.ZOOM_STEP, mx, my);
-        }
-      }
-      // Scroll down; zoom out
-      else {
-        if (world.scale < Mouse.Zoom.MAX_ZOOM) {
-          world.scaleResolution(world.scale + Mouse.Zoom.ZOOM_STEP, mx, my);
-        }
-      }
-    });
-  },
-  /**
-   * Disable zooming in response to mouse wheel scrolling.
-   * @static
-   */
-  disable: function() {
-    $canvas.off('.zoom');
-  },
-};
-})();
