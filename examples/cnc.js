@@ -31,6 +31,7 @@ var mousedown = false;
  */
 function update() {
   base.spawn();
+  enemyBase.spawn();
   soldiers.forEach(function(soldier) {
     if (soldier.selected) {
       soldier.update(soldier.chooseBestDirection());
@@ -74,6 +75,14 @@ function setup(first) {
   dragOverlay.context.fillStyle = 'rgba(255, 240, 40, 0.4)';
   dragOverlay.context.strokeStyle = 'rgba(255, 240, 40, 1.0)';
   dragOverlay.context.lineWidth = 2;
+
+  soldiers = new Collection();
+  selectedSoldiers = new Collection();
+
+  base = new Base(Team.BLUE, 400, 400);
+  world.centerViewportAround(440, 440);
+
+  enemyBase = new Base(Team.RED, 800, 800);//2720, 2720);
 
   bkgd = new Layer();
   bkgd.context.drawPattern('images/grass2body.png', 0, 0, world.width, world.height);
@@ -165,14 +174,6 @@ function setup(first) {
   $(document).on('touchmove', function(e) { e.preventDefault(); });
   // Disable the right-click menu
   canvas.oncontextmenu = function() { return false; };
-
-  soldiers = new Collection();
-  selectedSoldiers = new Collection();
-
-  base = new Base(Team.BLUE, 400, 400);
-  world.centerViewportAround(440, 440);
-
-  enemyBase = new Base(Team.RED, 2720, 2720);
 }
 
 var spawnLocations = [-40, 30, 100];
@@ -246,15 +247,9 @@ var Soldier = Actor.extend({
     });
   },
   drawDefault: function(ctx, x, y, w, h) {
-    if (this.selected) {
-      var t = this.fillStyle;
-      this.fillStyle = 'yellow';
-      this._super.call(this, ctx, x, y, w, h);
-      this.fillStyle = t;
-    }
-    else {
-      this._super.call(this, ctx, x, y, w, h);
-    }
+    this.fillStyle = this.selected ? 'yellow' : (this.team == Team.BLUE ? 'lightBlue' : '#F48D55');
+    this._super.call(this, ctx, x, y, w, h);
+
     ctx.lineWidth = 1;
     var healthPct = this.health/100;
     ctx.fillStyle = '#00DA00';
@@ -267,8 +262,8 @@ var Soldier = Actor.extend({
   drawHovered: function() {
     if (!this.selected) {
       var t = this.fillStyle;
-      this.fillStyle = 'lightGreen';
-      this.draw();
+      this.fillStyle = this.team == Team.BLUE ? 'lightGreen' : '#F4AC30';
+      Actor.prototype.drawDefault.call(this, context, Math.round(this.x), Math.round(this.y), this.width, this.height);
       this.fillStyle = t;
     }
   },
