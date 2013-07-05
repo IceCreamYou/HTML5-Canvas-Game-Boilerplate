@@ -2272,6 +2272,29 @@ function World(w, h) {
    */
   this.scale = 1;
   /**
+   * @property {Number} _actualXscale
+   *   The actual amount the width of the canvas is scaled relative to the
+   *   display size.
+   *
+   * This can be different than `this.scale` due to rounding error. This
+   * matters when converting document coordinates to canvas coordinates, for
+   * example when tracking mouse coordinates.
+   * @ignore
+   */
+  this._actualXscale = 1;
+  /**
+   * @property {Number} _actualYscale
+   *   The actual amount the height of the canvas is scaled relative to the
+   *   display size.
+   *
+   * This can be different than `this.scale` due to rounding error. This
+   * matters when converting document coordinates to canvas coordinates, for
+   * example when tracking mouse coordinates.
+   * @ignore
+   */
+  this._actualYscale = 1;
+
+  /**
    * @property {Number} width
    *   The width of the world.
    */
@@ -2290,7 +2313,6 @@ function World(w, h) {
    * @ignore
    */
   this.originalCanvasWidth = canvas.width;
-
   /**
    * @property {Number} originalCanvasHeight
    *   The height of the canvas when the world was initialized.
@@ -2313,17 +2335,6 @@ function World(w, h) {
    */
   this.yOffset = (this.height - canvas.height)/2;
   context.translate(-this.xOffset, -this.yOffset);
-
-  /**
-   * Return an object with 'x' and 'y' properties indicating how far offset
-   * the viewport is from the world origin.
-   */
-  this.getOffsets = function() {
-    return {
-      'x': this.xOffset,
-      'y': this.yOffset,
-    };
-  };
 
   /**
    * Resize the world to new dimensions.
@@ -2398,10 +2409,12 @@ function World(w, h) {
     // The original canvas size is pre-set using App.setDefaultCanvasSize() so
     // changing the value of the attributes just changes the number of pixels
     // to render. CSS then scales that buffer to the original canvas size.
-    canvas.width = (this.originalCanvasWidth*factor)|0;
-    canvas.height = (this.originalCanvasHeight*factor)|0;
-    this.xOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0;
-    this.yOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0;
+    canvas.width = Math.round(this.originalCanvasWidth*factor);
+    canvas.height = Math.round(this.originalCanvasHeight*factor);
+    this._actualXscale = canvas.width / this.originalCanvasWidth;
+    this._actualYscale = canvas.height / this.originalCanvasHeight;
+    this.xOffset = Math.round(Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)));
+    this.yOffset = Math.round(Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)));
     context.translate(-this.xOffset, -this.yOffset);
     this.scale = factor;
     if (!isAnimating()) {
@@ -2410,7 +2423,54 @@ function World(w, h) {
   };
 
   /**
-   * Center the viewport around a specific location.
+   * Convert a position over the canvas to a position in the world.
+   *
+   * The canvas position being converted should be in displayed pixels from the
+   * upper-left corner of the canvas.
+   *
+   * This could be useful when placing objects at a given location in the
+   * canvas if you need the object to align with something outside of the
+   * canvas. (Note that {@link Mouse.Coords} already has worldX() and worldY()
+   * methods for representing the mouse position in the world.)
+   *
+   * @param {Number} x The x-position over the canvas to convert.
+   * @param {Number} y The y-position over the canvas to convert.
+   *
+   * @return {Object}
+   *   An object with `x` and `y` properties representing x- and y-coordinates
+   *   in the world.
+   */
+  this.canvasToWorldPosition = function(x, y) {
+    return {
+      x: x * this._actualXscale + this.xOffset,
+      y: y * this._actualYscale + this.yOffset,
+    };
+  };
+  /**
+   * Convert a position in the world to a position over the canvas.
+   *
+   * The returned canvas position will be in displayed pixels from the
+   * upper-left corner of the canvas. This is useful when positioning DOM
+   * elements over the canvas, for example with
+   * {@link App.Utils.positionOverCanvas}.
+   *
+   * If you instead want the position relative to the rendered canvas, which
+   * may be useful for example if you want to transition something from
+   * scrolling to fixed position, you should instead use `x - world.xOffset`
+   * and `y - world.yOffset`. The difference between displayed and rendered
+   * position is only relevant when the canvas has been scaled with
+   * {@link World#scaleResolution}, causing the canvas to be rendered at one
+   * size and then scaled to another for display using CSS.
+   */
+  this.worldToCanvasPosition = function(x, y) {
+    return {
+      x: (x - this.xOffset) / this._actualXscale,
+      y: (y - this.yOffset) / this._actualYscale,
+    };
+  };
+
+  /**
+   * Center the viewport around a specific location in the world.
    *
    * @param {Number} x The x-coordinate around which to center the viewport.
    * @param {Number} y The y-coordinate around which to center the viewport.
@@ -2487,36 +2547,6 @@ function World(w, h) {
 App.Utils = {};
 
 /**
- * Convert a percent to the corresponding pixel position in the world.
- *
- * This is useful for specifying the size of objects relative to the size of
- * the canvas or world.
- *
- * @param {Number} percent
- *   A percent (out of 100%) across the canvas or world from the upper-left
- *   corner.
- * @param {Boolean} [relativeToCanvas=true]
- *   Whether the result is relative to the canvas (true) or to the world
- *   (false).
- *
- * @return {Object}
- *   An object with `x` and `y` properties denoting a pixel position at the
- *   given percent. For example, in a 100x100px canvas, calling
- *   `App.Utils.percentToPixels(25)` would return `{x: 25, y: 25}`.
- *
- * @static
- */
-App.Utils.percentToPixels = function(percent, relativeToCanvas) {
-  if (typeof relativeToCanvas === 'undefined') {
-    relativeToCanvas = true;
-  }
-  return {
-    x: Math.floor((relativeToCanvas ? canvas : world).width  * percent / 100),
-    y: Math.floor((relativeToCanvas ? canvas : world).height * percent / 100),
-  };
-};
-
-/**
  * Get a random number between two numbers.
  *
  * @param {Number} lo The first number.
@@ -2540,7 +2570,8 @@ App.Utils.getRandBetween = function(lo, hi) {
  * and hi, either one can be higher, and either or both can be integers or
  * floats. If either of the numbers is a float, the random distribution remains
  * equal among eligible integers; that is, if lo==3.3 and hi==5, 4 and 5 are
- * equally likely to be returned. Negative numbers work as well.
+ * equally likely to be returned. Behavior is undefined if there is no integer
+ * between lo and hi. Negative numbers work as well.
  *
  * @param {Number} lo The first number.
  * @param {Number} hi The second number.
@@ -2622,10 +2653,9 @@ App.Utils.randomString = function(n) {
  * Useful for placing forms, text, menus, and other UI elements that are more
  * easily handled in HTML.
  *
- * To place the DOM element at a specific location in the world, first subtract
- * the {@link World#getOffsets world offsets} from the `x` and `y` positions.
- * For example, to place an item at the player's x-position, you would use
- * `player.x-world.getOffsets().x` to get the canvas position.
+ * To place the DOM element at a specific location in the world, convert the
+ * position in the world to a position over the canvas using
+ * {@link World#worldToCanvasPosition}.
  *
  * @param {HTMLElement} elem
  *   A DOM element or jQuery representation of a DOM element to position over
@@ -2637,11 +2667,14 @@ App.Utils.randomString = function(n) {
  *   The number of pixels below the upper-left corner of the canvas at which to
  *   locate the DOM element.
  *
+ * @return {Object}
+ *   The jQuery representation of the positioned DOM element.
+ *
  * @static
  */
 App.Utils.positionOverCanvas = function(elem, x, y) {
   var o = $canvas.offset();
-  jQuery(elem).css({
+  return jQuery(elem).detach().appendTo('body').css({
     left: (o.left + parseInt($canvas.css('border-left-width'), 10) + x) + 'px',
     position: 'absolute',
     top: (o.top + parseInt($canvas.css('border-top-width'), 10) + y) + 'px',
@@ -3612,14 +3645,69 @@ App.isSomethingBeingDragged = false;
  */
 var Mouse = {
     /**
-     * @property
-     *   The coordinates of the mouse relative to the upper-left corner of the
-     *   canvas. If you want the coordinates of the mouse relative to the
-     *   world, add `world.xOffset` and `world.yOffset` to the `x` and `y`
-     *   coordinates, respectively.
+     * Handles mouse coordinates.
      * @static
      */
-    coords: {x: -9999, y: -9999},
+    Coords: {
+      /**
+       * The mouse x-coordinate relative to the upper-left corner of the canvas.
+       *
+       * This value is actually relative to `canvas.width` and `canvas.height`,
+       * which is an important distinction when the canvas is scaled using
+       * {@link World#scaleResolution}. It represents the horizontal location
+       * of the mouse on the rendered buffer before it is scaled by CSS. When
+       * you want the x-coordinate of the mouse relative to the canvas, this is
+       * usually what you want to use.
+       */
+      x: -9999,
+      /**
+       * The mouse y-coordinate relative to the upper-left corner of the canvas.
+       *
+       * This value is actually relative to `canvas.width` and `canvas.height`,
+       * which is an important distinction when the canvas is scaled using
+       * {@link World#scaleResolution}. It represents the vertical location of
+       * the mouse on the rendered buffer before it is scaled by CSS. When you
+       * want the y-coordinate of the mouse relative to the canvas, this is
+       * usually what you want to use.
+       */
+      y: -9999,
+      /**
+       * The mouse x-coordinate over the canvas DOM element.
+       *
+       * This value is actually relative to `$canvas.css('width')` and
+       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * be different than the size at which the canvas is rendered if the
+       * canvas is scaled with {@link World#scaleResolution}. You may want to
+       * use this if you are positioning DOM elements over the canvas.
+       */
+      physicalX: -9999,
+      /**
+       * The mouse y-coordinate over the canvas DOM element.
+       *
+       * This value is actually relative to `$canvas.css('width')` and
+       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * be different than the size at which the canvas is rendered if the
+       * canvas is scaled with {@link World#scaleResolution}. You may want to
+       * use this if you are positioning DOM elements over the canvas.
+       */
+      physicalY: -9999,
+      /**
+       * The mouse x-coordinate relative to the world.
+       *
+       * Use this if you want the pointer to interact with the world.
+       */
+      worldX: function() {
+        return this.x >= 0 ? this.x + world.xOffset : -9999;
+      },
+      /**
+       * The mouse y-coordinate relative to the world.
+       *
+       * Use this if you want the pointer to interact with the world.
+       */
+      worldY: function() {
+        return this.y >= 0 ? this.y + world.yOffset : -9999;
+      },
+    },
 };
 
 // Track mouse events
@@ -3635,10 +3723,11 @@ jQuery(document).ready(function() {
         e.preventDefault();
       }
       // The position we want is relative to the canvas
-      Mouse.coords = {
-          x: x - $canvas.offset().left,
-          y: y - $canvas.offset().top,
-      };
+      Mouse.Coords.physicalX = x - $canvas.offset().left;
+      Mouse.Coords.physicalY = y - $canvas.offset().top;
+      // Adjust for scaled resolution
+      Mouse.Coords.x = Math.round(Mouse.Coords.physicalX * world._actualXscale);
+      Mouse.Coords.y = Math.round(Mouse.Coords.physicalY * world._actualYscale);
     }
     catch(ex) {
       // Don't report anything. Probably the reason we had an error is because
@@ -3654,7 +3743,10 @@ jQuery(document).ready(function() {
     jQuery(this).on('mousemove.coords', trackmove);
   }, function() {
     jQuery(this).off('mousemove.coords');
-    Mouse.coords = {x: -9999, y: -9999};
+    Mouse.Coords.physicalX = -9999;
+    Mouse.Coords.physicalY = -9999;
+    Mouse.Coords.x = -9999;
+    Mouse.Coords.y = -9999;
   });
 
   // Track and delegate click events
@@ -3706,11 +3798,8 @@ jQuery(document).ready(function() {
  * @static
  */
 App.isHovered = function(obj) {
-  var offsets = world.getOffsets(),
-      xPos = obj.x - offsets.x,
-      yPos = obj.y - offsets.y;
-  return Mouse.coords.x > xPos && Mouse.coords.x < xPos + obj.width &&
-      Mouse.coords.y > yPos && Mouse.coords.y < yPos + obj.height;
+  return Mouse.Coords.worldX() > obj.x && Mouse.Coords.worldX() < obj.x + obj.width &&
+      Mouse.Coords.worldY() > obj.y && Mouse.Coords.worldY() < obj.y + obj.height;
 };
 
 /**
@@ -3746,16 +3835,16 @@ Mouse.Scroll = (function() {
     var ma, gradient, initialTranslationState = translating;
 
     // Left
-    if (Mouse.coords.x < canvas.width * THRESHOLD) {
-      gradient = easing(Mouse.coords.x / (canvas.width * THRESHOLD));
+    if (Mouse.Coords.x < canvas.width * THRESHOLD) {
+      gradient = easing(Mouse.Coords.x / (canvas.width * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
       world.xOffset -= ma;
       scrolled.x -= ma;
       context.translate(ma, 0);
     }
     // Right
-    else if (Mouse.coords.x > canvas.width * (1-THRESHOLD)) {
-      gradient = easing((canvas.width - Mouse.coords.x) / (canvas.width * THRESHOLD));
+    else if (Mouse.Coords.x > canvas.width * (1-THRESHOLD)) {
+      gradient = easing((canvas.width - Mouse.Coords.x) / (canvas.width * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
       world.xOffset += ma;
       scrolled.x += ma;
@@ -3763,16 +3852,16 @@ Mouse.Scroll = (function() {
     }
 
     // Up
-    if (Mouse.coords.y < canvas.height * THRESHOLD) {
-      gradient = easing(Mouse.coords.y / (canvas.height * THRESHOLD));
+    if (Mouse.Coords.y < canvas.height * THRESHOLD) {
+      gradient = easing(Mouse.Coords.y / (canvas.height * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
       world.yOffset -= ma;
       scrolled.y -= ma;
       context.translate(0, ma);
     }
     // Down
-    else if (Mouse.coords.y > canvas.height * (1-THRESHOLD)) {
-      gradient = easing((canvas.height - Mouse.coords.y) / (canvas.height * THRESHOLD));
+    else if (Mouse.Coords.y > canvas.height * (1-THRESHOLD)) {
+      gradient = easing((canvas.height - Mouse.Coords.y) / (canvas.height * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
       world.yOffset += ma;
       scrolled.y += ma;
@@ -3816,7 +3905,7 @@ Mouse.Scroll = (function() {
       enabled = true;
       $canvas.one('mousemove.translate', function() {
         // Enable translating if we're over the canvas
-        if (Mouse.coords.x >= 0 && Mouse.coords.y >= 0) {
+        if (Mouse.Coords.x >= 0 && Mouse.Coords.y >= 0) {
           hovered = true;
           translate();
         }
@@ -5788,8 +5877,8 @@ var Actor = Box.extend({
     this.lastX = this.x;
     this.lastY = this.y;
     if (this.isBeingDragged && window.Mouse) {
-      this.x = Mouse.coords.x + world.xOffset - this.width/2;
-      this.y = Mouse.coords.y + world.yOffset - this.height/2;
+      this.x = Mouse.Coords.worldX() - this.width/2;
+      this.y = Mouse.Coords.worldY() - this.height/2;
     }
     else {
       this.processInput(direction);
@@ -6782,36 +6871,38 @@ var Player = Actor.extend({
    *   this method caused the viewport to shift along each axis.
    */
   adjustViewport: function() {
-    var offsets = world.getOffsets(), changed = {x: 0, y: 0};
+    var xOffset = world.xOffset,
+        yOffset = world.yOffset,
+        changed = {x: 0, y: 0};
     // We should only have mouse or player scrolling, but not both.
     if (window.Mouse && Mouse.Scroll.isEnabled()) {
       return changed;
     }
     // left
-    if (offsets.x > 0 && this.x + this.width/2 - offsets.x < canvas.width * this.MOVEWORLD) {
-      world.xOffset = Math.max(offsets.x + (this.x - this.lastX), 0);
-      context.translate(offsets.x - world.xOffset, 0);
-      changed.x = offsets.x - world.xOffset;
+    if (xOffset > 0 && this.x + this.width/2 - xOffset < canvas.width * this.MOVEWORLD) {
+      world.xOffset = Math.max(xOffset + (this.x - this.lastX), 0);
+      context.translate(xOffset - world.xOffset, 0);
+      changed.x = xOffset - world.xOffset;
     }
     // right
-    else if (offsets.x < world.width - canvas.width &&
-        this.x + this.width/2 - offsets.x > canvas.width * (1-this.MOVEWORLD)) {
-      world.xOffset = Math.min(offsets.x + (this.x - this.lastX), world.width - canvas.width);
-      context.translate(offsets.x - world.xOffset, 0);
-      changed.x = offsets.x - world.xOffset;
+    else if (xOffset < world.width - canvas.width &&
+        this.x + this.width/2 - xOffset > canvas.width * (1-this.MOVEWORLD)) {
+      world.xOffset = Math.min(xOffset + (this.x - this.lastX), world.width - canvas.width);
+      context.translate(xOffset - world.xOffset, 0);
+      changed.x = xOffset - world.xOffset;
     }
     // up
-    if (offsets.y > 0 && this.y + this.height/2 - offsets.y < canvas.height * this.MOVEWORLD) {
-      world.yOffset = Math.max(offsets.y + (this.y - this.lastY), 0);
-      context.translate(0, offsets.y - world.yOffset);
-      changed.y = offsets.y - world.yOffset;
+    if (yOffset > 0 && this.y + this.height/2 - yOffset < canvas.height * this.MOVEWORLD) {
+      world.yOffset = Math.max(yOffset + (this.y - this.lastY), 0);
+      context.translate(0, yOffset - world.yOffset);
+      changed.y = yOffset - world.yOffset;
     }
     // down
-    else if (offsets.y < world.height - canvas.height &&
-        this.y + this.height/2 - offsets.y > canvas.height * (1-this.MOVEWORLD)) {
-      world.yOffset = Math.min(offsets.y + (this.y - this.lastY), world.height - canvas.height);
-      context.translate(0, offsets.y - world.yOffset);
-      changed.y = offsets.y - world.yOffset;
+    else if (yOffset < world.height - canvas.height &&
+        this.y + this.height/2 - yOffset > canvas.height * (1-this.MOVEWORLD)) {
+      world.yOffset = Math.min(yOffset + (this.y - this.lastY), world.height - canvas.height);
+      context.translate(0, yOffset - world.yOffset);
+      changed.y = yOffset - world.yOffset;
     }
     return changed;
   },

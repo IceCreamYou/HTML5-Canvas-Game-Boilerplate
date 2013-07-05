@@ -37,17 +37,74 @@ App.isSomethingBeingDragged = false;
 <span id='Mouse'>/**
 </span> * Handles mouse motion and scrolling.
  * @static
+ * @ignore
  */
 var Mouse = {
-<span id='Mouse-static-property-coords'>    /**
-</span>     * @property
-     *   The coordinates of the mouse relative to the upper-left corner of the
-     *   canvas. If you want the coordinates of the mouse relative to the
-     *   world, add `world.xOffset` and `world.yOffset` to the `x` and `y`
-     *   coordinates, respectively.
+<span id='Mouse-Coords'>    /**
+</span>     * @class Mouse.Coords
+     *   Handles mouse coordinates.
      * @static
      */
-    coords: {x: -9999, y: -9999},
+    Coords: {
+<span id='Mouse-Coords-property-x'>      /**
+</span>       * The mouse x-coordinate relative to the upper-left corner of the canvas.
+       *
+       * This value is actually relative to `canvas.width` and `canvas.height`,
+       * which is an important distinction when the canvas is scaled using
+       * {@link World#scaleResolution}. It represents the horizontal location
+       * of the mouse on the rendered buffer before it is scaled by CSS. When
+       * you want the x-coordinate of the mouse relative to the canvas, this is
+       * usually what you want to use.
+       */
+      x: -9999,
+<span id='Mouse-Coords-property-y'>      /**
+</span>       * The mouse y-coordinate relative to the upper-left corner of the canvas.
+       *
+       * This value is actually relative to `canvas.width` and `canvas.height`,
+       * which is an important distinction when the canvas is scaled using
+       * {@link World#scaleResolution}. It represents the vertical location of
+       * the mouse on the rendered buffer before it is scaled by CSS. When you
+       * want the y-coordinate of the mouse relative to the canvas, this is
+       * usually what you want to use.
+       */
+      y: -9999,
+<span id='Mouse-Coords-property-physicalX'>      /**
+</span>       * The mouse x-coordinate over the canvas DOM element.
+       *
+       * This value is actually relative to `$canvas.css('width')` and
+       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * be different than the size at which the canvas is rendered if the
+       * canvas is scaled with {@link World#scaleResolution}. You may want to
+       * use this if you are positioning DOM elements over the canvas.
+       */
+      physicalX: -9999,
+<span id='Mouse-Coords-property-physicalY'>      /**
+</span>       * The mouse y-coordinate over the canvas DOM element.
+       *
+       * This value is actually relative to `$canvas.css('width')` and
+       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * be different than the size at which the canvas is rendered if the
+       * canvas is scaled with {@link World#scaleResolution}. You may want to
+       * use this if you are positioning DOM elements over the canvas.
+       */
+      physicalY: -9999,
+<span id='Mouse-Coords-method-worldX'>      /**
+</span>       * The mouse x-coordinate relative to the world.
+       *
+       * Use this if you want the pointer to interact with the world.
+       */
+      worldX: function() {
+        return this.x &gt;= 0 ? this.x + world.xOffset : -9999;
+      },
+<span id='Mouse-Coords-method-worldY'>      /**
+</span>       * The mouse y-coordinate relative to the world.
+       *
+       * Use this if you want the pointer to interact with the world.
+       */
+      worldY: function() {
+        return this.y &gt;= 0 ? this.y + world.yOffset : -9999;
+      },
+    },
 };
 
 // Track mouse events
@@ -63,15 +120,16 @@ jQuery(document).ready(function() {
         e.preventDefault();
       }
       // The position we want is relative to the canvas
-      Mouse.coords = {
-          x: x - $canvas.offset().left,
-          y: y - $canvas.offset().top,
-      };
+      Mouse.Coords.physicalX = x - $canvas.offset().left;
+      Mouse.Coords.physicalY = y - $canvas.offset().top;
+      // Adjust for scaled resolution
+      Mouse.Coords.x = Math.round(Mouse.Coords.physicalX * world._actualXscale);
+      Mouse.Coords.y = Math.round(Mouse.Coords.physicalY * world._actualYscale);
     }
     catch(ex) {
-      if (window.console &amp;&amp; console.error) {
-        console.error('Unable to track cursor location. You are probably using an unusual touch-capable device.');
-      }
+      // Don't report anything. Probably the reason we had an error is because
+      // the mouse moved off the document so neither the pageX/Y nor the
+      // touches properties have meaningful values.
     }
   };
 
@@ -82,7 +140,10 @@ jQuery(document).ready(function() {
     jQuery(this).on('mousemove.coords', trackmove);
   }, function() {
     jQuery(this).off('mousemove.coords');
-    Mouse.coords = {x: -9999, y: -9999};
+    Mouse.Coords.physicalX = -9999;
+    Mouse.Coords.physicalY = -9999;
+    Mouse.Coords.x = -9999;
+    Mouse.Coords.y = -9999;
   });
 
   // Track and delegate click events
@@ -134,16 +195,16 @@ jQuery(document).ready(function() {
  * @static
  */
 App.isHovered = function(obj) {
-  var offsets = world.getOffsets(),
-      xPos = obj.x - offsets.x,
-      yPos = obj.y - offsets.y;
-  return Mouse.coords.x &gt; xPos &amp;&amp; Mouse.coords.x &lt; xPos + obj.width &amp;&amp;
-      Mouse.coords.y &gt; yPos &amp;&amp; Mouse.coords.y &lt; yPos + obj.height;
+  return Mouse.Coords.worldX() &gt; obj.x &amp;&amp; Mouse.Coords.worldX() &lt; obj.x + obj.width &amp;&amp;
+      Mouse.Coords.worldY() &gt; obj.y &amp;&amp; Mouse.Coords.worldY() &lt; obj.y + obj.height;
 };
 
 <span id='Mouse-Scroll'>/**
 </span> * @class Mouse.Scroll
  *   Encapsulates mouse position scrolling.
+ *
+ * Note that mouse scrolling will be temporarily paused while the mouse is down
+ * to avoid scrolling while the user is trying to select something.
  *
  * @static
  */
@@ -171,16 +232,16 @@ Mouse.Scroll = (function() {
     var ma, gradient, initialTranslationState = translating;
 
     // Left
-    if (Mouse.coords.x &lt; canvas.width * THRESHOLD) {
-      gradient = easing(Mouse.coords.x / (canvas.width * THRESHOLD));
+    if (Mouse.Coords.x &lt; canvas.width * THRESHOLD) {
+      gradient = easing(Mouse.Coords.x / (canvas.width * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
       world.xOffset -= ma;
       scrolled.x -= ma;
       context.translate(ma, 0);
     }
     // Right
-    else if (Mouse.coords.x &gt; canvas.width * (1-THRESHOLD)) {
-      gradient = easing((canvas.width - Mouse.coords.x) / (canvas.width * THRESHOLD));
+    else if (Mouse.Coords.x &gt; canvas.width * (1-THRESHOLD)) {
+      gradient = easing((canvas.width - Mouse.Coords.x) / (canvas.width * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
       world.xOffset += ma;
       scrolled.x += ma;
@@ -188,16 +249,16 @@ Mouse.Scroll = (function() {
     }
 
     // Up
-    if (Mouse.coords.y &lt; canvas.height * THRESHOLD) {
-      gradient = easing(Mouse.coords.y / (canvas.height * THRESHOLD));
+    if (Mouse.Coords.y &lt; canvas.height * THRESHOLD) {
+      gradient = easing(Mouse.Coords.y / (canvas.height * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
       world.yOffset -= ma;
       scrolled.y -= ma;
       context.translate(0, ma);
     }
     // Down
-    else if (Mouse.coords.y &gt; canvas.height * (1-THRESHOLD)) {
-      gradient = easing((canvas.height - Mouse.coords.y) / (canvas.height * THRESHOLD));
+    else if (Mouse.Coords.y &gt; canvas.height * (1-THRESHOLD)) {
+      gradient = easing((canvas.height - Mouse.Coords.y) / (canvas.height * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
       world.yOffset += ma;
       scrolled.y += ma;
@@ -241,7 +302,7 @@ Mouse.Scroll = (function() {
       enabled = true;
       $canvas.one('mousemove.translate', function() {
         // Enable translating if we're over the canvas
-        if (Mouse.coords.x &gt;= 0 &amp;&amp; Mouse.coords.y &gt;= 0) {
+        if (Mouse.Coords.x &gt;= 0 &amp;&amp; Mouse.Coords.y &gt;= 0) {
           hovered = true;
           translate();
         }
@@ -256,6 +317,13 @@ Mouse.Scroll = (function() {
           translating = false;
           jQuery(document).trigger('mousescrolloff');
         }
+      });
+      var mousedown = false;
+      $canvas.on('mousedown.translate touchstart.translate', function() {
+        mousedown = true;
+      });
+      $canvas.on('mouseup.translate touchend.translate', function() {
+        mousedown = false;
       });
     },
 <span id='Mouse-Scroll-static-method-disable'>    /**
@@ -277,6 +345,11 @@ Mouse.Scroll = (function() {
     },
 <span id='Mouse-Scroll-static-method-isScrolling'>    /**
 </span>     * Test whether the viewport is currently mouse-scrolling.
+     *
+     * There is one weird edge case: this will return true if the user is in
+     * the middle of a click-and-drag action that was started while the
+     * viewport was scrolling.
+     *
      * @static
      */
     isScrolling: function() {
@@ -284,26 +357,32 @@ Mouse.Scroll = (function() {
     },
     // Called in the core animation loop.
     _update: function() {
-      if (hovered) {
+      // Don't scroll while dragging.
+      if (hovered &amp;&amp; !mousedown) {
         return translate();
       }
     },
-<span id='Mouse-Scroll-property-easings'>    /**
+<span id='Mouse-Scroll-static-property-easings'>    /**
 </span>     * Available easing modes for scroll movement speed.
      *
      * Modes include:
+     *
      * - THRESHOLD: Scroll at max speed when the mouse is past the threshold
      * - LINEAR: Increase scroll speed linearly as the mouse approaches an edge
      * - SMOOTH: S-curve &quot;swing&quot; easing (default)
      * - EXPONENTIAL: Increase scroll speed inverse-exponentially as the mouse
      *   approaches an edge (increase quickly at first, then plateau)
+     *
+     * @static
      */
     easings: easings,
-<span id='Mouse-Scroll-method-setEasingFunction'>    /**
+<span id='Mouse-Scroll-static-method-setEasingFunction'>    /**
 </span>     * Set the easing function used to determine scroll speed.
      *
      * The `easings` property contains the possible easing functions, or you
      * can define your own.
+     *
+     * @static
      */
     setEasingFunction: function(e) {
       easing = e;

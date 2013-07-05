@@ -102,7 +102,7 @@ function setup(first) {
         if (soldier.selected) {
           var xDiff = soldier.x - midX,
               yDiff = soldier.y - midY;
-          soldier.moveTo(Mouse.coords.x + world.xOffset + xDiff, Mouse.coords.y + world.yOffset + yDiff);
+          soldier.moveTo(Mouse.Coords.x + world.xOffset + xDiff, Mouse.Coords.y + world.yOffset + yDiff);
         }
       });
     }
@@ -115,8 +115,8 @@ function setup(first) {
       if (mousedown) return;
       mousedown = true;
       // Start drawing the overlay rect
-      dragOverlay.startX = Mouse.coords.x;
-      dragOverlay.startY = Mouse.coords.y;
+      dragOverlay.startX = Mouse.Coords.x;
+      dragOverlay.startY = Mouse.Coords.y;
     }
   }, 1000); // Set the weight below everything else so we can cancel bubbling
   $canvas.on('mousemove.dragselect touchmove.dragselect', function(e) {
@@ -125,13 +125,13 @@ function setup(first) {
       dragOverlay.context.clear();
       dragOverlay.context.fillRect(
           dragOverlay.startX, dragOverlay.startY,
-          Mouse.coords.x - dragOverlay.startX,
-          Mouse.coords.y - dragOverlay.startY
+          Mouse.Coords.x - dragOverlay.startX,
+          Mouse.Coords.y - dragOverlay.startY
       );
       dragOverlay.context.strokeRect(
           dragOverlay.startX, dragOverlay.startY,
-          Mouse.coords.x - dragOverlay.startX,
-          Mouse.coords.y - dragOverlay.startY
+          Mouse.Coords.x - dragOverlay.startX,
+          Mouse.Coords.y - dragOverlay.startY
       );
     }
   });
@@ -140,10 +140,10 @@ function setup(first) {
     if (mousedown) {
       // Stop drawing the overlay rect
       dragOverlay.context.clear();
-      var x = Math.min(dragOverlay.startX, Mouse.coords.x) + world.xOffset,
-          y = Math.min(dragOverlay.startY, Mouse.coords.y) + world.yOffset,
-          w = Math.abs(Mouse.coords.x - dragOverlay.startX),
-          h = Math.abs(Mouse.coords.y - dragOverlay.startY);
+      var x = Math.min(dragOverlay.startX, Mouse.Coords.x) + world.xOffset,
+          y = Math.min(dragOverlay.startY, Mouse.Coords.y) + world.yOffset,
+          w = Math.abs(Mouse.Coords.x - dragOverlay.startX),
+          h = Math.abs(Mouse.Coords.y - dragOverlay.startY);
       if (w && h) {
         var selectBox = new Box(x, y, w, h);
         var toSelect = selectBox.collides(soldiers, true);
@@ -326,8 +326,8 @@ Mouse.Zoom = {
       // we can consistently deduce from this is the direction.
       var delta = e.originalEvent.deltaY || -e.originalEvent.wheelDelta;
       // We want to scroll in around the mouse coordinates.
-      var mx = Mouse.coords.x + world.xOffset,
-          my = Mouse.coords.y + world.yOffset;
+      var mx = Mouse.Coords.x + world.xOffset,
+          my = Mouse.Coords.y + world.yOffset;
       // Scroll up; zoom in
       if (delta.sign() < 0) {
         if (world.scale > Mouse.Zoom.MIN_ZOOM) {

@@ -136,7 +136,7 @@ function setup(first) {
   if (first) {
     // Make the paddle follow the mouse.
     $canvas.off('.setup').on('mousemove.setup touchmove.setup', function(e) {
-      player.x = Mouse.coords.x - player.width/2;
+      player.x = Mouse.Coords.worldX() - player.width/2;
     });
 
     // Make bricks draw slightly smaller than their hitbox so there's a gutter.

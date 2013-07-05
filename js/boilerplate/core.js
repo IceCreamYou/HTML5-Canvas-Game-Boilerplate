@@ -941,6 +941,29 @@ function World(w, h) {
    */
   this.scale = 1;
   /**
+   * @property {Number} _actualXscale
+   *   The actual amount the width of the canvas is scaled relative to the
+   *   display size.
+   *
+   * This can be different than `this.scale` due to rounding error. This
+   * matters when converting document coordinates to canvas coordinates, for
+   * example when tracking mouse coordinates.
+   * @ignore
+   */
+  this._actualXscale = 1;
+  /**
+   * @property {Number} _actualYscale
+   *   The actual amount the height of the canvas is scaled relative to the
+   *   display size.
+   *
+   * This can be different than `this.scale` due to rounding error. This
+   * matters when converting document coordinates to canvas coordinates, for
+   * example when tracking mouse coordinates.
+   * @ignore
+   */
+  this._actualYscale = 1;
+
+  /**
    * @property {Number} width
    *   The width of the world.
    */
@@ -959,7 +982,6 @@ function World(w, h) {
    * @ignore
    */
   this.originalCanvasWidth = canvas.width;
-
   /**
    * @property {Number} originalCanvasHeight
    *   The height of the canvas when the world was initialized.
@@ -982,17 +1004,6 @@ function World(w, h) {
    */
   this.yOffset = (this.height - canvas.height)/2;
   context.translate(-this.xOffset, -this.yOffset);
-
-  /**
-   * Return an object with 'x' and 'y' properties indicating how far offset
-   * the viewport is from the world origin.
-   */
-  this.getOffsets = function() {
-    return {
-      'x': this.xOffset,
-      'y': this.yOffset,
-    };
-  };
 
   /**
    * Resize the world to new dimensions.
@@ -1067,10 +1078,12 @@ function World(w, h) {
     // The original canvas size is pre-set using App.setDefaultCanvasSize() so
     // changing the value of the attributes just changes the number of pixels
     // to render. CSS then scales that buffer to the original canvas size.
-    canvas.width = (this.originalCanvasWidth*factor)|0;
-    canvas.height = (this.originalCanvasHeight*factor)|0;
-    this.xOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0;
-    this.yOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0;
+    canvas.width = Math.round(this.originalCanvasWidth*factor);
+    canvas.height = Math.round(this.originalCanvasHeight*factor);
+    this._actualXscale = canvas.width / this.originalCanvasWidth;
+    this._actualYscale = canvas.height / this.originalCanvasHeight;
+    this.xOffset = Math.round(Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)));
+    this.yOffset = Math.round(Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)));
     context.translate(-this.xOffset, -this.yOffset);
     this.scale = factor;
     if (!isAnimating()) {
@@ -1079,7 +1092,61 @@ function World(w, h) {
   };
 
   /**
-   * Center the viewport around a specific location.
+   * Convert a position over the canvas to a position in the world.
+   *
+   * The canvas position being converted should be in displayed pixels from the
+   * upper-left corner of the canvas.
+   *
+   * This could be useful when placing objects at a given location in the
+   * canvas if you need the object to align with something outside of the
+   * canvas. (Note that {@link Mouse.Coords} already has worldX() and worldY()
+   * methods for representing the mouse position in the world.)
+   *
+   * @param {Number} x The x-position over the canvas to convert.
+   * @param {Number} y The y-position over the canvas to convert.
+   *
+   * @return {Object}
+   *   An object with `x` and `y` properties representing x- and y-coordinates
+   *   in the world.
+   */
+  this.canvasToWorldPosition = function(x, y) {
+    return {
+      x: x * this._actualXscale + this.xOffset,
+      y: y * this._actualYscale + this.yOffset,
+    };
+  };
+  /**
+   * Convert a position in the world to a position over the canvas.
+   *
+   * The returned canvas position will be in displayed pixels from the
+   * upper-left corner of the canvas. This is useful when positioning DOM
+   * elements over the canvas, for example with
+   * {@link App.Utils#positionOverCanvas}.
+   *
+   * If you instead want the position relative to the rendered canvas, which
+   * may be useful for example if you want to transition something from
+   * scrolling to fixed position, you should instead use `x - world.xOffset`
+   * and `y - world.yOffset`. The difference between displayed and rendered
+   * position is only relevant when the canvas has been scaled with
+   * {@link World#scaleResolution}, causing the canvas to be rendered at one
+   * size and then scaled to another for display using CSS.
+   *
+   * @param {Number} x The x-position over the canvas to convert.
+   * @param {Number} y The y-position over the canvas to convert.
+   *
+   * @return {Object}
+   *   An object with `x` and `y` properties representing x- and y-coordinates
+   *   over the canvas.
+   */
+  this.worldToCanvasPosition = function(x, y) {
+    return {
+      x: (x - this.xOffset) / this._actualXscale,
+      y: (y - this.yOffset) / this._actualYscale,
+    };
+  };
+
+  /**
+   * Center the viewport around a specific location in the world.
    *
    * @param {Number} x The x-coordinate around which to center the viewport.
    * @param {Number} y The y-coordinate around which to center the viewport.
@@ -1156,36 +1223,6 @@ function World(w, h) {
 App.Utils = {};
 
 /**
- * Convert a percent to the corresponding pixel position in the world.
- *
- * This is useful for specifying the size of objects relative to the size of
- * the canvas or world.
- *
- * @param {Number} percent
- *   A percent (out of 100%) across the canvas or world from the upper-left
- *   corner.
- * @param {Boolean} [relativeToCanvas=true]
- *   Whether the result is relative to the canvas (true) or to the world
- *   (false).
- *
- * @return {Object}
- *   An object with `x` and `y` properties denoting a pixel position at the
- *   given percent. For example, in a 100x100px canvas, calling
- *   `App.Utils.percentToPixels(25)` would return `{x: 25, y: 25}`.
- *
- * @static
- */
-App.Utils.percentToPixels = function(percent, relativeToCanvas) {
-  if (typeof relativeToCanvas === 'undefined') {
-    relativeToCanvas = true;
-  }
-  return {
-    x: Math.floor((relativeToCanvas ? canvas : world).width  * percent / 100),
-    y: Math.floor((relativeToCanvas ? canvas : world).height * percent / 100),
-  };
-};
-
-/**
  * Get a random number between two numbers.
  *
  * @param {Number} lo The first number.
@@ -1209,7 +1246,8 @@ App.Utils.getRandBetween = function(lo, hi) {
  * and hi, either one can be higher, and either or both can be integers or
  * floats. If either of the numbers is a float, the random distribution remains
  * equal among eligible integers; that is, if lo==3.3 and hi==5, 4 and 5 are
- * equally likely to be returned. Negative numbers work as well.
+ * equally likely to be returned. Behavior is undefined if there is no integer
+ * between lo and hi. Negative numbers work as well.
  *
  * @param {Number} lo The first number.
  * @param {Number} hi The second number.
@@ -1291,10 +1329,9 @@ App.Utils.randomString = function(n) {
  * Useful for placing forms, text, menus, and other UI elements that are more
  * easily handled in HTML.
  *
- * To place the DOM element at a specific location in the world, first subtract
- * the {@link World#getOffsets world offsets} from the `x` and `y` positions.
- * For example, to place an item at the player's x-position, you would use
- * `player.x-world.getOffsets().x` to get the canvas position.
+ * To place the DOM element at a specific location in the world, convert the
+ * position in the world to a position over the canvas using
+ * {@link World#worldToCanvasPosition}.
  *
  * @param {HTMLElement} elem
  *   A DOM element or jQuery representation of a DOM element to position over
@@ -1306,11 +1343,14 @@ App.Utils.randomString = function(n) {
  *   The number of pixels below the upper-left corner of the canvas at which to
  *   locate the DOM element.
  *
+ * @return {Object}
+ *   The jQuery representation of the positioned DOM element.
+ *
  * @static
  */
 App.Utils.positionOverCanvas = function(elem, x, y) {
   var o = $canvas.offset();
-  jQuery(elem).css({
+  return jQuery(elem).detach().appendTo('body').css({
     left: (o.left + parseInt($canvas.css('border-left-width'), 10) + x) + 'px',
     position: 'absolute',
     top: (o.top + parseInt($canvas.css('border-top-width'), 10) + y) + 'px',

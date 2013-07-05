@@ -380,14 +380,36 @@ App.reset = function(first) {
  * Note that using CSS to resize the canvas causes it to scale the graphics as
  * well; it changes the size of each virtual &quot;pixel&quot; on the canvas rather than
  * changing the number of pixels inside the canvas. Unless you want to stretch
- * the canvas display, using CSS to resize the canvas is not recommended.
+ * the canvas display, using CSS to resize the canvas is not recommended. (If
+ * you do want to stretch the canvas display, for example to zoom in or reduce
+ * the number of pixels to render, take a look at World#scaleResolution.)
  *
  * @member App
  * @static
  */
 App.setDefaultCanvasSize = function() {
+  // Set the canvas size in CSS. This fixes the size of the canvas on the
+  // screen, so from here forward if we change canvas.width or canvas.height
+  // (for example, using World#scaleResolution) we will actually be changing
+  // the render size; and then CSS will scale the rendered buffer to the
+  // display size. (That's right; the width/height attributes mean something
+  // different than the width/height CSS properties.) We're also setting the
+  // scale3d transform which enables GPU rendering.
+  var ensureCanvasSize = function() {
+    $canvas.css({
+      width: canvas.width + 'px',
+      height: canvas.height + 'px',
+      // Force hardware accelerated rendering
+      transform: 'scale3d(1, 1, 1)',
+      mozTransform: 'scale3d(1, 1, 1)',
+      msTransform: 'scale3d(1, 1, 1)',
+      oTransform: 'scale3d(1, 1, 1)',
+      webkitTransform: 'scale3d(1, 1, 1)',
+    });
+  }
   // Do not resize if data-resize is false (fall back to CSS).
   if ($canvas.attr('data-resize') == 'false') {
+    ensureCanvasSize();
     return;
   }
   var $window = jQuery(window);
@@ -430,6 +452,7 @@ App.setDefaultCanvasSize = function() {
       canvas.width = Math.floor(canvas.height * aspectRatio);
     }
   }
+  ensureCanvasSize();
 };
 
 // CACHES ---------------------------------------------------------------------
@@ -927,9 +950,36 @@ function Timer(autoStart, whileAnimating) {
 function World(w, h) {
 <span id='World-property-scale'>  /**
 </span>   * @property {Number} scale
-   *   The percent amount (as a fraction) the canvas resolution is scaled.
+   *   The percent amount (as a fraction) the canvas resolution is linearly
+   *   scaled relative to its original size. For example, if the canvas started
+   *   at 1024x768 and it is now rendering at 512x384, then the scale will be
+   *   0.5. Notice that the number of virtual pixels rendered on the canvas
+   *   changes with the square of the scale.
    */
   this.scale = 1;
+<span id='global-property-_actualXscale'>  /**
+</span>   * @property {Number} _actualXscale
+   *   The actual amount the width of the canvas is scaled relative to the
+   *   display size.
+   *
+   * This can be different than `this.scale` due to rounding error. This
+   * matters when converting document coordinates to canvas coordinates, for
+   * example when tracking mouse coordinates.
+   * @ignore
+   */
+  this._actualXscale = 1;
+<span id='global-property-_actualYscale'>  /**
+</span>   * @property {Number} _actualYscale
+   *   The actual amount the height of the canvas is scaled relative to the
+   *   display size.
+   *
+   * This can be different than `this.scale` due to rounding error. This
+   * matters when converting document coordinates to canvas coordinates, for
+   * example when tracking mouse coordinates.
+   * @ignore
+   */
+  this._actualYscale = 1;
+
 <span id='World-property-width'>  /**
 </span>   * @property {Number} width
    *   The width of the world.
@@ -940,6 +990,23 @@ function World(w, h) {
    *   The height of the world.
    */
   this.height = h || parseInt($canvas.attr('data-worldheight'), 10) || canvas.height;
+
+<span id='global-property-originalCanvasWidth'>  /**
+</span>   * @property {Number} originalCanvasWidth
+   *   The width of the canvas when the world was initialized.
+   *
+   * This is used to keep the canvas size consistent when scaling resolution.
+   * @ignore
+   */
+  this.originalCanvasWidth = canvas.width;
+<span id='global-property-originalCanvasHeight'>  /**
+</span>   * @property {Number} originalCanvasHeight
+   *   The height of the canvas when the world was initialized.
+   *
+   * This is used to keep the canvas size consistent when scaling resolution.
+   * @ignore
+   */
+  this.originalCanvasHeight = canvas.height;
 
 <span id='World-property-xOffset'>  /**
 </span>   * @property {Number} xOffset
@@ -954,17 +1021,6 @@ function World(w, h) {
    */
   this.yOffset = (this.height - canvas.height)/2;
   context.translate(-this.xOffset, -this.yOffset);
-
-<span id='World-method-getOffsets'>  /**
-</span>   * Return an object with 'x' and 'y' properties indicating how far offset
-   * the viewport is from the world origin.
-   */
-  this.getOffsets = function() {
-    return {
-      'x': this.xOffset,
-      'y': this.yOffset,
-    };
-  };
 
 <span id='World-method-resize'>  /**
 </span>   * Resize the world to new dimensions.
@@ -1017,38 +1073,34 @@ function World(w, h) {
    *
    * @param {Number} factor
    *   The percent amount to scale the resolution on each dimension as a
-   *   fraction of the &lt;em&gt;current&lt;/em&gt; resolution (typically between zero and
+   *   fraction of the &lt;em&gt;original&lt;/em&gt; resolution (typically between zero and
    *   one). In other words, if the original resolution is 1024x768, scaling
    *   the resolution by a factor of 0.5 will result in a resolution of 512x384
    *   (showing 25% as many pixels on the screen). If scaled again by a factor
-   *   of 2, the result is 1024x768 again. Use the `scale` property to detect
+   *   of 2, the result will be 2048x1536. Use the `scale` property to detect
    *   the factor by which the resolution is currently scaled.
-   * @param {Number} [x=0]
+   * @param {Number} [x]
    *   The x-coordinate of a location to center the viewport around after
-   *   resizing the canvas. A common use is `player.x`.
-   * @param {Number} [y=0]
+   *   resizing the canvas. A common use is `player.x`. Defaults to centering
+   *   around the current view.
+   * @param {Number} [y]
    *   The y-coordinate of a location to center the viewport around after
-   *   resizing the canvas. A common use is `player.y`.
+   *   resizing the canvas. A common use is `player.y`. Defaults to centering
+   *   around the current view.
    */
   this.scaleResolution = function(factor, x, y) {
-    if (factor === 1) {
-      return;
-    }
-    $canvas.css({
-      width: (canvas.width/this.scale) + 'px',
-      height: (canvas.height/this.scale) + 'px',
-      // Force hardware accelerated rendering
-      mozTransform: 'scale3d(1, 1, 1)',
-      msTransform: 'scale3d(1, 1, 1)',
-      oTransform: 'scale3d(1, 1, 1)',
-      webkitTransform: 'scale3d(1, 1, 1)',
-    });
-    canvas.width = (canvas.width*factor)|0;
-    canvas.height = (canvas.height*factor)|0;
-    x = x || 0;
-    y = y || 0;
-    this.xOffset = Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)) | 0;
-    this.yOffset = Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)) | 0;
+    // Default to centering around the current center of the viewport.
+    x = x || this.xOffset + canvas.width / 2;
+    y = y || this.yOffset + canvas.height / 2;
+    // The original canvas size is pre-set using App.setDefaultCanvasSize() so
+    // changing the value of the attributes just changes the number of pixels
+    // to render. CSS then scales that buffer to the original canvas size.
+    canvas.width = Math.round(this.originalCanvasWidth*factor);
+    canvas.height = Math.round(this.originalCanvasHeight*factor);
+    this._actualXscale = canvas.width / this.originalCanvasWidth;
+    this._actualYscale = canvas.height / this.originalCanvasHeight;
+    this.xOffset = Math.round(Math.min(this.width - canvas.width, Math.max(0, x - canvas.width / 2)));
+    this.yOffset = Math.round(Math.min(this.height - canvas.height, Math.max(0, y - canvas.height / 2)));
     context.translate(-this.xOffset, -this.yOffset);
     this.scale = factor;
     if (!isAnimating()) {
@@ -1056,8 +1108,62 @@ function World(w, h) {
     }
   };
 
+<span id='World-method-canvasToWorldPosition'>  /**
+</span>   * Convert a position over the canvas to a position in the world.
+   *
+   * The canvas position being converted should be in displayed pixels from the
+   * upper-left corner of the canvas.
+   *
+   * This could be useful when placing objects at a given location in the
+   * canvas if you need the object to align with something outside of the
+   * canvas. (Note that {@link Mouse.Coords} already has worldX() and worldY()
+   * methods for representing the mouse position in the world.)
+   *
+   * @param {Number} x The x-position over the canvas to convert.
+   * @param {Number} y The y-position over the canvas to convert.
+   *
+   * @return {Object}
+   *   An object with `x` and `y` properties representing x- and y-coordinates
+   *   in the world.
+   */
+  this.canvasToWorldPosition = function(x, y) {
+    return {
+      x: x * this._actualXscale + this.xOffset,
+      y: y * this._actualYscale + this.yOffset,
+    };
+  };
+<span id='World-method-worldToCanvasPosition'>  /**
+</span>   * Convert a position in the world to a position over the canvas.
+   *
+   * The returned canvas position will be in displayed pixels from the
+   * upper-left corner of the canvas. This is useful when positioning DOM
+   * elements over the canvas, for example with
+   * {@link App.Utils#positionOverCanvas}.
+   *
+   * If you instead want the position relative to the rendered canvas, which
+   * may be useful for example if you want to transition something from
+   * scrolling to fixed position, you should instead use `x - world.xOffset`
+   * and `y - world.yOffset`. The difference between displayed and rendered
+   * position is only relevant when the canvas has been scaled with
+   * {@link World#scaleResolution}, causing the canvas to be rendered at one
+   * size and then scaled to another for display using CSS.
+   *
+   * @param {Number} x The x-position over the canvas to convert.
+   * @param {Number} y The y-position over the canvas to convert.
+   *
+   * @return {Object}
+   *   An object with `x` and `y` properties representing x- and y-coordinates
+   *   over the canvas.
+   */
+  this.worldToCanvasPosition = function(x, y) {
+    return {
+      x: (x - this.xOffset) / this._actualXscale,
+      y: (y - this.yOffset) / this._actualYscale,
+    };
+  };
+
 <span id='World-method-centerViewportAround'>  /**
-</span>   * Center the viewport around a specific location.
+</span>   * Center the viewport around a specific location in the world.
    *
    * @param {Number} x The x-coordinate around which to center the viewport.
    * @param {Number} y The y-coordinate around which to center the viewport.
@@ -1133,36 +1239,6 @@ function World(w, h) {
  */
 App.Utils = {};
 
-<span id='App-Utils-static-method-percentToPixels'>/**
-</span> * Convert a percent to the corresponding pixel position in the world.
- *
- * This is useful for specifying the size of objects relative to the size of
- * the canvas or world.
- *
- * @param {Number} percent
- *   A percent (out of 100%) across the canvas or world from the upper-left
- *   corner.
- * @param {Boolean} [relativeToCanvas=true]
- *   Whether the result is relative to the canvas (true) or to the world
- *   (false).
- *
- * @return {Object}
- *   An object with `x` and `y` properties denoting a pixel position at the
- *   given percent. For example, in a 100x100px canvas, calling
- *   `App.Utils.percentToPixels(25)` would return `{x: 25, y: 25}`.
- *
- * @static
- */
-App.Utils.percentToPixels = function(percent, relativeToCanvas) {
-  if (typeof relativeToCanvas === 'undefined') {
-    relativeToCanvas = true;
-  }
-  return {
-    x: Math.floor((relativeToCanvas ? canvas : world).width  * percent / 100),
-    y: Math.floor((relativeToCanvas ? canvas : world).height * percent / 100),
-  };
-};
-
 <span id='App-Utils-static-method-getRandBetween'>/**
 </span> * Get a random number between two numbers.
  *
@@ -1187,7 +1263,8 @@ App.Utils.getRandBetween = function(lo, hi) {
  * and hi, either one can be higher, and either or both can be integers or
  * floats. If either of the numbers is a float, the random distribution remains
  * equal among eligible integers; that is, if lo==3.3 and hi==5, 4 and 5 are
- * equally likely to be returned. Negative numbers work as well.
+ * equally likely to be returned. Behavior is undefined if there is no integer
+ * between lo and hi. Negative numbers work as well.
  *
  * @param {Number} lo The first number.
  * @param {Number} hi The second number.
@@ -1269,10 +1346,9 @@ App.Utils.randomString = function(n) {
  * Useful for placing forms, text, menus, and other UI elements that are more
  * easily handled in HTML.
  *
- * To place the DOM element at a specific location in the world, first subtract
- * the {@link World#getOffsets world offsets} from the `x` and `y` positions.
- * For example, to place an item at the player's x-position, you would use
- * `player.x-world.getOffsets().x` to get the canvas position.
+ * To place the DOM element at a specific location in the world, convert the
+ * position in the world to a position over the canvas using
+ * {@link World#worldToCanvasPosition}.
  *
  * @param {HTMLElement} elem
  *   A DOM element or jQuery representation of a DOM element to position over
@@ -1284,11 +1360,14 @@ App.Utils.randomString = function(n) {
  *   The number of pixels below the upper-left corner of the canvas at which to
  *   locate the DOM element.
  *
+ * @return {Object}
+ *   The jQuery representation of the positioned DOM element.
+ *
  * @static
  */
 App.Utils.positionOverCanvas = function(elem, x, y) {
   var o = $canvas.offset();
-  jQuery(elem).css({
+  return jQuery(elem).detach().appendTo('body').css({
     left: (o.left + parseInt($canvas.css('border-left-width'), 10) + x) + 'px',
     position: 'absolute',
     top: (o.top + parseInt($canvas.css('border-top-width'), 10) + y) + 'px',

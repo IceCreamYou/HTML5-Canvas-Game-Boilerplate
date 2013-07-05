@@ -13,26 +13,26 @@ var brush; // The active brush instance
  *
  * Each brush has a mousedown, mousemove, and mouseup method. These methods are
  * called automatically on the corresponding events, and passed the active
- * layer's graphics context as the only parameter. Use `Mouse.coords` to detect
+ * layer's graphics context as the only parameter. Use `Mouse.Coords` to detect
  * the mouse position.
  */
 var brushes = {
   // Draw a line that follows the mouse.
   pencil: function() {
     this.mousedown = function(ctx) {
-      this.x = Mouse.coords.x;
-      this.y = Mouse.coords.y;
+      this.x = Mouse.Coords.x;
+      this.y = Mouse.Coords.y;
       ctx.beginPath();
-      ctx.moveTo(Mouse.coords.x, Mouse.coords.y);
+      ctx.moveTo(Mouse.Coords.x, Mouse.Coords.y);
     };
     this.mousemove = function(ctx) {
-      ctx.lineTo(Mouse.coords.x, Mouse.coords.y);
+      ctx.lineTo(Mouse.Coords.x, Mouse.Coords.y);
       ctx.stroke();
-      ctx.moveTo(Mouse.coords.x, Mouse.coords.y);
+      ctx.moveTo(Mouse.Coords.x, Mouse.Coords.y);
     };
     this.mouseup = function(ctx) {
       // If the mouse never moved, just draw a dot.
-      if (Mouse.coords.x == this.x && Mouse.coords.y == this.y) {
+      if (Mouse.Coords.x == this.x && Mouse.Coords.y == this.y) {
         ctx.circle(this.x, this.y, 1);
       }
     };
@@ -40,19 +40,19 @@ var brushes = {
   // Draw a circle.
   circle: function() {
     this.mousedown = function() {
-      this.x = Mouse.coords.x;
-      this.y = Mouse.coords.y;
+      this.x = Mouse.Coords.x;
+      this.y = Mouse.Coords.y;
     };
     this.mousemove = function(ctx) {
       ctx.clear();
-      var w = Mouse.coords.x - this.x;
-      var h = Mouse.coords.y - this.y;
+      var w = Mouse.Coords.x - this.x;
+      var h = Mouse.Coords.y - this.y;
       var r = Math.sqrt(w*w + h*h) / 2;
       ctx.circle(this.x + w/2, this.y + h/2, r);
     };
     this.mouseup = function(ctx) {
       // If the mouse never moved, just draw a dot.
-      if (Mouse.coords.x == this.x && Mouse.coords.y == this.y) {
+      if (Mouse.Coords.x == this.x && Mouse.Coords.y == this.y) {
         ctx.circle(this.x, this.y, 1);
       }
     };
@@ -60,16 +60,16 @@ var brushes = {
   // Draw a box.
   rectangle: function() {
     this.mousedown = function() {
-      this.x = Mouse.coords.x;
-      this.y = Mouse.coords.y;
+      this.x = Mouse.Coords.x;
+      this.y = Mouse.Coords.y;
     };
     this.mousemove = function(ctx) {
       ctx.clear();
-      ctx.fillRect(this.x, this.y, Mouse.coords.x - this.x, Mouse.coords.y - this.y);
+      ctx.fillRect(this.x, this.y, Mouse.Coords.x - this.x, Mouse.Coords.y - this.y);
     };
     this.mouseup = function(ctx) {
       // If the mouse never moved, just draw a dot.
-      if (Mouse.coords.x == this.x && Mouse.coords.y == this.y) {
+      if (Mouse.Coords.x == this.x && Mouse.Coords.y == this.y) {
         ctx.circle(this.x, this.y, 1);
       }
     };

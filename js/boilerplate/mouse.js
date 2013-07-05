@@ -20,17 +20,74 @@ App.isSomethingBeingDragged = false;
 /**
  * Handles mouse motion and scrolling.
  * @static
+ * @ignore
  */
 var Mouse = {
     /**
-     * @property
-     *   The coordinates of the mouse relative to the upper-left corner of the
-     *   canvas. If you want the coordinates of the mouse relative to the
-     *   world, add `world.xOffset` and `world.yOffset` to the `x` and `y`
-     *   coordinates, respectively.
+     * @class Mouse.Coords
+     *   Handles mouse coordinates.
      * @static
      */
-    coords: {x: -9999, y: -9999},
+    Coords: {
+      /**
+       * The mouse x-coordinate relative to the upper-left corner of the canvas.
+       *
+       * This value is actually relative to `canvas.width` and `canvas.height`,
+       * which is an important distinction when the canvas is scaled using
+       * {@link World#scaleResolution}. It represents the horizontal location
+       * of the mouse on the rendered buffer before it is scaled by CSS. When
+       * you want the x-coordinate of the mouse relative to the canvas, this is
+       * usually what you want to use.
+       */
+      x: -9999,
+      /**
+       * The mouse y-coordinate relative to the upper-left corner of the canvas.
+       *
+       * This value is actually relative to `canvas.width` and `canvas.height`,
+       * which is an important distinction when the canvas is scaled using
+       * {@link World#scaleResolution}. It represents the vertical location of
+       * the mouse on the rendered buffer before it is scaled by CSS. When you
+       * want the y-coordinate of the mouse relative to the canvas, this is
+       * usually what you want to use.
+       */
+      y: -9999,
+      /**
+       * The mouse x-coordinate over the canvas DOM element.
+       *
+       * This value is actually relative to `$canvas.css('width')` and
+       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * be different than the size at which the canvas is rendered if the
+       * canvas is scaled with {@link World#scaleResolution}. You may want to
+       * use this if you are positioning DOM elements over the canvas.
+       */
+      physicalX: -9999,
+      /**
+       * The mouse y-coordinate over the canvas DOM element.
+       *
+       * This value is actually relative to `$canvas.css('width')` and
+       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * be different than the size at which the canvas is rendered if the
+       * canvas is scaled with {@link World#scaleResolution}. You may want to
+       * use this if you are positioning DOM elements over the canvas.
+       */
+      physicalY: -9999,
+      /**
+       * The mouse x-coordinate relative to the world.
+       *
+       * Use this if you want the pointer to interact with the world.
+       */
+      worldX: function() {
+        return this.x >= 0 ? this.x + world.xOffset : -9999;
+      },
+      /**
+       * The mouse y-coordinate relative to the world.
+       *
+       * Use this if you want the pointer to interact with the world.
+       */
+      worldY: function() {
+        return this.y >= 0 ? this.y + world.yOffset : -9999;
+      },
+    },
 };
 
 // Track mouse events
@@ -46,10 +103,11 @@ jQuery(document).ready(function() {
         e.preventDefault();
       }
       // The position we want is relative to the canvas
-      Mouse.coords = {
-          x: x - $canvas.offset().left,
-          y: y - $canvas.offset().top,
-      };
+      Mouse.Coords.physicalX = x - $canvas.offset().left;
+      Mouse.Coords.physicalY = y - $canvas.offset().top;
+      // Adjust for scaled resolution
+      Mouse.Coords.x = Math.round(Mouse.Coords.physicalX * world._actualXscale);
+      Mouse.Coords.y = Math.round(Mouse.Coords.physicalY * world._actualYscale);
     }
     catch(ex) {
       // Don't report anything. Probably the reason we had an error is because
@@ -65,7 +123,10 @@ jQuery(document).ready(function() {
     jQuery(this).on('mousemove.coords', trackmove);
   }, function() {
     jQuery(this).off('mousemove.coords');
-    Mouse.coords = {x: -9999, y: -9999};
+    Mouse.Coords.physicalX = -9999;
+    Mouse.Coords.physicalY = -9999;
+    Mouse.Coords.x = -9999;
+    Mouse.Coords.y = -9999;
   });
 
   // Track and delegate click events
@@ -117,11 +178,8 @@ jQuery(document).ready(function() {
  * @static
  */
 App.isHovered = function(obj) {
-  var offsets = world.getOffsets(),
-      xPos = obj.x - offsets.x,
-      yPos = obj.y - offsets.y;
-  return Mouse.coords.x > xPos && Mouse.coords.x < xPos + obj.width &&
-      Mouse.coords.y > yPos && Mouse.coords.y < yPos + obj.height;
+  return Mouse.Coords.worldX() > obj.x && Mouse.Coords.worldX() < obj.x + obj.width &&
+      Mouse.Coords.worldY() > obj.y && Mouse.Coords.worldY() < obj.y + obj.height;
 };
 
 /**
@@ -157,16 +215,16 @@ Mouse.Scroll = (function() {
     var ma, gradient, initialTranslationState = translating;
 
     // Left
-    if (Mouse.coords.x < canvas.width * THRESHOLD) {
-      gradient = easing(Mouse.coords.x / (canvas.width * THRESHOLD));
+    if (Mouse.Coords.x < canvas.width * THRESHOLD) {
+      gradient = easing(Mouse.Coords.x / (canvas.width * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.xOffset, MOVEAMOUNT * App.physicsDelta));
       world.xOffset -= ma;
       scrolled.x -= ma;
       context.translate(ma, 0);
     }
     // Right
-    else if (Mouse.coords.x > canvas.width * (1-THRESHOLD)) {
-      gradient = easing((canvas.width - Mouse.coords.x) / (canvas.width * THRESHOLD));
+    else if (Mouse.Coords.x > canvas.width * (1-THRESHOLD)) {
+      gradient = easing((canvas.width - Mouse.Coords.x) / (canvas.width * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.width - canvas.width - world.xOffset, MOVEAMOUNT * App.physicsDelta));
       world.xOffset += ma;
       scrolled.x += ma;
@@ -174,16 +232,16 @@ Mouse.Scroll = (function() {
     }
 
     // Up
-    if (Mouse.coords.y < canvas.height * THRESHOLD) {
-      gradient = easing(Mouse.coords.y / (canvas.height * THRESHOLD));
+    if (Mouse.Coords.y < canvas.height * THRESHOLD) {
+      gradient = easing(Mouse.Coords.y / (canvas.height * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.yOffset, MOVEAMOUNT * App.physicsDelta));
       world.yOffset -= ma;
       scrolled.y -= ma;
       context.translate(0, ma);
     }
     // Down
-    else if (Mouse.coords.y > canvas.height * (1-THRESHOLD)) {
-      gradient = easing((canvas.height - Mouse.coords.y) / (canvas.height * THRESHOLD));
+    else if (Mouse.Coords.y > canvas.height * (1-THRESHOLD)) {
+      gradient = easing((canvas.height - Mouse.Coords.y) / (canvas.height * THRESHOLD));
       ma = Math.round(gradient*Math.min(world.height - canvas.height - world.yOffset, MOVEAMOUNT * App.physicsDelta));
       world.yOffset += ma;
       scrolled.y += ma;
@@ -227,7 +285,7 @@ Mouse.Scroll = (function() {
       enabled = true;
       $canvas.one('mousemove.translate', function() {
         // Enable translating if we're over the canvas
-        if (Mouse.coords.x >= 0 && Mouse.coords.y >= 0) {
+        if (Mouse.Coords.x >= 0 && Mouse.Coords.y >= 0) {
           hovered = true;
           translate();
         }
@@ -291,11 +349,14 @@ Mouse.Scroll = (function() {
      * Available easing modes for scroll movement speed.
      *
      * Modes include:
+     *
      * - THRESHOLD: Scroll at max speed when the mouse is past the threshold
      * - LINEAR: Increase scroll speed linearly as the mouse approaches an edge
      * - SMOOTH: S-curve "swing" easing (default)
      * - EXPONENTIAL: Increase scroll speed inverse-exponentially as the mouse
      *   approaches an edge (increase quickly at first, then plateau)
+     *
+     * @static
      */
     easings: easings,
     /**
@@ -303,6 +364,8 @@ Mouse.Scroll = (function() {
      *
      * The `easings` property contains the possible easing functions, or you
      * can define your own.
+     *
+     * @static
      */
     setEasingFunction: function(e) {
       easing = e;

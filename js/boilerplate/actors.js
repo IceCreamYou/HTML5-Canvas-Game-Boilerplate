@@ -655,8 +655,8 @@ var Actor = Box.extend({
     this.lastX = this.x;
     this.lastY = this.y;
     if (this.isBeingDragged && window.Mouse) {
-      this.x = Mouse.coords.x + world.xOffset - this.width/2;
-      this.y = Mouse.coords.y + world.yOffset - this.height/2;
+      this.x = Mouse.Coords.worldX() - this.width/2;
+      this.y = Mouse.Coords.worldY() - this.height/2;
     }
     else {
       this.processInput(direction);
@@ -1649,36 +1649,38 @@ var Player = Actor.extend({
    *   this method caused the viewport to shift along each axis.
    */
   adjustViewport: function() {
-    var offsets = world.getOffsets(), changed = {x: 0, y: 0};
+    var xOffset = world.xOffset,
+        yOffset = world.yOffset,
+        changed = {x: 0, y: 0};
     // We should only have mouse or player scrolling, but not both.
     if (window.Mouse && Mouse.Scroll.isEnabled()) {
       return changed;
     }
     // left
-    if (offsets.x > 0 && this.x + this.width/2 - offsets.x < canvas.width * this.MOVEWORLD) {
-      world.xOffset = Math.max(offsets.x + (this.x - this.lastX), 0);
-      context.translate(offsets.x - world.xOffset, 0);
-      changed.x = offsets.x - world.xOffset;
+    if (xOffset > 0 && this.x + this.width/2 - xOffset < canvas.width * this.MOVEWORLD) {
+      world.xOffset = Math.max(xOffset + (this.x - this.lastX), 0);
+      context.translate(xOffset - world.xOffset, 0);
+      changed.x = xOffset - world.xOffset;
     }
     // right
-    else if (offsets.x < world.width - canvas.width &&
-        this.x + this.width/2 - offsets.x > canvas.width * (1-this.MOVEWORLD)) {
-      world.xOffset = Math.min(offsets.x + (this.x - this.lastX), world.width - canvas.width);
-      context.translate(offsets.x - world.xOffset, 0);
-      changed.x = offsets.x - world.xOffset;
+    else if (xOffset < world.width - canvas.width &&
+        this.x + this.width/2 - xOffset > canvas.width * (1-this.MOVEWORLD)) {
+      world.xOffset = Math.min(xOffset + (this.x - this.lastX), world.width - canvas.width);
+      context.translate(xOffset - world.xOffset, 0);
+      changed.x = xOffset - world.xOffset;
     }
     // up
-    if (offsets.y > 0 && this.y + this.height/2 - offsets.y < canvas.height * this.MOVEWORLD) {
-      world.yOffset = Math.max(offsets.y + (this.y - this.lastY), 0);
-      context.translate(0, offsets.y - world.yOffset);
-      changed.y = offsets.y - world.yOffset;
+    if (yOffset > 0 && this.y + this.height/2 - yOffset < canvas.height * this.MOVEWORLD) {
+      world.yOffset = Math.max(yOffset + (this.y - this.lastY), 0);
+      context.translate(0, yOffset - world.yOffset);
+      changed.y = yOffset - world.yOffset;
     }
     // down
-    else if (offsets.y < world.height - canvas.height &&
-        this.y + this.height/2 - offsets.y > canvas.height * (1-this.MOVEWORLD)) {
-      world.yOffset = Math.min(offsets.y + (this.y - this.lastY), world.height - canvas.height);
-      context.translate(0, offsets.y - world.yOffset);
-      changed.y = offsets.y - world.yOffset;
+    else if (yOffset < world.height - canvas.height &&
+        this.y + this.height/2 - yOffset > canvas.height * (1-this.MOVEWORLD)) {
+      world.yOffset = Math.min(yOffset + (this.y - this.lastY), world.height - canvas.height);
+      context.translate(0, yOffset - world.yOffset);
+      changed.y = yOffset - world.yOffset;
     }
     return changed;
   },
