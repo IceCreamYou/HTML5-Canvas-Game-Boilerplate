@@ -448,11 +448,16 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   // those will be implemented by the original __drawImage() later.
   if (typeof x != 'number' && typeof y === 'undefined' &&
       typeof w != 'number' && typeof h === 'undefined') {
-    x = sx, y = sy;
+    x = sx;
+    y = sy;
     if (typeof sw == 'number' && typeof sh !== 'undefined') {
-      w = sw, h = sh;
+      w = sw;
+      h = sh;
     }
-    sx = undefined, sy = undefined, sw = undefined, sh = undefined;
+    sx = undefined;
+    sy = undefined;
+    sw = undefined;
+    sh = undefined;
   }
   // Wrapper function for doing the actual drawing
   var _drawImage = function(image, x, y, w, h, sx, sy, sw, sh) {
@@ -792,8 +797,13 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
   if (typeof squareSize === 'undefined') squareSize = 80;
   if (typeof squareSize == 'string' && typeof x == 'string') {
     var c1 = squareSize, c2 = x;
-    squareSize = y, x = w, y = h, w = color1, h = color2;
-    color1 = c1, color2 = c2;
+    squareSize = y;
+    x = w;
+    y = h;
+    w = color1;
+    h = color2;
+    color1 = c1;
+    color2 = c2;
   }
   var pattern = document.createElement('canvas'), pctx = pattern.getContext('2d');
   pattern.width = squareSize*2;

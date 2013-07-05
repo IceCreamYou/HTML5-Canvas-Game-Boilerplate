@@ -78,9 +78,10 @@ var Dot = Box.extend({
   },
   // Initialize the Dot in a random location that doesn't overlap the snake
   init: function() {
+    var x, y;
     do {
-      var x = this.getRand(world.width);
-      var y = this.getRand(world.height);
+      x = this.getRand(world.width);
+      y = this.getRand(world.height);
     } while (this.near(player, UNIT*5) || this.overlapsPieces());
     this._super.call(this, x, y, UNIT, UNIT);
   },

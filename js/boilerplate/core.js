@@ -389,7 +389,7 @@ App.setDefaultCanvasSize = function() {
       oTransform: 'scale3d(1, 1, 1)',
       webkitTransform: 'scale3d(1, 1, 1)',
     });
-  }
+  };
   // Do not resize if data-resize is false (fall back to CSS).
   if ($canvas.attr('data-resize') == 'false') {
     ensureCanvasSize();
@@ -835,9 +835,9 @@ function Timer(autoStart, whileAnimating) {
     if (this.running) {
       return;
     }
-    this.lastStartTime = this.lastDeltaTime = this.whileAnimating
-      ? App.physicsTimeElapsed
-      : performance.now();
+    this.lastStartTime = this.lastDeltaTime = this.whileAnimating ?
+        App.physicsTimeElapsed :
+          performance.now();
     this.running = true;
   };
   /**

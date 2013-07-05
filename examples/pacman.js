@@ -158,9 +158,9 @@ function setup(first) {
   ghosts.add(new Ghost()); // Starts above the ghost regeneration area
   var startCoords = map.getPixelCoords(8, 9); // left
   ghosts.add(new Ghost(startCoords.x+WIGGLE, startCoords.y+WIGGLE));
-  var startCoords = map.getPixelCoords(9, 9); // middle
+  startCoords = map.getPixelCoords(9, 9); // middle
   ghosts.add(new Ghost(startCoords.x+WIGGLE, startCoords.y+WIGGLE));
-  var startCoords = map.getPixelCoords(10, 9); // right
+  startCoords = map.getPixelCoords(10, 9); // right
   ghosts.add(new Ghost(startCoords.x+WIGGLE, startCoords.y+WIGGLE));
 
   if (first) {
@@ -205,20 +205,20 @@ jQuery(window).load(function() {
 
 // 3... 2... 1... Go!
 function countdown(callback) {
-  var countdown = jQuery('#countdown .countdown').text('3');
-  var container = jQuery('#countdown').css('opacity', '1');
+  var $countdown = jQuery('#countdown .countdown').text('3');
+  var $container = jQuery('#countdown').css('opacity', '1');
   setTimeout(function() {
-    countdown.text('Go!');
-    container.animate({opacity: 0}, 1000);
+    $countdown.text('Go!');
+    $container.animate({opacity: 0}, 1000);
     if (typeof callback == 'function') {
       callback();
     }
   }, 3000);
   setTimeout(function() {
-    countdown.text('1');
+    $countdown.text('1');
   }, 2000);
   setTimeout(function() {
-    countdown.text('2');
+    $countdown.text('2');
   }, 1000);
 }
 
@@ -484,7 +484,7 @@ var Ghost = Actor.extend({
     if (dirs.turn) {
       delete dirs.turn;
       var availDirs = [], currentDir = this.lastLooked[0];
-      for (dir in dirs) {
+      for (var dir in dirs) {
         // Try to avoid reversing direction.
         var opposite =
           (dir == 'up' && currentDir == 'down') ||

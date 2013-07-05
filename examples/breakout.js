@@ -182,18 +182,18 @@ function setup(first) {
 
 // 3... 2... 1... Go!
 function countdown(callback) {
-  var countdown = jQuery('#countdown').text('3').show();
+  var $countdown = jQuery('#countdown').text('3').show();
   setTimeout(function() {
-    countdown.text('Go!').fadeOut(1000);
+    $countdown.text('Go!').fadeOut(1000);
     if (typeof callback == 'function') {
       callback();
     }
   }, 3000);
   setTimeout(function() {
-    countdown.text('1');
+    $countdown.text('1');
   }, 2000);
   setTimeout(function() {
-    countdown.text('2');
+    $countdown.text('2');
   }, 1000);
 }
 
