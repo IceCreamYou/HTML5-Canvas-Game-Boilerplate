@@ -465,11 +465,16 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   // those will be implemented by the original __drawImage() later.
   if (typeof x != 'number' &amp;&amp; typeof y === 'undefined' &amp;&amp;
       typeof w != 'number' &amp;&amp; typeof h === 'undefined') {
-    x = sx, y = sy;
+    x = sx;
+    y = sy;
     if (typeof sw == 'number' &amp;&amp; typeof sh !== 'undefined') {
-      w = sw, h = sh;
+      w = sw;
+      h = sh;
     }
-    sx = undefined, sy = undefined, sw = undefined, sh = undefined;
+    sx = undefined;
+    sy = undefined;
+    sw = undefined;
+    sh = undefined;
   }
   // Wrapper function for doing the actual drawing
   var _drawImage = function(image, x, y, w, h, sx, sy, sw, sh) {
@@ -488,6 +493,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       finished.call(t, a, true);
     }
   };
+  var image;
   if ((typeof Sprite !== 'undefined' &amp;&amp; src instanceof Sprite) ||
       (typeof SpriteMap !== 'undefined' &amp;&amp; src instanceof SpriteMap)) { // draw a sprite
     src.draw(this, x, y, w, h);
@@ -516,7 +522,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src;
+    image = src;
     src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
@@ -547,7 +553,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     }
   }
   else if (typeof src == 'string' &amp;&amp; Caches.images[src]) { // cached image path
-    var image = Caches.images[src];
+    image = Caches.images[src];
     if (image.complete || (image.width &amp;&amp; image.height)) { // Cached image is loaded
       _drawImage(image, x, y, w, h, sx, sy, sw, sh);
     }
@@ -555,7 +561,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     // from the first time it was attempted to be drawn
   }
   else if (typeof src == 'string') { // uncached image path
-    var image = new Image();
+    image = new Image();
     image.onload = function() {
       if (finished instanceof Function) {
         finished.call(t, a, false);
@@ -655,6 +661,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   if (typeof Layer !== 'undefined' &amp;&amp; src instanceof Layer) { // Draw the Layer's canvas
     src = src.canvas;
   }
+  var image;
   if (src instanceof CanvasPattern) { // draw an already-created pattern
     this.fillStyle = src;
     this.fillRect(x, y, w, h);
@@ -685,7 +692,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src;
+    image = src;
     src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
@@ -738,7 +745,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       }
     }
     else if (Caches.images[src]) { // Image is cached, but no pattern
-      var image = Caches.images[src];
+      image = Caches.images[src];
       if (image.complete || (image.width &amp;&amp; image.height)) { // Cached image is loaded
         this.fillStyle = this.createPattern(image, rpt);
         this.fillRect(x, y, w, h);
@@ -751,11 +758,12 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       // from the first time it was attempted to be drawn
     }
     else { // Image not loaded yet
-      var image = new Image(), t = this;
+      var that = this;
+      image = new Image();
       image.onload = function() {
         Caches.imagePatterns[src] = this.createPattern(image, rpt);
         if (finished instanceof Function) {
-          finished.call(t, arguments, false);
+          finished.call(that, arguments, false);
         }
       };
       image._src = src;
@@ -809,8 +817,13 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
   if (typeof squareSize === 'undefined') squareSize = 80;
   if (typeof squareSize == 'string' &amp;&amp; typeof x == 'string') {
     var c1 = squareSize, c2 = x;
-    squareSize = y, x = w, y = h, w = color1, h = color2;
-    color1 = c1, color2 = c2;
+    squareSize = y;
+    x = w;
+    y = h;
+    w = color1;
+    h = color2;
+    color1 = c1;
+    color2 = c2;
   }
   var pattern = document.createElement('canvas'), pctx = pattern.getContext('2d');
   pattern.width = squareSize*2;

@@ -476,6 +476,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       finished.call(t, a, true);
     }
   };
+  var image;
   if ((typeof Sprite !== 'undefined' && src instanceof Sprite) ||
       (typeof SpriteMap !== 'undefined' && src instanceof SpriteMap)) { // draw a sprite
     src.draw(this, x, y, w, h);
@@ -504,7 +505,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src;
+    image = src;
     src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
@@ -535,7 +536,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     }
   }
   else if (typeof src == 'string' && Caches.images[src]) { // cached image path
-    var image = Caches.images[src];
+    image = Caches.images[src];
     if (image.complete || (image.width && image.height)) { // Cached image is loaded
       _drawImage(image, x, y, w, h, sx, sy, sw, sh);
     }
@@ -543,7 +544,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     // from the first time it was attempted to be drawn
   }
   else if (typeof src == 'string') { // uncached image path
-    var image = new Image();
+    image = new Image();
     image.onload = function() {
       if (finished instanceof Function) {
         finished.call(t, a, false);
@@ -643,6 +644,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
     src = src.canvas;
   }
+  var image;
   if (src instanceof CanvasPattern) { // draw an already-created pattern
     this.fillStyle = src;
     this.fillRect(x, y, w, h);
@@ -673,7 +675,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src;
+    image = src;
     src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
@@ -726,7 +728,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       }
     }
     else if (Caches.images[src]) { // Image is cached, but no pattern
-      var image = Caches.images[src];
+      image = Caches.images[src];
       if (image.complete || (image.width && image.height)) { // Cached image is loaded
         this.fillStyle = this.createPattern(image, rpt);
         this.fillRect(x, y, w, h);
@@ -739,11 +741,12 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       // from the first time it was attempted to be drawn
     }
     else { // Image not loaded yet
-      var image = new Image(), t = this;
+      var that = this;
+      image = new Image();
       image.onload = function() {
         Caches.imagePatterns[src] = this.createPattern(image, rpt);
         if (finished instanceof Function) {
-          finished.call(t, arguments, false);
+          finished.call(that, arguments, false);
         }
       };
       image._src = src;

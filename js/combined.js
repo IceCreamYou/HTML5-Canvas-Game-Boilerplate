@@ -1,10 +1,12 @@
 /**
- * HTML5 Canvas Game Boilerplate
+ * HTML5 Canvas Game Boilerplate 2.1.0-05072013
  * Certain components copyright their respective authors.
- * @author Isaac Sukin
+ *
+ * @author Isaac Sukin (http://www.isaacsukin.com/)
  * @license MIT License
  * @ignore
  */
+
 /**
  * jQuery Hotkeys Plugin
  *
@@ -276,6 +278,7 @@
   jQuery(document).keyup('na', function() {});
 
 })(this.jQuery);
+
 /**
  * Simple JavaScript Inheritance
  * By [John Resig](http://ejohn.org/)
@@ -374,6 +377,7 @@
     return Class;
   };
 })();
+
 /**
  * A powerful, easy-to-use Sprite animation library for HTML5 Canvas.
  *
@@ -1329,6 +1333,7 @@ this.Sprite = Sprite;
 }).call(this);
 
 // END IMAGE CACHE HELPERS ====================================================
+
 /**
  * Provides helpful utilities for common Canvas operations.
  *
@@ -1720,7 +1725,7 @@ App.setDefaultCanvasSize = function() {
       oTransform: 'scale3d(1, 1, 1)',
       webkitTransform: 'scale3d(1, 1, 1)',
     });
-  }
+  };
   // Do not resize if data-resize is false (fall back to CSS).
   if ($canvas.attr('data-resize') == 'false') {
     ensureCanvasSize();
@@ -2166,9 +2171,9 @@ function Timer(autoStart, whileAnimating) {
     if (this.running) {
       return;
     }
-    this.lastStartTime = this.lastDeltaTime = this.whileAnimating
-      ? App.physicsTimeElapsed
-      : performance.now();
+    this.lastStartTime = this.lastDeltaTime = this.whileAnimating ?
+        App.physicsTimeElapsed :
+          performance.now();
     this.running = true;
   };
   /**
@@ -2823,6 +2828,7 @@ Number.prototype.sign = function(v) {
   }
   return v > 0 ? 1 : (v < 0 ? -1 : 0);
 };
+
 /**
  * Provides utilities to draw onto the canvas.
  *
@@ -3273,11 +3279,16 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   // those will be implemented by the original __drawImage() later.
   if (typeof x != 'number' && typeof y === 'undefined' &&
       typeof w != 'number' && typeof h === 'undefined') {
-    x = sx, y = sy;
+    x = sx;
+    y = sy;
     if (typeof sw == 'number' && typeof sh !== 'undefined') {
-      w = sw, h = sh;
+      w = sw;
+      h = sh;
     }
-    sx = undefined, sy = undefined, sw = undefined, sh = undefined;
+    sx = undefined;
+    sy = undefined;
+    sw = undefined;
+    sh = undefined;
   }
   // Wrapper function for doing the actual drawing
   var _drawImage = function(image, x, y, w, h, sx, sy, sw, sh) {
@@ -3296,6 +3307,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       finished.call(t, a, true);
     }
   };
+  var image;
   if ((typeof Sprite !== 'undefined' && src instanceof Sprite) ||
       (typeof SpriteMap !== 'undefined' && src instanceof SpriteMap)) { // draw a sprite
     src.draw(this, x, y, w, h);
@@ -3324,7 +3336,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src;
+    image = src;
     src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
@@ -3355,7 +3367,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     }
   }
   else if (typeof src == 'string' && Caches.images[src]) { // cached image path
-    var image = Caches.images[src];
+    image = Caches.images[src];
     if (image.complete || (image.width && image.height)) { // Cached image is loaded
       _drawImage(image, x, y, w, h, sx, sy, sw, sh);
     }
@@ -3363,7 +3375,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     // from the first time it was attempted to be drawn
   }
   else if (typeof src == 'string') { // uncached image path
-    var image = new Image();
+    image = new Image();
     image.onload = function() {
       if (finished instanceof Function) {
         finished.call(t, a, false);
@@ -3463,6 +3475,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   if (typeof Layer !== 'undefined' && src instanceof Layer) { // Draw the Layer's canvas
     src = src.canvas;
   }
+  var image;
   if (src instanceof CanvasPattern) { // draw an already-created pattern
     this.fillStyle = src;
     this.fillRect(x, y, w, h);
@@ -3493,7 +3506,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
   }
   else if (src instanceof HTMLImageElement || // draw an image directly
       src instanceof Image) { // same thing
-    var image = src;
+    image = src;
     src = image._src || image.src; // check for preloaded src
     if (!src) { // can't draw an empty image
       if (finished instanceof Function) {
@@ -3546,7 +3559,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       }
     }
     else if (Caches.images[src]) { // Image is cached, but no pattern
-      var image = Caches.images[src];
+      image = Caches.images[src];
       if (image.complete || (image.width && image.height)) { // Cached image is loaded
         this.fillStyle = this.createPattern(image, rpt);
         this.fillRect(x, y, w, h);
@@ -3559,11 +3572,12 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       // from the first time it was attempted to be drawn
     }
     else { // Image not loaded yet
-      var image = new Image(), t = this;
+      var that = this;
+      image = new Image();
       image.onload = function() {
         Caches.imagePatterns[src] = this.createPattern(image, rpt);
         if (finished instanceof Function) {
-          finished.call(t, arguments, false);
+          finished.call(that, arguments, false);
         }
       };
       image._src = src;
@@ -3617,8 +3631,13 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
   if (typeof squareSize === 'undefined') squareSize = 80;
   if (typeof squareSize == 'string' && typeof x == 'string') {
     var c1 = squareSize, c2 = x;
-    squareSize = y, x = w, y = h, w = color1, h = color2;
-    color1 = c1, color2 = c2;
+    squareSize = y;
+    x = w;
+    y = h;
+    w = color1;
+    h = color2;
+    color1 = c1;
+    color2 = c2;
   }
   var pattern = document.createElement('canvas'), pctx = pattern.getContext('2d');
   pattern.width = squareSize*2;
@@ -3671,6 +3690,7 @@ CanvasRenderingContext2D.prototype.circle = function(x, y, r, fillStyle, strokeS
     this.stroke();
   }
 };
+
 /**
  * Handles mouse motion/tracking, scrolling, and dragging.
  *
@@ -3880,7 +3900,7 @@ Mouse.Scroll = (function() {
       LINEAR: function(val) { return 1-val; },
       SMOOTH: function(val) { return 0.5 - Math.cos( (1-val)*Math.PI ) / 2; },
       EXPONENTIAL: function(val) { return Math.sqrt(1-val); },
-  }
+  };
   // The currently active easing function
   var easing = easings.SMOOTH;
 
@@ -4117,6 +4137,7 @@ Mouse.Scroll = (function() {
     },
   };
 })();
+
 /**
  * Handles events on canvas objects.
  *
@@ -4428,6 +4449,7 @@ App.Events = {
 };
 
 }).call(this);
+
 /**
  * @class App.Storage
  *   Provides persistent local storage that preserves object type.
@@ -4591,6 +4613,7 @@ App.Storage = (function(window, undefined) {
   }
   return api;
 })(window);
+
 /**
  * Defines structures that are useful containers of other entities.
  *
@@ -5278,6 +5301,7 @@ function TileMap(grid, map, options) {
     };
   };
 }
+
 /**
  * Defines useful classes for actors in the world.
  *

@@ -224,7 +224,7 @@ Mouse.Scroll = (function() {
       LINEAR: function(val) { return 1-val; },
       SMOOTH: function(val) { return 0.5 - Math.cos( (1-val)*Math.PI ) / 2; },
       EXPONENTIAL: function(val) { return Math.sqrt(1-val); },
-  }
+  };
   // The currently active easing function
   var easing = easings.SMOOTH;
 
