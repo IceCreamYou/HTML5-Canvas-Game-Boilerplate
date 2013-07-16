@@ -33,9 +33,11 @@ function update() {
   base.spawn();
   enemyBase.spawn();
   soldiers.forEach(function(soldier) {
+    // Move
     if (soldier.selected) {
       soldier.update(soldier.chooseBestDirection());
     }
+    // Get hit by projectiles
     bullets.forEach(function(bullet) {
       if (bullet.team != soldier.team && bullet.overlaps(soldier)) {
         soldier.damage(bullet.DAMAGE);
@@ -44,6 +46,11 @@ function update() {
     });
     return soldier.health <= 0;
   });
+  // Collide with other soldiers
+  soldiers.collideAll(function(s1, s2) {
+    s1.collideSolid(s2);
+  });
+  // Shoot
   base.soldiers.forEach(function(soldier) {
     enemyBase.soldiers.forEach(function(enemy) {
       if (soldier.near(enemy)) {
@@ -54,6 +61,7 @@ function update() {
       }
     });
   });
+  // Expire bullets
   bullets.forEach(function(bullet) {
     bullet.update();
     return bullet.movedTooFar() || bullet.target.health <= 0;
@@ -210,6 +218,7 @@ var Base = Box.extend({
     this.lastSpawned = App.physicsTimeElapsed-2;
     this.dummySoldier = new Soldier(this.x, this.y);
     this.soldiers = new Collection();
+    this.canSpawn = true;
   },
   spawn: function(force) {
     if (!force && this.lastSpawned + this.delayBetweenSpawns > App.physicsTimeElapsed) {
@@ -228,19 +237,21 @@ var Base = Box.extend({
           this.soldiers.add(s);
           this.dummySoldier = new Soldier(this.x, this.y);
           this.lastSpawned = App.physicsTimeElapsed;
+          this.canSpawn = true;
           return;
         }
       }
     }
+    this.canSpawn = false;
   },
   drawDefault: function(ctx, x, y, w, h) {
     this._super.apply(this, arguments);
     // TODO Make this aware of the soldiers' location
-    if (soldiers.length < 8) {
-      ctx.fillStyle = 'gray';
-      var percentComplete = (App.physicsTimeElapsed - this.lastSpawned) / this.delayBetweenSpawns;
-      ctx.fillRect(x+w*0.1, y+h*0.8, w*0.8*percentComplete, h*0.1);
-    }
+    ctx.fillStyle = 'gray';
+    var percentComplete = this.canSpawn ?
+        (App.physicsTimeElapsed - this.lastSpawned) / this.delayBetweenSpawns :
+          1;
+    ctx.fillRect(x+w*0.1, y+h*0.8, w*0.8*percentComplete, h*0.1);
   },
 });
 
@@ -351,12 +362,18 @@ var Projectile = Actor.extend({
   DAMAGE: 20,
   init: function(x, y, team, target) {
     this._super.call(this, x, y);
+    this.fillStyle = 'lightGray';
     this.x -= this.DEFAULT_WIDTH*0.5;
     this.y -= this.DEFAULT_HEIGHT*0.5;
     this.startX = this.x;
     this.startY = this.y;
     this.team = team;
     this.target = target;
+    var xDist = this.target.x+this.target.width*0.5 - this.x+this.width*0.5,
+        yDist = this.target.y+this.target.height*0.5 - this.y+this.height*0.5,
+        ratio = Math.abs(xDist/(xDist+yDist));
+    this.xVelocity = this.MOVEAMOUNT*xDist.sign()*ratio;
+    this.yVelocity = this.MOVEAMOUNT*yDist.sign()*(1-ratio);
   },
   drawDefault: function(ctx, x, y, w, h) {
     ctx.circle(x + w/2, y + h/2, (w+h)/4);
@@ -367,13 +384,8 @@ var Projectile = Actor.extend({
            this.MAX_DISTANCE*this.MAX_DISTANCE;
   },
   move: function() {
-    var xDist = this.target.x+this.target.width*0.5 - this.x+this.width*0.5,
-        yDist = this.target.y+this.target.height*0.5 - this.y+this.height*0.5,
-        ratio = Math.abs(xDist/(xDist+yDist));
-    this.xVelocity = this.MOVEAMOUNT*xDist.sign()*ratio;
-    this.yVelocity = this.MOVEAMOUNT*yDist.sign()*(1-ratio);
-    // Apply thrust
     this.x += this.xVelocity*App.physicsDelta;
     this.y += this.yVelocity*App.physicsDelta;
   },
+  dampVelocity: function() {},
 });
