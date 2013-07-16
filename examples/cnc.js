@@ -36,6 +36,27 @@ function update() {
     if (soldier.selected) {
       soldier.update(soldier.chooseBestDirection());
     }
+    bullets.forEach(function(bullet) {
+      if (bullet.team != soldier.team && bullet.overlaps(soldier)) {
+        soldier.damage(bullet.DAMAGE);
+        return true;
+      }
+    });
+    return soldier.health <= 0;
+  });
+  base.soldiers.forEach(function(soldier) {
+    enemyBase.soldiers.forEach(function(enemy) {
+      if (soldier.near(enemy)) {
+        soldier.shoot(enemy);
+      }
+      if (enemy.near(soldier)) {
+        enemy.shoot(soldier);
+      }
+    });
+  });
+  bullets.forEach(function(bullet) {
+    bullet.update();
+    return bullet.movedTooFar() || bullet.target.health <= 0;
   });
 }
 
@@ -52,6 +73,7 @@ function draw() {
       soldier.drawHovered();
     }
   });
+  bullets.draw();
   dragOverlay.draw();
 }
 
@@ -77,7 +99,7 @@ function setup(first) {
   dragOverlay.context.lineWidth = 2;
 
   soldiers = new Collection();
-  selectedSoldiers = new Collection();
+  bullets = new Collection();
 
   base = new Base(Team.BLUE, 400, 400);
   world.centerViewportAround(440, 440);
@@ -86,8 +108,8 @@ function setup(first) {
 
   bkgd = new Layer();
   bkgd.context.drawPattern('images/grass2body.png', 0, 0, world.width, world.height);
+
   App.Events.listen(bkgd, 'mousedown.bkgd, touchstart.bkgd', function(e) {
-    if (typeof e === 'undefined') return;
     e.preventDefault();
     // Right click -> Move
     if (e.type == 'mousedown' && e.which === 3) {
@@ -163,15 +185,15 @@ function setup(first) {
         var toSelect = selectBox.collides(soldiers, true);
         if (toSelect) {
           for (var i = 0; i < toSelect.length; i++) {
-            toSelect[i].toggleSelected();
+            if (toSelect[i].team == Team.BLUE) { // Only select own soldiers
+              toSelect[i].toggleSelected();
+            }
           }
         }
       }
     }
     mousedown = false;
   });
-  // Prevent iOS webkit from scrolling
-  $(document).on('touchmove', function(e) { e.preventDefault(); });
   // Disable the right-click menu
   canvas.oncontextmenu = function() { return false; };
 }
@@ -187,6 +209,7 @@ var Base = Box.extend({
     this.team = this.fillStyle = team;
     this.lastSpawned = App.physicsTimeElapsed-2;
     this.dummySoldier = new Soldier(this.x, this.y);
+    this.soldiers = new Collection();
   },
   spawn: function(force) {
     if (!force && this.lastSpawned + this.delayBetweenSpawns > App.physicsTimeElapsed) {
@@ -194,6 +217,7 @@ var Base = Box.extend({
     }
     var s = this.dummySoldier;
     s.team = this.team;
+    s.base = this;
     for (var i = 0; i < spawnLocations.length; i++) {
       for (var j = 0; j < spawnLocations.length; j++) {
         if (i === 1 && j === 1) continue;
@@ -201,6 +225,7 @@ var Base = Box.extend({
         s.y = this.y + spawnLocations[j];
         if (!s.collides(soldiers)) {
           soldiers.add(s);
+          this.soldiers.add(s);
           this.dummySoldier = new Soldier(this.x, this.y);
           this.lastSpawned = App.physicsTimeElapsed;
           return;
@@ -223,17 +248,24 @@ var Soldier = Actor.extend({
   MOVEAMOUNT: 300,
   DEFAULT_WIDTH: 20,
   DEFAULT_HEIGHT: 20,
+  NEAR_THRESHOLD: 150,
+  SHOOT_DELAY: 1,
   team: Team.BLUE,
   selected: false,
   moveToX: 0,
   moveToY: 0,
   health: 100,
+  lastShot: 0,
   init: function() {
     this._super.apply(this, arguments);
+    this.lastShot = App.physicsTimeElapsed;
     var t = this;
     this.listen('mousedown.select touchstart.select', function(e) {
       // Left click only
       if (typeof e !== 'undefined' && e.type == 'mousedown' && e.which !== 1) {
+        return;
+      }
+      if (t.team != Team.BLUE) { // Only select own team
         return;
       }
       // Holding down CTRL allows selecting multiple soldiers.
@@ -247,7 +279,7 @@ var Soldier = Actor.extend({
     });
   },
   drawDefault: function(ctx, x, y, w, h) {
-    this.fillStyle = this.selected ? 'yellow' : (this.team == Team.BLUE ? 'lightBlue' : '#F48D55');
+    this.fillStyle = this.selected ? '#47AD98' : (this.team == Team.BLUE ? 'lightBlue' : '#F48D55');
     this._super.call(this, ctx, x, y, w, h);
 
     ctx.lineWidth = 1;
@@ -262,7 +294,7 @@ var Soldier = Actor.extend({
   drawHovered: function() {
     if (!this.selected) {
       var t = this.fillStyle;
-      this.fillStyle = this.team == Team.BLUE ? 'lightGreen' : '#F4AC30';
+      this.fillStyle = this.team == Team.BLUE ? '#82D8D4' : '#F4AC30';
       Actor.prototype.drawDefault.call(this, context, Math.round(this.x), Math.round(this.y), this.width, this.height);
       this.fillStyle = t;
     }
@@ -287,8 +319,61 @@ var Soldier = Actor.extend({
   damage: function(dmg) {
     this.health -= dmg;
   },
+  near: function(other) {
+    return (this.x-other.x)*(this.x-other.x) +
+           (this.y-other.y)*(this.y-other.y) <
+           this.NEAR_THRESHOLD*this.NEAR_THRESHOLD;
+  },
+  shoot: function(target) {
+    if (App.physicsTimeElapsed > this.lastShot + this.SHOOT_DELAY) {
+      this.lastShot = App.physicsTimeElapsed;
+      bullets.add(new Projectile(
+          this.x+this.width*0.5,
+          this.y+this.width*0.5,
+          this.team,
+          target
+      ));
+    }
+  },
   destroy: function() {
     this._super.apply(this, arguments);
     this.unlisten('.select');
+    this.base.soldiers.remove(this);
+  },
+});
+
+var Projectile = Actor.extend({
+  DEFAULT_WIDTH: 5,
+  DEFAULT_HEIGHT: 5,
+  STAY_IN_WORLD: false,
+  MOVEAMOUNT: Soldier.prototype.MOVEAMOUNT*1.5,
+  MAX_DISTANCE: 200,
+  DAMAGE: 20,
+  init: function(x, y, team, target) {
+    this._super.call(this, x, y);
+    this.x -= this.DEFAULT_WIDTH*0.5;
+    this.y -= this.DEFAULT_HEIGHT*0.5;
+    this.startX = this.x;
+    this.startY = this.y;
+    this.team = team;
+    this.target = target;
+  },
+  drawDefault: function(ctx, x, y, w, h) {
+    ctx.circle(x + w/2, y + h/2, (w+h)/4);
+  },
+  movedTooFar: function() {
+    return (this.startX-this.x)*(this.startX-this.x) +
+           (this.startY-this.y)*(this.startY-this.y) >
+           this.MAX_DISTANCE*this.MAX_DISTANCE;
+  },
+  move: function() {
+    var xDist = this.target.x+this.target.width*0.5 - this.x+this.width*0.5,
+        yDist = this.target.y+this.target.height*0.5 - this.y+this.height*0.5,
+        ratio = Math.abs(xDist/(xDist+yDist));
+    this.xVelocity = this.MOVEAMOUNT*xDist.sign()*ratio;
+    this.yVelocity = this.MOVEAMOUNT*yDist.sign()*(1-ratio);
+    // Apply thrust
+    this.x += this.xVelocity*App.physicsDelta;
+    this.y += this.yVelocity*App.physicsDelta;
   },
 });

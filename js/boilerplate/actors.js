@@ -622,7 +622,7 @@ var Actor = Box.extend({
   drawDefault: function(ctx, x, y, w, h) {
     x = x + w/2;
     y = y + h/2;
-    r = (w+h)/4;
+    var r = (w+h)/4;
 
     // Circle
     ctx.circle(x, y, r, this.fillStyle, 'black');

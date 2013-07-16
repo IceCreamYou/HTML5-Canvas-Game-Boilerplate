@@ -1,5 +1,5 @@
 /**
- * HTML5 Canvas Game Boilerplate 2.1.0-05072013
+ * HTML5 Canvas Game Boilerplate 2.1.0-16072013
  * Certain components copyright their respective authors.
  *
  * @author Isaac Sukin (http://www.isaacsukin.com/)
@@ -4341,7 +4341,8 @@ App.Events = {
    * @static
    */
   trigger: function() {
-    eventName = Array.prototype.shift.call(arguments);
+    var eventName = Array.prototype.shift.call(arguments);
+    var event = arguments[0];
     var e = _listeners[eventName]; // All listeners for this event
     if (e) {
       // Sort listeners by weight (lowest last, then we'll iterate in reverse).
@@ -4358,7 +4359,6 @@ App.Events = {
             App.Events.unlisten(e[i].object, eventName + '.' + e[i].namespace);
           }
           // Stop processing overlapping objects if propagation is stopped.
-          var event = Array.prototype.shift.call(arguments);
           if (event && event.isPropagationStopped && event.isPropagationStopped()) {
             break;
           }
@@ -5926,7 +5926,7 @@ var Actor = Box.extend({
   drawDefault: function(ctx, x, y, w, h) {
     x = x + w/2;
     y = y + h/2;
-    r = (w+h)/4;
+    var r = (w+h)/4;
 
     // Circle
     ctx.circle(x, y, r, this.fillStyle, 'black');

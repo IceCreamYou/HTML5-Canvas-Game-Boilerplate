@@ -201,7 +201,8 @@ App.Events = {
    * @static
    */
   trigger: function() {
-    eventName = Array.prototype.shift.call(arguments);
+    var eventName = Array.prototype.shift.call(arguments);
+    var event = arguments[0];
     var e = _listeners[eventName]; // All listeners for this event
     if (e) {
       // Sort listeners by weight (lowest last, then we'll iterate in reverse).
@@ -218,7 +219,6 @@ App.Events = {
             App.Events.unlisten(e[i].object, eventName + '.' + e[i].namespace);
           }
           // Stop processing overlapping objects if propagation is stopped.
-          var event = Array.prototype.shift.call(arguments);
           if (event && event.isPropagationStopped && event.isPropagationStopped()) {
             break;
           }
