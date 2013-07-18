@@ -19,7 +19,11 @@ var keys = {
 /**
  * An array of image file paths to pre-load.
  */
-var preloadables = ['images/grass2body.png'];
+var preloadables = [
+                    'images/grass2body.png',
+                    'images/bluebase.png',
+                    'images/redbase.png',
+                    ];
 
 // Teams
 var Team = {BLUE: 'blue', RED: 'red'};
@@ -34,9 +38,7 @@ function update() {
   enemyBase.spawn();
   soldiers.forEach(function(soldier) {
     // Move
-    if (soldier.selected) {
-      soldier.update(soldier.chooseBestDirection());
-    }
+    soldier.update(soldier.chooseBestDirection());
     // Get hit by projectiles
     bullets.forEach(function(bullet) {
       if (bullet.team != soldier.team && bullet.overlaps(soldier)) {
@@ -120,9 +122,11 @@ function setup(first) {
   bullets = new Collection();
 
   base = new Base(Team.BLUE, 400, 400);
+  base.src = 'images/bluebase.png';
   world.centerViewportAround(440, 440);
 
   enemyBase = new Base(Team.RED, 800, 800);//2720, 2720);
+  enemyBase.src = 'images/redbase.png';
 
   bkgd = new Layer();
   bkgd.context.drawPattern('images/grass2body.png', 0, 0, world.width, world.height);
@@ -153,7 +157,7 @@ function setup(first) {
         if (soldier.selected) {
           var xDiff = soldier.x - midX,
               yDiff = soldier.y - midY;
-          soldier.moveTo(Mouse.Coords.x + world.xOffset + xDiff, Mouse.Coords.y + world.yOffset + yDiff);
+          soldier.moveTo(Mouse.Coords.worldX() + xDiff, Mouse.Coords.worldY() + yDiff);
         }
       });
     }
@@ -216,7 +220,7 @@ function setup(first) {
   canvas.oncontextmenu = function() { return false; };
 }
 
-var spawnLocations = [-40, 30, 100];
+var spawnLocations = [-25, 40, 105];
 var Base = Box.extend({
   team: Team.BLUE,
   lastSpawned: 0,
@@ -248,20 +252,46 @@ var Base = Box.extend({
           this.dummySoldier = new Soldier(this.x, this.y);
           this.lastSpawned = App.physicsTimeElapsed;
           this.canSpawn = true;
+          s.moveTo(s.x, s.y);
+          s.x = this.x + this.width * 0.5 - s.width * 0.5;
+          s.y = this.x + this.height * 0.5 - s.height * 0.5;
           return;
         }
       }
     }
     this.canSpawn = false;
   },
-  drawDefault: function(ctx, x, y, w, h) {
-    this._super.apply(this, arguments);
-    // TODO Make this aware of the soldiers' location
+  draw: function(ctx, smooth) {
+    ctx = ctx || context;
+    if (typeof smooth === 'undefined') {
+      smooth = true;
+    }
+    ctx.save();
     ctx.fillStyle = 'gray';
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1;
+    var x = this.x, y = this.y, w = this.width, h = this.height;
+    if (smooth) {
+      x = Math.round(x);
+      y = Math.round(y);
+    }
+    if (this.radians) {
+      ctx.translate(x+w/2, y+h/2);
+      ctx.rotate(this.radians);
+      ctx.translate(-w/2-x, -h/2-y);
+    }
+    if (this.src) {
+      ctx.drawImage(this.src, x, y, w, h);
+    }
+    else {
+      this.drawDefault(ctx, x, y, w, h);
+    }
     var percentComplete = this.canSpawn ?
         (App.physicsTimeElapsed - this.lastSpawned) / this.delayBetweenSpawns :
           1;
-    ctx.fillRect(x+w*0.1, y+h*0.8, w*0.8*percentComplete, h*0.1);
+      ctx.fillRect(x+w*0.1, y+h*0.9, w*0.8*percentComplete, h*0.075);
+      ctx.strokeRect(x+w*0.1, y+h*0.9, w*0.8*percentComplete, h*0.075);
+    ctx.restore();
   },
 });
 

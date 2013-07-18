@@ -39,6 +39,8 @@ features, or dig deeper into the documentation:
  - **Examples**
      - [Mario-style platformer](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js))
+     - [Command & Conquer-style RTS](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/cnc.html)
+       ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/cnc.js))
      - [Paint](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
        ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/paint.js))
      - [Snake](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/snake.html)
