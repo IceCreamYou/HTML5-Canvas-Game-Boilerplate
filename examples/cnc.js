@@ -93,6 +93,16 @@ function draw() {
  *   been reset and is starting over.
  */
 function setup(first) {
+  if (first) {
+    $('#show-instructions').click(function() {
+      $('#instructions').show();
+    });
+    $('#instructions-inner').click(function(e) { e.stopPropagation(); });
+    $('#instructions').click(function() {
+      $('#instructions').hide();
+    });
+  }
+
   world.resize(3200, 3200);
 
   Mouse.Zoom.enable(true);

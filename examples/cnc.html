@@ -20,6 +20,47 @@
   <link rel="stylesheet" media="all" href="../css/utilities.css" />
   <link rel="stylesheet" media="screen" href="../css/media.css" />
   <link rel="stylesheet" media="print" href="../css/print.css" />
+  <style>
+    #show-instructions {
+      background-color: #333333;
+      box-shadow: 1px -1px 2px 2px #555555 inset, -1px 1px 2px 2px #111111 inset;
+      color: #DDDDDD;
+      cursor: pointer;
+      left: 10px;
+      padding: 7px 12px;
+      position: absolute;
+      top: 10px;
+    }
+    #show-instructions:hover {
+      color: #EEEEEE;
+    }
+    #instructions {
+      background-color: rgba(41, 41, 41, 0.7);
+      bottom: 0;
+      cursor: pointer;
+      display: none;
+      left: 0;
+      position: fixed;
+      right: 0;
+      top: 0;
+    }
+    #instructions-inner {
+      background-color: rgba(41, 41, 41, 0.7);
+      border: 2px solid #333333;
+      box-shadow: 1px -1px 2px 2px #555555 inset, -1px 1px 2px 2px #111111 inset;
+      color: #DDDDDD;
+      cursor: default;
+      font-size: 20px;
+      height: 400px;
+      margin: -200px auto 0;
+      overflow-y: auto;
+      padding: 30px;
+      position: relative;
+      text-align: center;
+      top: 50%;
+      width: 600px;
+    }
+  </style>
 </head>
 <body>
   <!-- Prompt IE 6/7/8 users to install Chrome Frame.
@@ -42,6 +83,17 @@
       </canvas>
     </div> <!-- /content -->
   </div> <!-- /main -->
+  <div id="show-instructions">Show instructions</div>
+  <div id="instructions">
+    <div id="instructions-inner">
+      <p>Click on blue soldiers to select them.</p>
+      <p>Click-and-drag on the grass or CTRL-click to select multiple soldiers at once.</p>
+      <p>CTRL-click again or click on the grass to deselect all soldiers.</p>
+      <p>Right-click on the grass to move.</p>
+      <p>Soldiers will automatically attack different-colored soldiers when they are nearby.</p>
+      <p>Scroll the mouse wheel to zoom in and out. Move the mouse near the edges of the window to scroll the viewport.</p>
+    </div>
+  </div>
 
   <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
