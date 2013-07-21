@@ -1,5 +1,5 @@
 /**
- * HTML5 Canvas Game Boilerplate 2.1.0-16072013
+ * HTML5 Canvas Game Boilerplate 2.1.0-21072013
  * Certain components copyright their respective authors.
  *
  * @author Isaac Sukin (http://www.isaacsukin.com/)
@@ -3060,13 +3060,10 @@ function Layer(options) {
     var $d = jQuery('<div></div>');
     var o = $canvas.offset();
     $d.css({
-      height: '100%',
       left: o.left,
-      overflow: 'hidden',
       pointerEvents: 'none',
       position: 'absolute',
       top: o.top,
-      width: '100%',
     });
     var $c = jQuery(this.canvas);
     $c.css({
@@ -3890,6 +3887,8 @@ Mouse.Scroll = (function() {
   var enabled = false;
   // If enabled is true, then whether the mouse is over the canvas
   var hovered = false;
+  // Whether the mouse is pressed down over the canvas
+  var mousedown = false;
   // Whether we're currently scrolling
   var translating = false;
   // How far we scrolled last time
@@ -3994,7 +3993,6 @@ Mouse.Scroll = (function() {
           jQuery(document).trigger('mousescrolloff');
         }
       });
-      var mousedown = false;
       $canvas.on('mousedown.translate touchstart.translate', function() {
         mousedown = true;
       });
@@ -5361,8 +5359,6 @@ var Box = Class.extend({
      *   A fillStyle to use when drawing the Box if no `src` is specified.
      */
     this.fillStyle = fillStyle || 'black';
-
-    this.draw();
   },
   /**
    * The default width of a Box.
@@ -5794,7 +5790,8 @@ var Actor = Box.extend({
    * slides around. Higher means more movement control (less sliding).
    *
    * If you want specific surfaces to feel slippery, set this when the Actor
-   * moves onto and off of those surfaces.
+   * moves onto and off of those surfaces. One way to do this is using the
+   * {@link Box#stoodOn stoodOn() method}.
    *
    * Numeric values are interpreted as damping factors. If this is null, full
    * damping is applied (the Actor stops and turns on a dime).

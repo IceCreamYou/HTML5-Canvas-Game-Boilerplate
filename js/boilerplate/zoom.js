@@ -69,6 +69,7 @@ Mouse.Zoom = {
     Mouse.Zoom.enabled = true;
     // wheel is a standard (IE and FF); mousewheel is legacy (Chrome)
     $canvas.on('wheel.zoom mousewheel.zoom', function(e) {
+      e.preventDefault();
       // Avoid overzealous scrolling causing unexpected zooming
       if (lastZoom + Mouse.Zoom.ZOOM_TIMEOUT > App.physicsTimeElapsed) return;
       if (++numScrollEvents < Mouse.Zoom.MIN_SCROLL_EVENTS) return;

@@ -57,8 +57,6 @@ var Box = Class.extend({
      *   A fillStyle to use when drawing the Box if no `src` is specified.
      */
     this.fillStyle = fillStyle || 'black';
-
-    this.draw();
   },
   /**
    * The default width of a Box.
@@ -490,7 +488,8 @@ var Actor = Box.extend({
    * slides around. Higher means more movement control (less sliding).
    *
    * If you want specific surfaces to feel slippery, set this when the Actor
-   * moves onto and off of those surfaces.
+   * moves onto and off of those surfaces. One way to do this is using the
+   * {@link Box#stoodOn stoodOn() method}.
    *
    * Numeric values are interpreted as damping factors. If this is null, full
    * damping is applied (the Actor stops and turns on a dime).

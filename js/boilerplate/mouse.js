@@ -197,6 +197,8 @@ Mouse.Scroll = (function() {
   var enabled = false;
   // If enabled is true, then whether the mouse is over the canvas
   var hovered = false;
+  // Whether the mouse is pressed down over the canvas
+  var mousedown = false;
   // Whether we're currently scrolling
   var translating = false;
   // How far we scrolled last time
@@ -301,7 +303,6 @@ Mouse.Scroll = (function() {
           jQuery(document).trigger('mousescrolloff');
         }
       });
-      var mousedown = false;
       $canvas.on('mousedown.translate touchstart.translate', function() {
         mousedown = true;
       });

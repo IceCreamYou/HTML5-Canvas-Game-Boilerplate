@@ -246,13 +246,10 @@ function Layer(options) {
     var $d = jQuery('&lt;div&gt;&lt;/div&gt;');
     var o = $canvas.offset();
     $d.css({
-      height: '100%',
       left: o.left,
-      overflow: 'hidden',
       pointerEvents: 'none',
       position: 'absolute',
       top: o.top,
-      width: '100%',
     });
     var $c = jQuery(this.canvas);
     $c.css({
