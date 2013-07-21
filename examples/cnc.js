@@ -18,7 +18,7 @@ var preloadables = [
                     ];
 
 // Globals initialized in setup()
-var Teams, myTeam, dragOverlay, soldiers, bullets, bkgd;
+var Teams, myTeam, soldiers, bullets, bkgd;
 
 // Seconds between spawning a soldier for each base
 var SPAWN_DELAY = 5;
@@ -100,7 +100,6 @@ function draw() {
   });
   soldiers.draw();
   bullets.draw();
-  dragOverlay.draw();
 }
 
 /**
@@ -114,7 +113,7 @@ function setup(first) {
   if (first) {
     // Make the world big enough to demo mouse scrolling.
     // The world must be resized before anything is placed in it.
-    world.resize(Math.max(1600, $(window).innerWidth()+480), Math.max(1200, $(window).innerHeight()+480));
+    world.resize(Math.max(1600, $(window).innerWidth()+640), Math.max(1200, $(window).innerHeight()+480));
   }
 
   // Set up the teams
@@ -153,9 +152,6 @@ function setup(first) {
     $('#instructions').hide();
   });
 
-  // Enable zooming, and display the zoom level indicator
-  Mouse.Zoom.enable(true);
-
   // Allow the mouse to scroll the viewport
   Mouse.Scroll.enable();
   Mouse.Scroll.setThreshold(0.3);
@@ -166,7 +162,7 @@ function setup(first) {
   bkgd.context.drawPattern('images/grass2body.png', 0, 0, world.width, world.height);
 
   // Set up the drag-to-select rectangle.
-  dragOverlay = setupDragOverlay(bkgd, function(x, y, w, h) {
+  setupDragOverlay(bkgd, function(x, y, w, h) {
     // Position a box where the drag rectangle was
     var selectBox = new Box(x, y, w, h);
     // See which soldiers are inside the box, and then select the ones that are
@@ -177,6 +173,9 @@ function setup(first) {
       }
     }
   });
+
+  // Enable zooming, and display the zoom level indicator
+  Mouse.Zoom.enable(true);
 
   // Respond to clicks on the background
   App.Events.listen(bkgd, 'mousedown.bkgd, touchstart.bkgd', function(e) {
@@ -456,7 +455,7 @@ var Projectile = Actor.extend({
     // Go directly towards the target.
     var xDist = this.target.x+this.target.width*0.5 - this.x+this.width*0.5,
         yDist = this.target.y+this.target.height*0.5 - this.y+this.height*0.5,
-        ratio = Math.abs(xDist/(xDist+yDist));
+        ratio = Math.abs(xDist)/(Math.abs(xDist)+Math.abs(yDist));
     this.xVelocity = this.MOVEAMOUNT*xDist.sign()*ratio;
     this.yVelocity = this.MOVEAMOUNT*yDist.sign()*(1-ratio);
   },
@@ -489,6 +488,7 @@ function setupDragOverlay(bkgd, stopDraggingCallback) {
   dragOverlay.context.fillStyle = 'rgba(255, 240, 40, 0.4)';
   dragOverlay.context.strokeStyle = 'rgba(255, 240, 40, 1.0)';
   dragOverlay.context.lineWidth = 2;
+  dragOverlay.positionOverCanvas();
 
   // Whether we're currently drag-selecting
   var mousedown = false;
@@ -503,8 +503,8 @@ function setupDragOverlay(bkgd, stopDraggingCallback) {
     if (mousedown) return;
     mousedown = true;
     // Start drawing the overlay rect
-    dragOverlay.startX = Mouse.Coords.x;
-    dragOverlay.startY = Mouse.Coords.y;
+    dragOverlay.startX = Mouse.Coords.physicalX;
+    dragOverlay.startY = Mouse.Coords.physicalY;
   }, 1000); // Set the weight below everything else so we can cancel bubbling
   $canvas.on('mousemove.dragselect touchmove.dragselect', function(e) {
     if (mousedown) {
@@ -512,13 +512,13 @@ function setupDragOverlay(bkgd, stopDraggingCallback) {
       dragOverlay.context.clear();
       dragOverlay.context.fillRect(
           dragOverlay.startX, dragOverlay.startY,
-          Mouse.Coords.x - dragOverlay.startX,
-          Mouse.Coords.y - dragOverlay.startY
+          Mouse.Coords.physicalX - dragOverlay.startX,
+          Mouse.Coords.physicalY - dragOverlay.startY
       );
       dragOverlay.context.strokeRect(
           dragOverlay.startX, dragOverlay.startY,
-          Mouse.Coords.x - dragOverlay.startX,
-          Mouse.Coords.y - dragOverlay.startY
+          Mouse.Coords.physicalX - dragOverlay.startX,
+          Mouse.Coords.physicalY - dragOverlay.startY
       );
     }
   });
@@ -527,10 +527,10 @@ function setupDragOverlay(bkgd, stopDraggingCallback) {
     if (mousedown) {
       // Stop drawing the overlay rect
       dragOverlay.context.clear();
-      var x = Math.min(dragOverlay.startX, Mouse.Coords.x) + world.xOffset,
-          y = Math.min(dragOverlay.startY, Mouse.Coords.y) + world.yOffset,
-          w = Math.abs(Mouse.Coords.x - dragOverlay.startX),
-          h = Math.abs(Mouse.Coords.y - dragOverlay.startY);
+      var x = Math.round(Math.min(dragOverlay.startX, Mouse.Coords.physicalX) * world._actualXscale) + world.xOffset,
+          y = Math.round(Math.min(dragOverlay.startY, Mouse.Coords.physicalY) * world._actualYscale) + world.yOffset,
+          w = Math.round(Math.abs(Mouse.Coords.physicalX - dragOverlay.startX) * world._actualXscale),
+          h = Math.round(Math.abs(Mouse.Coords.physicalY - dragOverlay.startY) * world._actualYscale);
       if (w && h) {
         // Do something with the selection
         stopDraggingCallback(x, y, w, h);
