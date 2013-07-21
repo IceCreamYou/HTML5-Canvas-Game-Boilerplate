@@ -7,7 +7,7 @@
   <title>Site</title>
 
   <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=800px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Display full-screen in standalone mode -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -30,6 +30,7 @@
       padding: 7px 12px;
       position: absolute;
       top: 10px;
+      z-index: 1;
     }
     #show-instructions:hover {
       color: #EEEEEE;
@@ -40,22 +41,24 @@
       cursor: pointer;
       display: none;
       left: 0;
-      position: fixed;
+      position: absolute;
       right: 0;
       top: 0;
+      z-index: 51;
     }
     #instructions-inner {
       background-color: rgba(41, 41, 41, 0.7);
       border: 2px solid #333333;
-      box-shadow: 1px -1px 2px 2px #555555 inset, -1px 1px 2px 2px #111111 inset;
+      box-shadow: 1px -1px 3px 1px #555555 inset, -1px 1px 3px 1px #111111 inset;
       color: #DDDDDD;
       cursor: default;
       font-size: 20px;
       height: 400px;
-      margin: -200px auto 0;
+      left: 50%;
+      margin: -200px 0 0 -300px;
       overflow-y: auto;
       padding: 30px;
-      position: relative;
+      position: absolute;
       text-align: center;
       top: 50%;
       width: 600px;
