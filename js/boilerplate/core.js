@@ -190,7 +190,7 @@ App.setCanvas = function(c) {
     // Reset the existing canvas if there is one.
     if (typeof world !== 'undefined') {
       context.translate(world.xOffset, world.yOffset);
-      world.scaleResolution(1/world.scale);
+      world.scaleResolution(1);
     }
     canvas = c;
     $canvas = jQuery(canvas);
@@ -269,7 +269,7 @@ App.reset = function(first) {
   // If the world already exists, reset it to the origin.
   if (typeof world !== 'undefined') {
     context.translate(world.xOffset, world.yOffset);
-    world.scaleResolution(1/world.scale);
+    world.scaleResolution(1);
   }
 
   // Set up the world.

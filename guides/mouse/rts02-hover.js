@@ -12,9 +12,9 @@ var keys = {
  * An array of image file paths to pre-load.
  */
 var preloadables = [
-                    'images/grass2body.png',
-                    'images/bluebase.png',
-                    'images/redbase.png',
+                    '../../examples/images/grass2body.png',
+                    '../../examples/images/bluebase.png',
+                    '../../examples/images/redbase.png',
                     ];
 
 // Globals initialized in setup()
@@ -111,23 +111,22 @@ function draw() {
  */
 function setup(first) {
   if (first) {
-    // Make the world big enough to demo mouse scrolling.
     // The world must be resized before anything is placed in it.
-    world.resize(Math.max(1600, $(window).innerWidth()+640), Math.max(1200, $(window).innerHeight()+480));
+    world.resize(3200, 2400);
   }
 
   // Set up the teams
   Teams = new Collection();
-  Teams.add(myTeam = new Team(400, 400, {
+  Teams.add(myTeam = new Team(200, 200, {
     color: 'blue',
-    baseImage: 'images/bluebase.png',
+    baseImage: '../../examples/images/bluebase.png',
     soldierColor: 'lightBlue',
     soldierHoverColor: '#82D8D4',
     soldierSelectedColor: '#47AD98',
   }));
-  Teams.add(new Team(world.width-480, world.height-480, {
+  Teams.add(new Team(600, 500, {
     color: 'red',
-    baseImage: 'images/redbase.png',
+    baseImage: '../../examples/images/redbase.png',
     soldierColor: '#F48D55',
     soldierHoverColor: '#F4AC30',
   }));
@@ -143,15 +142,6 @@ function setup(first) {
   // Don't bind events multiple times if we've reset
   if (!first) return;
 
-  // Toggle instructions
-  $('#show-instructions').click(function() {
-    $('#instructions').show();
-  });
-  $('#instructions-inner').click(function(e) { e.stopPropagation(); });
-  $('#instructions').click(function() {
-    $('#instructions').hide();
-  });
-
   // Allow the mouse to scroll the viewport
   Mouse.Scroll.enable();
   Mouse.Scroll.setThreshold(0.3);
@@ -159,42 +149,10 @@ function setup(first) {
 
   // Set up the background layer and tile grass over it
   bkgd = new Layer();
-  bkgd.context.drawPattern('images/grass2body.png', 0, 0, world.width, world.height);
-
-  // Set up the drag-to-select rectangle.
-  setupDragOverlay(bkgd, function(x, y, w, h) {
-    // Position a box where the drag rectangle was
-    var selectBox = new Box(x, y, w, h);
-    // See which soldiers are inside the box, and then select the ones that are
-    var toSelect = selectBox.collides(myTeam.soldiers, true);
-    if (toSelect) {
-      for (var i = 0; i < toSelect.length; i++) {
-        toSelect[i].toggleSelected();
-      }
-    }
-  });
+  bkgd.context.drawPattern('../../examples/images/grass2body.png', 0, 0, world.width, world.height);
 
   // Enable zooming, and display the zoom level indicator
   Mouse.Zoom.enable(true);
-
-  // Respond to clicks on the background
-  App.Events.listen(bkgd, 'mousedown.bkgd, touchstart.bkgd', function(e) {
-    // Right click -> Move
-    if (e.type == 'mousedown' && e.which === 3) {
-      moveSelectedSoldiersToMouse();
-    }
-    // Touch or left click -> Deselect all
-    else {
-      // Holding down CTRL allows selecting multiple soldiers.
-      if (!jQuery.hotkeys.areKeysDown('ctrl')) {
-        myTeam.soldiers.forEach(function(soldier) {
-          soldier.selected = false;
-        });
-      }
-    }
-  }, 1000); // Set the weight below everything else so we can cancel bubbling
-  // Disable the right-click menu
-  canvas.oncontextmenu = function() { return false; };
 }
 
 /**
@@ -342,24 +300,6 @@ var Soldier = Actor.extend({
     this._super.call(this, x, y);
     this.team = team;
     this.lastShot = App.physicsTimeElapsed;
-    if (team != myTeam) return; // Only allow selecting the player's team
-    var t = this;
-    // Allow selecting soldiers by clicking on them
-    this.listen('mousedown.select touchstart.select', function(e) {
-      // Left click or touch only
-      if (typeof e !== 'undefined' && e.type == 'mousedown' && e.which !== 1) {
-        return;
-      }
-      // Holding down CTRL allows selecting multiple soldiers.
-      if (!jQuery.hotkeys.areKeysDown('ctrl')) {
-        t.team.soldiers.forEach(function(soldier) {
-          soldier.selected = false;
-        });
-      }
-      t.toggleSelected.call(t);
-      // Don't bubble the event
-      e.stopPropagation();
-    });
   },
   /**
    * Draw a soldier with colors and a health indicator.
@@ -428,7 +368,6 @@ var Soldier = Actor.extend({
   },
   destroy: function() {
     this._super.apply(this, arguments);
-    this.unlisten('.select');
     this.team.soldiers.remove(this);
   },
 });
@@ -474,114 +413,6 @@ var Projectile = Actor.extend({
   // Don't slow down.
   dampVelocity: function() {},
 });
-
-/**
- * Create an overlay to track mouse-drag selection.
- *
- * @param bkgd The object which should listen for click-and-dragging.
- * @param stopDraggingCallback A function to call when dragging stops.
- * @return The drag-overlay Layer.
- */
-function setupDragOverlay(bkgd, stopDraggingCallback) {
-  // Set up a layer to hold the drag-and-drop rectangle.
-  var dragOverlay = new Layer({relative: 'canvas'});
-  dragOverlay.context.fillStyle = 'rgba(255, 240, 40, 0.4)';
-  dragOverlay.context.strokeStyle = 'rgba(255, 240, 40, 1.0)';
-  dragOverlay.context.lineWidth = 2;
-  dragOverlay.positionOverCanvas();
-
-  // Whether we're currently drag-selecting
-  var mousedown = false;
-
-  // Respond to pointer events
-  App.Events.listen(bkgd, 'mousedown.bkgd, touchstart.bkgd', function(e) {
-    // Left click only
-    if (e.type == 'mousedown' && e.which !== 1) return;
-    // Single-touch only so we don't interfere with gestures
-    if (e.type == 'touchstart' && (e.touches || e.originalEvent.touches).length > 1) return;
-    // Only listen to the first mousedown in a gesture
-    if (mousedown) return;
-    mousedown = true;
-    // Start drawing the overlay rect
-    dragOverlay.startX = Mouse.Coords.physicalX;
-    dragOverlay.startY = Mouse.Coords.physicalY;
-  }, 1000); // Set the weight below everything else so we can cancel bubbling
-  $canvas.on('mousemove.dragselect touchmove.dragselect', function(e) {
-    if (mousedown) {
-      // Draw the overlay rect
-      dragOverlay.context.clear();
-      dragOverlay.context.fillRect(
-          dragOverlay.startX, dragOverlay.startY,
-          Mouse.Coords.physicalX - dragOverlay.startX,
-          Mouse.Coords.physicalY - dragOverlay.startY
-      );
-      dragOverlay.context.strokeRect(
-          dragOverlay.startX, dragOverlay.startY,
-          Mouse.Coords.physicalX - dragOverlay.startX,
-          Mouse.Coords.physicalY - dragOverlay.startY
-      );
-    }
-  });
-  $canvas.on('mouseup.dragselect mouseleave.dragselect touchend.dragselect', function(e) {
-    if (e.type == 'mouseup' && e.which !== 1) return; // left click or touch only
-    if (mousedown) {
-      // Stop drawing the overlay rect
-      dragOverlay.context.clear();
-      var x = Math.round(Math.min(dragOverlay.startX, Mouse.Coords.physicalX) * world._actualXscale) + world.xOffset,
-          y = Math.round(Math.min(dragOverlay.startY, Mouse.Coords.physicalY) * world._actualYscale) + world.yOffset,
-          w = Math.round(Math.abs(Mouse.Coords.physicalX - dragOverlay.startX) * world._actualXscale),
-          h = Math.round(Math.abs(Mouse.Coords.physicalY - dragOverlay.startY) * world._actualYscale);
-      if (w && h) {
-        // Do something with the selection
-        stopDraggingCallback(x, y, w, h);
-      }
-    }
-    mousedown = false;
-  });
-
-  return dragOverlay;
-}
-
-/**
- * Tell all selected soldiers to move towards the mouse.
- */
-function moveSelectedSoldiersToMouse() {
-  var w = 0, h = 0, selected = [];
-  // Get information about the selected soldiers.
-  myTeam.soldiers.forEach(function(soldier) {
-    if (soldier.selected) {
-      selected.push(soldier);
-      w += soldier.width;
-      h += soldier.height;
-    }
-  });
-  var numSelected = selected.length, k = -1;
-  if (!numSelected) return;
-  // Build a grid of evenly spaced soldiers.
-  var sqrt = Math.sqrt(numSelected),
-      rows = Math.ceil(sqrt),
-      cols = Math.ceil(sqrt),
-      x = Mouse.Coords.worldX(),
-      y = Mouse.Coords.worldY(),
-      iw = Math.ceil(w / numSelected),
-      ih = Math.ceil(h / numSelected),
-      wg = iw*1.2,
-      hg = ih*1.2;
-  if ((rows-1)*cols >= numSelected) rows--;
-  w = iw * cols + wg * (cols-1);
-  h = ih * rows + hg * (rows-1);
-  // Place the grid over the mouse and send soldiers there.
-  for (var i = 0; i < rows; i++) {
-    for (var j = 0; j < cols; j++) {
-      var s = selected[++k];
-      if (s) {
-        var mx = x + j * (iw+wg) - w * 0.5 + s.width * 0.5,
-            my = y + i * (ih+hg) - h * 0.5 + s.height * 0.5;
-        s.moveTo(mx, my);
-      }
-    }
-  }
-}
 
 /**
  * Draw a progress bar.

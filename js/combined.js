@@ -1,5 +1,5 @@
 /**
- * HTML5 Canvas Game Boilerplate 2.1.0-21072013
+ * HTML5 Canvas Game Boilerplate 2.1.0-22072013
  * Certain components copyright their respective authors.
  *
  * @author Isaac Sukin (http://www.isaacsukin.com/)
@@ -1526,7 +1526,7 @@ App.setCanvas = function(c) {
     // Reset the existing canvas if there is one.
     if (typeof world !== 'undefined') {
       context.translate(world.xOffset, world.yOffset);
-      world.scaleResolution(1/world.scale);
+      world.scaleResolution(1);
     }
     canvas = c;
     $canvas = jQuery(canvas);
@@ -1605,7 +1605,7 @@ App.reset = function(first) {
   // If the world already exists, reset it to the origin.
   if (typeof world !== 'undefined') {
     context.translate(world.xOffset, world.yOffset);
-    world.scaleResolution(1/world.scale);
+    world.scaleResolution(1);
   }
 
   // Set up the world.
@@ -3055,6 +3055,9 @@ function Layer(options) {
    * However, since it is literally in front of the primary canvas, any other
    * Layers that need to be drawn in front of this one must also be positioned
    * over the primary canvas instead of drawn directly onto it.
+   *
+   * @return {HTMLElement}
+   *   A jQuery representation of a div containing the Layer's canvas.
    */
   this.positionOverCanvas = function() {
     var $d = jQuery('<div></div>');
@@ -3084,8 +3087,7 @@ function Layer(options) {
    * Clicking the overlay will remove it.
    *
    * @return {HTMLElement}
-   *   A jQuery representation of a div containing the canvas holding the
-   *   Layer.
+   *   A jQuery representation of a div containing the Layer's canvas.
    */
   this.showCanvasOverlay = function() {
     stopAnimating();

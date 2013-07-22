@@ -12,9 +12,9 @@ var keys = {
  * An array of image file paths to pre-load.
  */
 var preloadables = [
-                    'images/grass2body.png',
-                    'images/bluebase.png',
-                    'images/redbase.png',
+                    '../../examples/images/grass2body.png',
+                    '../../examples/images/bluebase.png',
+                    '../../examples/images/redbase.png',
                     ];
 
 // Globals initialized in setup()
@@ -111,23 +111,22 @@ function draw() {
  */
 function setup(first) {
   if (first) {
-    // Make the world big enough to demo mouse scrolling.
     // The world must be resized before anything is placed in it.
-    world.resize(Math.max(1600, $(window).innerWidth()+640), Math.max(1200, $(window).innerHeight()+480));
+    world.resize(3200, 2400);
   }
 
   // Set up the teams
   Teams = new Collection();
-  Teams.add(myTeam = new Team(400, 400, {
+  Teams.add(myTeam = new Team(200, 200, {
     color: 'blue',
-    baseImage: 'images/bluebase.png',
+    baseImage: '../../examples/images/bluebase.png',
     soldierColor: 'lightBlue',
     soldierHoverColor: '#82D8D4',
     soldierSelectedColor: '#47AD98',
   }));
-  Teams.add(new Team(world.width-480, world.height-480, {
+  Teams.add(new Team(600, 500, {
     color: 'red',
-    baseImage: 'images/redbase.png',
+    baseImage: '../../examples/images/redbase.png',
     soldierColor: '#F48D55',
     soldierHoverColor: '#F4AC30',
   }));
@@ -143,15 +142,6 @@ function setup(first) {
   // Don't bind events multiple times if we've reset
   if (!first) return;
 
-  // Toggle instructions
-  $('#show-instructions').click(function() {
-    $('#instructions').show();
-  });
-  $('#instructions-inner').click(function(e) { e.stopPropagation(); });
-  $('#instructions').click(function() {
-    $('#instructions').hide();
-  });
-
   // Allow the mouse to scroll the viewport
   Mouse.Scroll.enable();
   Mouse.Scroll.setThreshold(0.3);
@@ -159,7 +149,7 @@ function setup(first) {
 
   // Set up the background layer and tile grass over it
   bkgd = new Layer();
-  bkgd.context.drawPattern('images/grass2body.png', 0, 0, world.width, world.height);
+  bkgd.context.drawPattern('../../examples/images/grass2body.png', 0, 0, world.width, world.height);
 
   // Set up the drag-to-select rectangle.
   setupDragOverlay(bkgd, function(x, y, w, h) {

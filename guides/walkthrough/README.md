@@ -524,11 +524,13 @@ scrolling.
 ## Exercises for the Reader
 
 We've now gone through all the rapid prototyping tools that are useful in
-setting up a platformer game. There are some features that are missing from the
-game we've built compared to the Mario games, most notably enemies and coins.
-These can be written with the tools we've already encountered, so they're not
-covered here for brevity. It's a good exercise to implement these features
-yourself. If you get stuck or want to see the end product, you can
+setting up a platformer game. (We have not used every feature that each tool
+provides &mdash; for that, take a look at the full documentation.) There are
+still some features that are missing from the game we've built compared to the
+Mario games, most notably enemies and coins. These can be written with the
+tools we've already encountered, so they're not covered here for brevity. It's
+a good exercise to implement these features yourself. If you get stuck or want
+to see the end product, you can
 [play with](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html) or
 [read the code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js)
 of a more complete example.
@@ -549,7 +551,8 @@ to get more familiar with them. Also feel free to dig through the code; it's
 well-documented.
 
 The one major feature set we didn't cover is mouse interactions. There is a lot
-to cover there, so it will be addressed in a separate tutorial.
+to cover there, so it is addressed in a
+[separate tutorial](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/mouse).
 
 Congratulations! Go
 [get the code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate) if

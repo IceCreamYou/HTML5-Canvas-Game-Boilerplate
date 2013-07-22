@@ -7,6 +7,12 @@
         "url": "walkthrough",
         "title": "Walkthrough: Basics",
         "description": "Learn the rapid prototyping tools H5CGB provides by building a Mario-style platformer game."
+      },
+      {
+        "name": "mouse",
+        "url": "mouse",
+        "title": "Mouse Interaction",
+        "description": "Learn the H5CGB rapid prototyping tools for mouse interaction by building a C&C-style RTS game."
       }
     ]
   }
