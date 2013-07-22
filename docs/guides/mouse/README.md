@@ -309,7 +309,7 @@ Other than the fact that this is a lot of code, there are really only two
 things to note here. First, we are displaying the selection box in a `Layer`
 that is positioned over the canvas; we could also have just created a `Box`
 inside the world, set its coordinates to `Mouse.Coords.worldX()` /
-`Mouse.Coords.worldY()`, and changed its `width` and `height as we dragged.
+`Mouse.Coords.worldY()`, and changed its `width` and `height` as we dragged.
 Second, there are some complicated calculations happening at the end to
 determine the parameters to pass to the `stopDraggingCallback`. This is a
 conversion from on-screen pixels to in-world coordinates, taking into account

@@ -1,3 +1,6 @@
+// There is a tutorial on how to build this example game at
+// http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/mouse
+
 /**
  * Keywords for Actor#update() that move the actor in the specified direction.
  */
