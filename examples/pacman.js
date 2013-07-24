@@ -19,7 +19,7 @@ var keys = {
 var preloadables = [];
 
 // Constants
-var UNIT = Math.max(30, (jQuery(window).innerHeight()/22)|0), // Size of each square in the map
+var UNIT = 30, // Size of each square in the map
     WIGGLE = 1, // Room between Pacman and the wall
     PAUSE = 1500, // Pause between levels and after death
     INITIAL_LIVES = 3,
@@ -131,11 +131,17 @@ function draw() {
  */
 function setup(first) {
   // Scale the canvas proportionately to fill the window as much as possible.
-  if (first) {
-    // 19 and 22 are determined by the layout in setupMap().
-    canvas.width = world.width = UNIT * 19;
-    canvas.height = world.height = UNIT * 22;
-  }
+  UNIT = Math.max(30, (jQuery(window).innerHeight()/22)|0);
+  console.log(UNIT, jQuery(window).innerHeight());
+  // 19 and 22 are determined by the layout in setupMap().
+  canvas.width = UNIT * 19;
+  canvas.height = UNIT * 22;
+  world.width = canvas.width;
+  world.height = canvas.height;
+  $canvas.css({
+    height: canvas.height,
+    width: canvas.width,
+  });
 
   // Initialize the map (walls and dots/powerups).
   // Make sure not to reset dots/powerups when losing a life.
