@@ -573,6 +573,11 @@ function moveSelectedSoldiersToMouse() {
   if ((rows-1)*cols >= numSelected) rows--;
   w = iw * cols + wg * (cols-1);
   h = ih * rows + hg * (rows-1);
+  // Sort by location to avoid soldiers getting in each others' way.
+  selected.sort(function(a, b) {
+    var ax = a.x.round(-1), ay = a.y.round(-1), bx = b.x.round(-1), by = b.y.round(-1);
+    return ay - by || ax - bx;
+  });
   // Place the grid over the mouse and send soldiers there.
   for (var i = 0; i < rows; i++) {
     for (var j = 0; j < cols; j++) {
