@@ -22,8 +22,7 @@ and associated tutorials are listed below.
    The classic paint program; select different colors or shapes and draw onto
    the canvas. A good illustration of mobile support, HTML menus,
    mouse tracking, and Layers
- - [Snake](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/snake.html)
-   ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/snake.js)) -
+ - [Snake](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/snake.html) -
    The classic eat-the-pellet game. Illustrates resizing to fit the window,
    custom movement mechanics and keyboard handling, drawing text, and storing
    high scores
@@ -34,8 +33,7 @@ and associated tutorials are listed below.
    Control a character who moves around a maze eating dots. Illustrates a
    fixed-ratio-size canvas, complex inheritence, complex movement mechanics,
    collision, Layers, and map layout.
- - [Default project](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/)
-   ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/app/main.js)) -
+ - [Default project](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/) -
    A full-size canvas with a keyboard-controlled character and top-down
    (four-way) scrolling
 
