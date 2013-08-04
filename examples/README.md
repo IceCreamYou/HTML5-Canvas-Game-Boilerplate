@@ -12,19 +12,16 @@ and associated tutorials are listed below.
    shoot fireballs at enemies in a side-scrolling world. A good illustration of
    parallax layers, world geometry and collisions, simple class inheritance,
    and animated sprites
-   ![Platformer screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen06.png)
  - [Command & Conquer-style RTS](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/cnc.html)
    ([tutorial](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/mouse)) -
    Use the mouse to scroll around a top-down world and select and control
    soldiers in order to conquer the enemy base. A good illustration of mouse
    interaction (scrolling, zooming, tracking, events, etc.), advanced class
    inheritance, and collections
-   ![RTS screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/mouse/screen02.png)
  - [Paint](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html) -
    The classic paint program; select different colors or shapes and draw onto
    the canvas. A good illustration of mobile support, HTML menus,
    mouse tracking, and Layers
-   ![Paint screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/examples/screenshots/paint.png)
  - [Snake](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/snake.html)
    ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/snake.js)) -
    The classic eat-the-pellet game. Illustrates resizing to fit the window,
@@ -41,8 +38,12 @@ and associated tutorials are listed below.
    ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/app/main.js)) -
    A full-size canvas with a keyboard-controlled character and top-down
    (four-way) scrolling
-   ![Default project screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen00.png)
 
 Every example except Paint and RTS has keyboard-controlled movement. Paint and
 Breakout have full mobile support. The Platformer and RTS examples use most of
 the framework's high-level features.
+
+![Platformer screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen06.png)
+![RTS screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/mouse/screen02.png)
+![Paint screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/examples/screenshots/paint.png)
+![Default project screenshot](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/raw/gh-pages/guides/walkthrough/screen00.png)
