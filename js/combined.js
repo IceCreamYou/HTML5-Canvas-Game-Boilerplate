@@ -1,5 +1,5 @@
 /**
- * HTML5 Canvas Game Boilerplate 2.1.0-22072013
+ * HTML5 Canvas Game Boilerplate 2.1.0-04082013
  * Certain components copyright their respective authors.
  *
  * @author Isaac Sukin (http://www.isaacsukin.com/)
@@ -1716,8 +1716,6 @@ App.setDefaultCanvasSize = function() {
   // scale3d transform which enables GPU rendering.
   var ensureCanvasSize = function() {
     $canvas.css({
-      width: canvas.width + 'px',
-      height: canvas.height + 'px',
       // Force hardware accelerated rendering
       transform: 'scale3d(1, 1, 1)',
       mozTransform: 'scale3d(1, 1, 1)',
@@ -2393,7 +2391,8 @@ function World(w, h) {
    * may be off depending on how you are positioning the items you are drawing
    * onto the relevant Layers. Of course, you can manually resize your Layers
    * after scaling, or only scale the primary canvas during initalization and
-   * then create all Layers subsequently at appropriate sizes.
+   * then create all Layers subsequently at appropriate sizes, or make Layers
+   * be positioned over the canvas using {@link Layer#positionOverCanvas}().
    *
    * You may want to call this in a listener for the
    * {@link global#low_fps Low FPS event}.
@@ -2416,6 +2415,14 @@ function World(w, h) {
    *   around the current view.
    */
   this.scaleResolution = function(factor, x, y) {
+    // Define the display size so we can rescale the rendering size
+    if (!$canvas.hasClass('canvas-rescaled')) {
+      $canvas.css({
+        width: canvas.width + 'px',
+        height: canvas.height + 'px',
+      });
+      $canvas.addClass('canvas-rescaled');
+    }
     // Default to centering around the current center of the viewport.
     x = x || this.xOffset + canvas.width / 2;
     y = y || this.yOffset + canvas.height / 2;

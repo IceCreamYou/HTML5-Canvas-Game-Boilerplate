@@ -132,16 +132,11 @@ function draw() {
 function setup(first) {
   // Scale the canvas proportionately to fill the window as much as possible.
   UNIT = Math.max(30, (jQuery(window).innerHeight()/22)|0);
-  console.log(UNIT, jQuery(window).innerHeight());
   // 19 and 22 are determined by the layout in setupMap().
   canvas.width = UNIT * 19;
   canvas.height = UNIT * 22;
   world.width = canvas.width;
   world.height = canvas.height;
-  $canvas.css({
-    height: canvas.height,
-    width: canvas.width,
-  });
 
   // Initialize the map (walls and dots/powerups).
   // Make sure not to reset dots/powerups when losing a life.
