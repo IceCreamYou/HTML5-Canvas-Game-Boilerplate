@@ -208,7 +208,7 @@ td { vertical-align: top; }
 
 
 /* =============================================================================
-   Chrome Frame Prompt
+   Browser Upgrade Prompt
    ========================================================================== */
 
-.chromeframe { margin: 0.2em 0; background: #ccc; color: black; padding: 0.2em 0; }
+.outdated { margin: 0.2em 0; background: #ccc; color: black; padding: 0.2em 0; }
