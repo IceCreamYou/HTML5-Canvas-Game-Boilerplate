@@ -481,8 +481,8 @@ var Projectile = Actor.extend({
 /**
  * Create an overlay to track mouse-drag selection.
  *
- * @param bkgd The object which should listen for click-and-dragging.
- * @param stopDraggingCallback A function to call when dragging stops.
+ * @param {Object} bkgd The object which should listen for click-and-dragging.
+ * @param {Function} stopDraggingCallback A function called when dragging stops.
  * @return The drag-overlay Layer.
  */
 function setupDragOverlay(bkgd, stopDraggingCallback) {

@@ -226,17 +226,17 @@ var Ball = Actor.extend({
      x = this.x + this.width/2;
      y = this.y + this.height/2;
      r = (this.width + this.height)/4;
-  
+
      // Circle
      context.circle(x, y, r, 'lightBlue', 'black');
-  
+
      // Smile
      context.beginPath();
      context.arc(x, y+this.height*0.4, r*0.6, -Math.PI*0.85, -Math.PI*0.15, false);
      context.lineWidth = Math.max(Math.ceil(r/15), 1);
      context.strokeStyle = 'black';
      context.stroke();
-  
+
      // Eyes
      context.beginPath();
      context.arc(x - r*0.3, y - r*0.25, Math.max(Math.ceil(r/15), 1), 0, 2 * Math.PI, false);

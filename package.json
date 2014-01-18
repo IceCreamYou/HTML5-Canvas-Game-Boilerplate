@@ -1,5 +1,5 @@
 {
-  "name": "CanvasBoilerplate",
+  "name": "canvasboilerplate",
   "version": "2.1.0",
   "description": "Provides a set of default code that makes getting up and running with an HTML5 canvas game very easy.",
   "homepage": "https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate",
@@ -28,9 +28,10 @@
   "readmeFilename": "README.md",
   "devDependencies": {
     "grunt": "~0.4.1",
-    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-contrib-jshint": "~0.8.0",
     "grunt-contrib-concat": "~0.3.0",
-    "grunt-contrib-uglify": "~0.2.2",
-    "grunt-jsduck": "~0.1.4"
+    "grunt-contrib-uglify": "~0.3.0",
+    "grunt-jsduck": "~1.0.0",
+    "grunt-jscs-checker": "~0.3.2"
   }
 }

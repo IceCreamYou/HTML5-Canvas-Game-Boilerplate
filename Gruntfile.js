@@ -42,7 +42,7 @@ module.exports = function(grunt) {
         mangle: true,
         report: 'min'
       },
-      target : {
+      target: {
         src: ['js/combined.js'],
         dest: 'js/combined.min.js'
       }
@@ -76,6 +76,13 @@ module.exports = function(grunt) {
                'examples/*.js'
                ]
       }
+    },
+    jscs: {
+      main: [
+             'js/app/*.js',
+             'js/boilerplate/*.js',
+             'examples/*.js'
+             ]
     }
   });
 
@@ -83,5 +90,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jsduck');
-  grunt.registerTask('default', ['concat', 'uglify', 'jshint', 'jsduck']);
+  grunt.loadNpmTasks("grunt-jscs-checker");
+  grunt.registerTask('default', ['concat', 'uglify', 'jshint', 'jscs', 'jsduck']);
 };

@@ -14,7 +14,7 @@
  *
  * @constructor
  *   Creates a new Box instance.
- * 
+ *
  * @param {Number} [x]
  *   The x-coordinate of the top-left corner of the Box. Defaults to the center
  *   of the world.

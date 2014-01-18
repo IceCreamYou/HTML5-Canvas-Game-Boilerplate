@@ -290,7 +290,7 @@ App.reset = function(first) {
    * been animating. You can also use `Timer.getTimeSince('app start')` to get
    * the total time since animation began. Normally what you actually want is
    * `App.physicsTimeElapsed`.
-   * 
+   *
    * @member App
    * @static
    * @ignore
@@ -455,7 +455,7 @@ var Caches = {
     imagePatterns: {},
     /**
      * Preload a list of images asynchronously.
-     * 
+     *
      * @param {String[]} files
      *   An Array of paths to images to preload.
      * @param {Object} [options]
@@ -534,7 +534,7 @@ window.requestAnimFrame = (function() {
 
 /**
  * Start animating the canvas.
- * 
+ *
  * See also {@link global#method-stopAnimating stopAnimating()} and
  * {@link global#method-isAnimating isAnimating()}.
  *
@@ -555,7 +555,7 @@ window.startAnimating = function() {
 
 /**
  * Stop animating the canvas.
- * 
+ *
  * See also {@link global#method-startAnimating startAnimating()} and
  * {@link global#method-isAnimating isAnimating()}.
  *
@@ -609,7 +609,7 @@ window.stopAnimating = function() {
 
 /**
  * Determine whether the canvas is currently animating.
- * 
+ *
  * See also {@link global#method-startAnimating startAnimating()} and
  * {@link global#method-stopAnimating stopAnimating()}.
  *
@@ -911,14 +911,14 @@ function Timer(autoStart, whileAnimating) {
 
 /**
  * The World object.
- * 
+ *
  * The World represents the complete playable game area. Its size can be set
  * explicitly or is automatically determined by the "data-worldwidth" and
  * "data-worldheight" attributes set on the HTML canvas element (with a
  * fallback to the canvas width and height). If the size of the world is larger
  * than the canvas then by default the view of the world will scroll when the
  * {@link global#player player} approaches a side of the canvas.
- * 
+ *
  * @param {Number} [w]
  *   The width of the world. Defaults to the value of the "data-worldwidth"
  *   attribute on the HTML canvas element, or (if that attribute is not
@@ -1020,11 +1020,11 @@ function World(w, h) {
     this.xOffset += deltaX;
     this.yOffset += deltaY;
     context.translate(-deltaX, -deltaY);
-    
+
     // Change the world dimensions.
     this.width = newWidth;
     this.height = newHeight;
-    
+
     /**
      * @event resizeWorld
      *   Broadcast that the world size changed so that objects already in the
