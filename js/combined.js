@@ -1,9 +1,9 @@
 /**
- * HTML5 Canvas Game Boilerplate 2.1.0-18012014
+ * HTML5 Canvas Game Boilerplate 2.1.1-16022015
  * Certain components copyright their respective authors.
  *
  * @author Isaac Sukin (http://www.isaacsukin.com/)
- * @license MIT License
+ * @license [object Object] License
  * @ignore
  */
 
@@ -2813,7 +2813,7 @@ Number.prototype.round = function(v, a) {
     v = this;
   }
   if (!a) a = 0;
-  var m = Math.pow(10,a|0);
+  var m = Math.pow(10, a|0);
   return Math.round(v*m)/m;
 };
 
@@ -3130,7 +3130,7 @@ function Layer(options) {
   };
 }
 
-//RENDERING ------------------------------------------------------------------
+// RENDERING ------------------------------------------------------------------
 
 /**
  * @class CanvasRenderingContext2D

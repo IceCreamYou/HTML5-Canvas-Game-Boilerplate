@@ -1477,7 +1477,7 @@ Number.prototype.round = function(v, a) {
     v = this;
   }
   if (!a) a = 0;
-  var m = Math.pow(10,a|0);
+  var m = Math.pow(10, a|0);
   return Math.round(v*m)/m;
 };
 

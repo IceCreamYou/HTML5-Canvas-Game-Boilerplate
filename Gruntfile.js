@@ -78,6 +78,9 @@ module.exports = function(grunt) {
       }
     },
     jscs: {
+      options: {
+        config: '.jscs.json',
+      },
       main: [
              'js/app/*.js',
              'js/boilerplate/*.js',
@@ -90,6 +93,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jsduck');
-  grunt.loadNpmTasks("grunt-jscs-checker");
+  grunt.loadNpmTasks("grunt-jscs");
   grunt.registerTask('default', ['concat', 'uglify', 'jshint', 'jscs', 'jsduck']);
 };

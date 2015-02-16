@@ -7,7 +7,7 @@
   <title>Site</title>
 
   <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Display full-screen in standalone mode -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -29,7 +29,7 @@
   <!--[if lt IE 9 ]>
     <p class="outdated">
       You are using an <strong>outdated</strong> browser.
-      <a href="http://whatbrowser.org/">Upgrade to a different browser</a> to
+      <a href="http://browsehappy.com/">Upgrade to a different browser</a> to
       experience this site.
     </p>
   <![endif]-->
@@ -51,10 +51,12 @@
   <script src="js/app/main.js"></script>
   <!-- Google Analytics: change UA-XXXXXXXX-X to be your site's ID. -->
   <script>
-    var _gaq=[['_setAccount','UA-XXXXXXXX-X'],['_trackPageview']];
-    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-    s.parentNode.insertBefore(g,s)}(document,'script'));
+    (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+    function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+    e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+    e.src='//www.google-analytics.com/analytics.js';
+    r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+    ga('create','UA-XXXXX-X','auto');ga('send','pageview');
   </script>
 </body>
 </html>
