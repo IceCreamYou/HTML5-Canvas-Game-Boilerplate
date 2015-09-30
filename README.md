@@ -100,7 +100,7 @@ Notes
 This project is [MIT-licensed](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/LICENSE.md).
 
 Compatible with all modern browsers, meaning not IE8. Also works in modern
-mobile browsers as long as you accomodate mobile input methods. The
+mobile browsers as long as you accommodate mobile input methods. The
 [Paint demo](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
 is a good example of this.
 
