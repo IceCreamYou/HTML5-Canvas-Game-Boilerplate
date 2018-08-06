@@ -42,9 +42,9 @@
    *
    * - Bind the `keydown`, `keypress`, or `keyup` events to an element:
    *
-   *       $(selector).keypress('ctrl+a down', function(event) {});
+   *       $(selector).keypress(&#39;ctrl+a down&#39;, function(event) {});
    *       // OR
-   *       $(selector).on('keypress', 'ctrl+a down', function(event) {});
+   *       $(selector).on(&#39;keypress&#39;, &#39;ctrl+a down&#39;, function(event) {});
    *
    *   Separate key combinations that should trigger the callback with spaces.
    *   In the examples above, the callback would fire if `ctrl+a` or `down` was
@@ -69,12 +69,12 @@
    *   `jQuery.hotkeys.lastKeyPressed()` or examine the last 5 keys pressed in
    *   `jQuery.hotkeys.lastKeysPressed`.
    *
-   * Hotkeys aren't tracked if you're inside of an input element (unless you
+   * Hotkeys aren&#39;t tracked if you&#39;re inside of an input element (unless you
    * explicitly bind the hotkey directly to the input). This helps avoid
    * conflicts with normal user typing.
    *
    * NOTE: Firefox is the only major browser that will reliably let you override
-   * all key shortcuts built into the browser. This won't be a problem for most
+   * all key shortcuts built into the browser. This won&#39;t be a problem for most
    * applications, but you should avoid binding to combinations like ctrl+Q and
    * alt+F4 because most browsers will still react to those by closing the
    * window.
@@ -90,11 +90,11 @@
 
     // HTML elements that support text input
     textTypes: [
-      'text', 'search', 'tel', 'url', 'email', 'password', 'number', 'range',
-      'date', 'month', 'week', 'time', 'datetime', 'datetime-local', 'color'
+      &#39;text&#39;, &#39;search&#39;, &#39;tel&#39;, &#39;url&#39;, &#39;email&#39;, &#39;password&#39;, &#39;number&#39;, &#39;range&#39;,
+      &#39;date&#39;, &#39;month&#39;, &#39;week&#39;, &#39;time&#39;, &#39;datetime&#39;, &#39;datetime-local&#39;, &#39;color&#39;
     ],
 
-    // Charcodes for when String.fromCharCode() doesn't work
+    // Charcodes for when String.fromCharCode() doesn&#39;t work
     specialKeys: {
       8: &quot;backspace&quot;, 9: &quot;tab&quot;, 10: &quot;return&quot;, 13: &quot;return&quot;, 16: &quot;shift&quot;,
       17: &quot;ctrl&quot;, 18: &quot;alt&quot;, 19: &quot;pause&quot;, 20: &quot;capslock&quot;, 27: &quot;esc&quot;,
@@ -106,14 +106,14 @@
       116: &quot;f5&quot;, 117: &quot;f6&quot;, 118: &quot;f7&quot;, 119: &quot;f8&quot;, 120: &quot;f9&quot;, 121: &quot;f10&quot;,
       122: &quot;f11&quot;, 123: &quot;f12&quot;, 144: &quot;numlock&quot;, 145: &quot;scroll&quot;, 186: &quot;;&quot;,
       187: &quot;=&quot;, 188: &quot;,&quot;, 189: &quot;-&quot;, 190: &quot;.&quot;, 191: &quot;/&quot;, 219: &quot;[&quot;, 220: &quot;\\&quot;,
-      221: &quot;]&quot;, 222: &quot;'&quot;, 224: &quot;meta&quot;
+      221: &quot;]&quot;, 222: &quot;&#39;&quot;, 224: &quot;meta&quot;
     },
 
     // Map of characters to the character they upshift to
     shiftNums: {
       &quot;`&quot;: &quot;~&quot;, &quot;1&quot;: &quot;!&quot;, &quot;2&quot;: &quot;@&quot;, &quot;3&quot;: &quot;#&quot;, &quot;4&quot;: &quot;$&quot;, &quot;5&quot;: &quot;%&quot;, &quot;6&quot;: &quot;^&quot;,
       &quot;7&quot;: &quot;&amp;&quot;, &quot;8&quot;: &quot;*&quot;, &quot;9&quot;: &quot;(&quot;, &quot;0&quot;: &quot;)&quot;, &quot;-&quot;: &quot;_&quot;, &quot;=&quot;: &quot;+&quot;, &quot;;&quot;: &quot;:&quot;,
-      &quot;'&quot;: &quot;\&quot;&quot;, &quot;,&quot;: &quot;&lt;&quot;, &quot;.&quot;: &quot;&gt;&quot;,  &quot;/&quot;: &quot;?&quot;,  &quot;\\&quot;: &quot;|&quot;, &quot;[&quot;: &quot;{&quot;, &quot;]&quot;: &quot;}&quot;
+      &quot;&#39;&quot;: &quot;\&quot;&quot;, &quot;,&quot;: &quot;&lt;&quot;, &quot;.&quot;: &quot;&gt;&quot;,  &quot;/&quot;: &quot;?&quot;,  &quot;\\&quot;: &quot;|&quot;, &quot;[&quot;: &quot;{&quot;, &quot;]&quot;: &quot;}&quot;
     },
 
 <span id='jQuery-hotkeys-method-areKeysDown'>    /**
@@ -145,29 +145,29 @@
     areKeysDown: function(keyArray) {
       var i;
       // If the parameter is a string, split it apart and check each combination.
-      if (typeof keyArray == 'string') {
-        var choices = keyArray.split(' ');
+      if (typeof keyArray == &#39;string&#39;) {
+        var choices = keyArray.split(&#39; &#39;);
         for (i = 0; i &lt; choices.length; i++) {
-          if (this.areKeysDown(choices[i].split('+'))) {
+          if (this.areKeysDown(choices[i].split(&#39;+&#39;))) {
             return true;
           }
         }
         return false;
       }
       var foundControlKey = false, l = this.keysDown.length;
-      // The combinations won't match if they aren't the same length.
+      // The combinations won&#39;t match if they aren&#39;t the same length.
       if (l != keyArray.length) {
         return false;
       }
       // Check for control keys so we know whether order matters.
       for (i = 0; i &lt; l; i++) {
-        if (jQuery.inArray(this.keysDown[i], ['alt', 'ctrl', 'meta', 'shift']) &gt; -1) {
+        if (jQuery.inArray(this.keysDown[i], [&#39;alt&#39;, &#39;ctrl&#39;, &#39;meta&#39;, &#39;shift&#39;]) &gt; -1) {
           foundControlKey = true;
           break;
         }
       }
       if (foundControlKey) {
-        // Compare keyArray with $.hotkeys.keysDown, order doesn't matter
+        // Compare keyArray with $.hotkeys.keysDown, order doesn&#39;t matter
         for (i = 0; i &lt; l; i++) {
           if (jQuery.inArray(this.keysDown[i], keyArray) == -1) {
             return false;
@@ -204,7 +204,7 @@
         keys = handleObj.data.toLowerCase().split(&quot; &quot;);
 
     handleObj.handler = function(event) {
-      // Don't fire in text-accepting inputs that we didn't directly bind to
+      // Don&#39;t fire in text-accepting inputs that we didn&#39;t directly bind to
       if (this !== event.target &amp;&amp; (/textarea|select/i.test(event.target.nodeName) ||
           jQuery.inArray(event.target.type, jQuery.hotkeys.textTypes) &gt; -1)) {
         return;
@@ -282,8 +282,8 @@
   });
 
   // Listen to every keydown/keyup event so we can record them.
-  jQuery(document).keydown('na', function() {});
-  jQuery(document).keyup('na', function() {});
+  jQuery(document).keydown(&#39;na&#39;, function() {});
+  jQuery(document).keyup(&#39;na&#39;, function() {});
 
 })(this.jQuery);
 </pre>

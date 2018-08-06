@@ -76,12 +76,12 @@
  *   class.
  */
 function SpriteMap(src, animations, options) {
-  var origPIC = typeof options.postInitCallback == 'function' ? options.postInitCallback : null;
+  var origPIC = typeof options.postInitCallback == &#39;function&#39; ? options.postInitCallback : null;
   var t = this;
   options.postInitCallback = function(sprite) {
     t.sprite = sprite;
     t.baseImage = sprite.image;
-    t.cachedImages = {'00': t.baseImage};
+    t.cachedImages = {&#39;00&#39;: t.baseImage};
     t.maps = {};
     for (var name in animations) {
       if (animations.hasOwnProperty(name)) {
@@ -105,14 +105,14 @@ SpriteMap.prototype = {
    *   Specifies the frames of the animation sequence. If an Array is passed,
    *   the values should be included in the order below.
    * @param {Number} [options.startRow=0]
-   *   The index of the sequence's starting row.
+   *   The index of the sequence&#39;s starting row.
    * @param {Number} [options.startCol=0]
-   *   The index of the sequence's starting column.
+   *   The index of the sequence&#39;s starting column.
    * @param {Number} [options.endRow]
-   *   The index of the sequence's ending row. Defaults to the Sprite's last
+   *   The index of the sequence&#39;s ending row. Defaults to the Sprite&#39;s last
    *   row.
    * @param {Number} [options.endCol]
-   *   The index of the sequence's ending column. Defaults to the Sprite's last
+   *   The index of the sequence&#39;s ending column. Defaults to the Sprite&#39;s last
    *   column.
    * @param {Boolean} [options.squeeze=false]
    *   Determines which frames are included in the animation loop. If set to
@@ -141,17 +141,17 @@ SpriteMap.prototype = {
       };
     }
     this.maps[name] = {
-        startRow: typeof options.startRow !== 'undefined' ? options.startRow : 0,
-        startCol: typeof options.startCol !== 'undefined' ? options.startCol : 0,
-        endRow:   typeof options.endRow   !== 'undefined' ? options.endRow   : this.sprite.rows-1,
-        endCol:   typeof options.endCol   !== 'undefined' ? options.endCol   : this.sprite.cols-1,
-        squeeze:  typeof options.squeeze  !== 'undefined' ? options.squeeze  : false,
-        flipped:  typeof options.flipped  !== 'undefined' ? options.flipped  : {horizontal: false, vertical: false}
+        startRow: typeof options.startRow !== &#39;undefined&#39; ? options.startRow : 0,
+        startCol: typeof options.startCol !== &#39;undefined&#39; ? options.startCol : 0,
+        endRow:   typeof options.endRow   !== &#39;undefined&#39; ? options.endRow   : this.sprite.rows-1,
+        endCol:   typeof options.endCol   !== &#39;undefined&#39; ? options.endCol   : this.sprite.cols-1,
+        squeeze:  typeof options.squeeze  !== &#39;undefined&#39; ? options.squeeze  : false,
+        flipped:  typeof options.flipped  !== &#39;undefined&#39; ? options.flipped  : {horizontal: false, vertical: false}
     };
-    // Pre-render the flipped versions of the image we know we'll need to use.
+    // Pre-render the flipped versions of the image we know we&#39;ll need to use.
     var f = this.maps[name].flipped,
-        key = (f.horizontal ? '1' : '0') + (f.vertical ? '1' : '0');
-    if (typeof this.sprite.cachedImages[key] === 'undefined') {
+        key = (f.horizontal ? &#39;1&#39; : &#39;0&#39;) + (f.vertical ? &#39;1&#39; : &#39;0&#39;);
+    if (typeof this.sprite.cachedImages[key] === &#39;undefined&#39;) {
       this.sprite.cachedImages[key] = this.sprite._prerender(this.baseImage, f);
     }
     return this;
@@ -243,7 +243,7 @@ SpriteMap.prototype = {
     return this;
   },
 <span id='SpriteMap-method-draw'>  /**
-</span>   * Draw the sprite's current frame.
+</span>   * Draw the sprite&#39;s current frame.
    *
    * @param {CanvasRenderingContext2D} ctx
    *   The canvas graphics context onto which the sprite should be drawn.
@@ -257,10 +257,10 @@ SpriteMap.prototype = {
    *   the vertical distance in pixels from the top of the canvas.
    * @param {Number} [w]
    *   The width of the image when drawn onto the canvas. Defaults to the
-   *   Sprite's projected width, which in turn defaults to the frame width.
+   *   Sprite&#39;s projected width, which in turn defaults to the frame width.
    * @param {Number} [h]
    *   The height of the image when drawn onto the canvas. Defaults to the
-   *   Sprite's projected height, which in turn defaults to the frame height.
+   *   Sprite&#39;s projected height, which in turn defaults to the frame height.
    */
   draw: function(ctx, x, y, w, h) {
     this.sprite.draw(ctx, x, y, w, h);
@@ -387,13 +387,13 @@ this.SpriteMap = SpriteMap;
  *   source image has not been loaded before, this will be after the image has
  *   been fully loaded asynchronously). If the source image was not pre-loaded
  *   and you draw() the Sprite before this callback is invoked, nothing will be
- *   drawn because the image won't be loaded yet.
+ *   drawn because the image won&#39;t be loaded yet.
  * @param {Sprite} [options.postInitCallback.sprite]
  *   The Sprite that was loaded.
  */
 function Sprite(src, options) {
   // String image file path
-  if (typeof src == 'string') {
+  if (typeof src == &#39;string&#39;) {
     this.sourceFile = src;
     var cachedImage = Sprite.getImageFromCache(src);
     if (cachedImage) { // cached
@@ -420,12 +420,12 @@ function Sprite(src, options) {
       this._init(src, options);
     }
     else { // not loaded
-      if (src._src) { // We've already tried to draw this one
+      if (src._src) { // We&#39;ve already tried to draw this one
         return; // The onload callback will initialize the sprite when it runs
       }
       var o = src.onload, t = this;
       src.onload = function() {
-        if (typeof o == 'function') { // don't overwrite any existing handler
+        if (typeof o == &#39;function&#39;) { // don&#39;t overwrite any existing handler
           o();
         }
         Sprite.saveImageToCache(t.sourceFile, src);
@@ -451,23 +451,23 @@ Sprite.prototype = {
     this.cols = Math.floor(this.width / this.frameW);
     this.startRow = options.startRow || 0;
     this.startCol = options.startCol || 0;
-    this.endRow = (typeof options.endRow === 'undefined' ? this.rows-1 : options.endRow);
-    this.endCol = (typeof options.endCol === 'undefined' ? this.cols-1 : options.endCol);
+    this.endRow = (typeof options.endRow === &#39;undefined&#39; ? this.rows-1 : options.endRow);
+    this.endCol = (typeof options.endCol === &#39;undefined&#39; ? this.cols-1 : options.endCol);
     this.row = this.startRow;
     this.col = this.startCol;
     this.frame = 1;
     this.squeeze = options.squeeze || false;
-    this.interval = (typeof options.interval === 'undefined' ? 125 : options.interval);
-    this.useTimer = (typeof options.useTimer === 'undefined' ? true : options.useTimer);
+    this.interval = (typeof options.interval === &#39;undefined&#39; ? 125 : options.interval);
+    this.useTimer = (typeof options.useTimer === &#39;undefined&#39; ? true : options.useTimer);
     this.advanceFramesManually = options.advanceFramesManually || false;
     this.lastFrameUpdateTime = 0;
     this.flipped = options.flipped || {horizontal: false, vertical: false};
     this.flipped.horizontal = this.flipped.horizontal || false;
     this.flipped.vertical = this.flipped.vertical || false;
-    this.cachedImages = {'00': img};
+    this.cachedImages = {&#39;00&#39;: img};
     var f = this.flipped,
-        key = (f.horizontal ? '1' : '0') + (f.vertical ? '1' : '0');
-    if (typeof this.cachedImages[key] === 'undefined') {
+        key = (f.horizontal ? &#39;1&#39; : &#39;0&#39;) + (f.vertical ? &#39;1&#39; : &#39;0&#39;);
+    if (typeof this.cachedImages[key] === &#39;undefined&#39;) {
       this.cachedImages[key] = this._prerender(img, f);
     }
     this.image = this.cachedImages[key];
@@ -489,10 +489,10 @@ Sprite.prototype = {
    * @ignore
    */
   _prerender: function(image, flipped) {
-    var tempCanvas = document.createElement('canvas');
+    var tempCanvas = document.createElement(&#39;canvas&#39;);
     tempCanvas.width = this.width;
     tempCanvas.height = this.height;
-    var tempContext = tempCanvas.getContext('2d');
+    var tempContext = tempCanvas.getContext(&#39;2d&#39;);
     if (flipped.horizontal || flipped.vertical) {
       tempContext.translate(flipped.horizontal ? tempCanvas.width : 0,
           flipped.vertical ? tempCanvas.height : 0);
@@ -517,10 +517,10 @@ Sprite.prototype = {
    *   the vertical distance in pixels from the top of the canvas.
    * @param {Number} [w]
    *   The width of the image when drawn onto the canvas. Defaults to the
-   *   Sprite's projected width, which in turn defaults to the frame width.
+   *   Sprite&#39;s projected width, which in turn defaults to the frame width.
    * @param {Number} [h]
    *   The height of the image when drawn onto the canvas. Defaults to the
-   *   Sprite's projected height, which in turn defaults to the frame height.
+   *   Sprite&#39;s projected height, which in turn defaults to the frame height.
    */
   draw: function(ctx, x, y, w, h) {
     try {
@@ -550,8 +550,8 @@ Sprite.prototype = {
     } catch(e) {
       if (console &amp;&amp; console.error) {
         // Usually the reason you would get an error here is if you tried to
-        // draw() an image before it was fully loaded. That's an ignore-able
-        // error, because if you're animating, the image will just pop in when
+        // draw() an image before it was fully loaded. That&#39;s an ignore-able
+        // error, because if you&#39;re animating, the image will just pop in when
         // it loads.
         console.error(e);
       }
@@ -603,7 +603,7 @@ Sprite.prototype = {
    *   The column of the frame to which to switch.
    */
   setFrame: function(row, col) {
-    if (typeof col !== 'undefined') {
+    if (typeof col !== &#39;undefined&#39;) {
       this.row = row, this.col = col;
       if (this.squeeze) {
         this.frame = this.cols * (this.row - this.startRow + 1) -
@@ -648,20 +648,20 @@ Sprite.prototype = {
    */
   setLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.stopLoop();
-    if (endRow === null || typeof endRow === 'undefined') {
+    if (endRow === null || typeof endRow === &#39;undefined&#39;) {
       endRow = this.rows-1;
     }
-    if (endCol === null || typeof endCol === 'undefined') {
+    if (endCol === null || typeof endCol === &#39;undefined&#39;) {
       endCol = this.cols-1;
     }
-    if (typeof squeeze !== 'undefined') {
+    if (typeof squeeze !== &#39;undefined&#39;) {
       this.squeeze = squeeze;
     }
-    if (typeof flipped !== 'undefined') {
+    if (typeof flipped !== &#39;undefined&#39;) {
       this.flipped = flipped;
       var f = this.flipped,
-          key = (f.horizontal ? '1' : '0') + (f.vertical ? '1' : '0');
-      if (typeof this.cachedImages[key] === 'undefined') {
+          key = (f.horizontal ? &#39;1&#39; : &#39;0&#39;) + (f.vertical ? &#39;1&#39; : &#39;0&#39;);
+      if (typeof this.cachedImages[key] === &#39;undefined&#39;) {
         this.cachedImages[key] = this._prerender(this.image, f);
       }
       this.image = this.cachedImages[key];
@@ -676,7 +676,7 @@ Sprite.prototype = {
 </span>   * Starts running a new animation loop.
    *
    * Usually this function will be called without parameters since it defaults
-   * to using the sprite's settings defined at instantiation time. In cases
+   * to using the sprite&#39;s settings defined at instantiation time. In cases
    * where the frames that should be used in an animation change, this function
    * takes the same parameters as Sprite#setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
@@ -712,7 +712,7 @@ Sprite.prototype = {
    *   current animation sequence.
    */
   startLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
-    if (typeof startRow !== 'undefined' &amp;&amp; typeof startCol !== 'undefined') {
+    if (typeof startRow !== &#39;undefined&#39; &amp;&amp; typeof startCol !== &#39;undefined&#39;) {
       this.setLoop(startRow, startCol, endRow, endCol, squeeze, flipped);
     }
     this.lastFrameUpdateTime = Date.now();
@@ -739,7 +739,7 @@ Sprite.prototype = {
    * frame. Use the callback function to reset it if you need that behavior.
    *
    * Usually this function will be called without parameters since it defaults
-   * to using the sprite's settings defined at instantiation time. In cases
+   * to using the sprite&#39;s settings defined at instantiation time. In cases
    * where the frames that should be used in an animation change, this function
    * takes the same parameters as Sprite#setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
@@ -850,8 +850,8 @@ Sprite.prototype = {
    *   The frame number to convert.
    *
    * @return {Object}
-   *   An object containing the 'frame' number and the corresponding 'row' and
-   *   'col' properties.
+   *   An object containing the &#39;frame&#39; number and the corresponding &#39;row&#39; and
+   *   &#39;col&#39; properties.
    */
   frameNumberToRowCol: function(frame) {
     var row, col;
@@ -945,10 +945,10 @@ this.Sprite = Sprite;
     var l = files.length, m = -1, src, image;
     var notifyLoaded = function(itemCallback, src) {
       m++;
-      if (typeof itemCallback == 'function') {
+      if (typeof itemCallback == &#39;function&#39;) {
         itemCallback(src, m, l);
       }
-      if (m == l &amp;&amp; typeof options.finishCallback == 'function') {
+      if (m == l &amp;&amp; typeof options.finishCallback == &#39;function&#39;) {
         options.finishCallback(l);
       }
     };

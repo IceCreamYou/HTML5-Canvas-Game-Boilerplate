@@ -15,7 +15,9 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">// The main logic for your project goes in this file.
+  <pre class="prettyprint lang-js">/*
+ * The main logic for your project goes in this file.
+ */
 
 <span id='global-property-player'>/**
 </span> * The {@link Player} object; an {@link Actor} controlled by user input.
@@ -29,15 +31,15 @@ var player;
  * of keyboard keys or key combinations that will invoke these actions. Valid
  * keys include anything that {@link jQuery.hotkeys} accepts. The up, down,
  * left, and right properties are required if the `keys` variable exists; if
- * you don't want to use them, just set them to an empty array. {@link Actor}s
+ * you don&#39;t want to use them, just set them to an empty array. {@link Actor}s
  * can have their own {@link Actor#keys keys} which will override the global
  * set.
  */
 var keys = {
-  up: ['up', 'w'],
-  down: ['down', 's'],
-  left: ['left', 'a'],
-  right: ['right', 'd'],
+    up: [&#39;up&#39;, &#39;w&#39;],
+    down: [&#39;down&#39;, &#39;s&#39;],
+    left: [&#39;left&#39;, &#39;a&#39;],
+    right: [&#39;right&#39;, &#39;d&#39;]
 };
 
 <span id='global-property-preloadables'>/**
@@ -49,17 +51,17 @@ var preloadables = [];
 </span> * A magic-named function where all updates should occur.
  */
 function update() {
-  player.update();
+    player.update();
 }
 
 <span id='global-method-draw'>/**
 </span> * A magic-named function where all drawing should occur.
  */
 function draw() {
-  // Draw a background. This is just for illustration so we can see scrolling.
-  context.drawCheckered(80, 0, 0, world.width, world.height);
+    // Draw a background. This is just for illustration so we can see scrolling.
+    context.drawCheckered(80, 0, 0, world.width, world.height);
 
-	player.draw();
+    player.draw();
 }
 
 <span id='global-method-setup'>/**
@@ -70,14 +72,15 @@ function draw() {
  *   been reset and is starting over.
  */
 function setup(first) {
-  // Change the size of the playable area. Do this before placing items!
-  world.resize(canvas.width + 200, canvas.height + 200);
 
-  // Switch from side view to top-down.
-  Actor.prototype.GRAVITY = false;
+    // Change the size of the playable area. Do this before placing items!
+    world.resize(canvas.width + 200, canvas.height + 200);
 
-  // Initialize the player.
-  player = new Player();
+    // Switch from side view to top-down.
+    Actor.prototype.GRAVITY = false;
+
+    // Initialize the player.
+    player = new Player();
 }
 </pre>
 </body>

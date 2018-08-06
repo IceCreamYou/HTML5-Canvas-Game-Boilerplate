@@ -1,4 +1,6 @@
-// The main logic for your project goes in this file.
+/*
+ * The main logic for your project goes in this file.
+ */
 
 /**
  * The {@link Player} object; an {@link Actor} controlled by user input.
@@ -17,10 +19,10 @@ var player;
  * set.
  */
 var keys = {
-  up: ['up', 'w'],
-  down: ['down', 's'],
-  left: ['left', 'a'],
-  right: ['right', 'd'],
+    up: ['up', 'w'],
+    down: ['down', 's'],
+    left: ['left', 'a'],
+    right: ['right', 'd']
 };
 
 /**
@@ -32,17 +34,17 @@ var preloadables = [];
  * A magic-named function where all updates should occur.
  */
 function update() {
-  player.update();
+    player.update();
 }
 
 /**
  * A magic-named function where all drawing should occur.
  */
 function draw() {
-  // Draw a background. This is just for illustration so we can see scrolling.
-  context.drawCheckered(80, 0, 0, world.width, world.height);
+    // Draw a background. This is just for illustration so we can see scrolling.
+    context.drawCheckered(80, 0, 0, world.width, world.height);
 
-	player.draw();
+    player.draw();
 }
 
 /**
@@ -53,12 +55,13 @@ function draw() {
  *   been reset and is starting over.
  */
 function setup(first) {
-  // Change the size of the playable area. Do this before placing items!
-  world.resize(canvas.width + 200, canvas.height + 200);
 
-  // Switch from side view to top-down.
-  Actor.prototype.GRAVITY = false;
+    // Change the size of the playable area. Do this before placing items!
+    world.resize(canvas.width + 200, canvas.height + 200);
 
-  // Initialize the player.
-  player = new Player();
+    // Switch from side view to top-down.
+    Actor.prototype.GRAVITY = false;
+
+    // Initialize the player.
+    player = new Player();
 }

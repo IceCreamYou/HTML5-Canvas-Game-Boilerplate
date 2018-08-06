@@ -29,19 +29,19 @@
 </span>   * @class Class
    *   The base Class implementation (does nothing).
    *
-   * This is [John Resig's &quot;simple JavaScript inheritance&quot; library](http://ejohn.org/blog/simple-javascript-inheritance/).
+   * This is [John Resig&#39;s &quot;simple JavaScript inheritance&quot; library](http://ejohn.org/blog/simple-javascript-inheritance/).
    *
    * Define a new class with Class#extend:
    *
    *      var MyClass = Class.extend({
    *        // This is the constructor.
    *        init: function() {
-   *          // this._super is the parent object's method.
+   *          // this._super is the parent object&#39;s method.
    *          this._super.apply(this, arguments);
    *        },
    *        // This is a custom method.
    *        myMethod: function() {
-   *          alert('hi');
+   *          alert(&#39;hi&#39;);
    *        },
    *      });
    *      var myInstance = new MyClass();
@@ -49,7 +49,7 @@
    *      var MyChildClass = MyClass.extend({
    *        // Overrides the parent method.
    *        myMethod: function() {
-   *          alert('hi there');
+   *          alert(&#39;hi there&#39;);
    *        },
    *      });
    *      var myChild = new MyChildClass();
@@ -65,14 +65,14 @@
     var _super = this.prototype;
    
     // Instantiate a base class (but only create the instance,
-    // don't run the init constructor)
+    // don&#39;t run the init constructor)
     initializing = true;
     var prototype = new this();
     initializing = false;
    
     // Copy the properties over onto the new prototype
     for (var name in prop) {
-      // Check if we're overwriting an existing function
+      // Check if we&#39;re overwriting an existing function
       prototype[name] = typeof prop[name] == &quot;function&quot; &amp;&amp;
         typeof _super[name] == &quot;function&quot; &amp;&amp; fnTest.test(prop[name]) ?
         (function(name, fn){
@@ -84,7 +84,7 @@
             this._super = _super[name];
            
             // The method only need to be bound temporarily, so we
-            // remove it when we're done executing
+            // remove it when we&#39;re done executing
             var ret = fn.apply(this, arguments);       
             this._super = tmp;
            
