@@ -30,11 +30,11 @@
   },
   "readmeFilename": "README.md",
   "devDependencies": {
-    "grunt": "latest",
-    "grunt-contrib-concat": "latest",
-    "grunt-contrib-jshint": "latest",
-    "grunt-contrib-uglify": "latest",
-    "grunt-jscs": "latest",
-    "grunt-jsduck": "latest"
+    "grunt": "~1.0.3",
+    "grunt-contrib-concat": "~1.0.1",
+    "grunt-contrib-jshint": "~1.1.0",
+    "grunt-contrib-uglify": "~3.4.0",
+    "grunt-jscs": "~3.0.1",
+    "grunt-jsduck": "~1.0.1"
   }
 }
