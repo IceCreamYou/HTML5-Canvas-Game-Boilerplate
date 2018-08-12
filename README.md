@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/IceCreamYou/HTML5-Canvas-Game-Boilerplate.svg?branch=gh-pages)](https://travis-ci.org/IceCreamYou/HTML5-Canvas-Game-Boilerplate) [![npm version](https://badge.fury.io/js/canvasboilerplate.svg)](https://www.npmjs.com/package/canvasboilerplate)
+
 **This project makes starting an interactive 2D Canvas application fast and easy**,
 even for developers who have never used Canvas before.
 
@@ -13,6 +15,9 @@ easy to learn, use, and get started.
 
 Getting Started
 ---------------
+
+First, fork and `git clone` this repository, or install from NPM with
+`npm i canvasboilerplate`.
 
 To get started building, open up
 [main.js](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/js/app/main.js).
