@@ -28,7 +28,7 @@
  *
  * Layers allow efficient rendering of complex scenes by acting as caches for
  * parts of the scene that are grouped together. For example, it is recommended
- * to create a Layer for your canvas's background so that you can render the
+ * to create a Layer for your canvas&#39;s background so that you can render the
  * background once and then draw the completely rendered background onto the
  * main canvas in each frame instead of re-computing the background for each
  * frame. This can significantly speed up animation.
@@ -54,9 +54,9 @@
  * @param {&quot;world&quot;/&quot;canvas&quot;} [options.relative=&quot;world&quot;]
  *   Indicates what to draw the Layer relative to:
  *
- *   - 'world': Draw the layer relative to the world so that it will appear
+ *   - &#39;world&#39;: Draw the layer relative to the world so that it will appear
  *     to be in one specific place as the player or viewport moves.
- *   - 'canvas': Draw the layer relative to the canvas so that it stays fixed
+ *   - &#39;canvas&#39;: Draw the layer relative to the canvas so that it stays fixed
  *     as the player moves. This is useful for a HUD, for example.
  *
  *   This option is irrelevant if the world is the same size as the canvas.
@@ -66,7 +66,7 @@
  *   applied when {@link Layer#draw drawing} the layer.
  * @param {Number} [options.parallax=1]
  *   A fractional percentage indicating how much to {@link Layer#scroll scroll}
- *   the Layer relative to the viewport's movement.
+ *   the Layer relative to the viewport&#39;s movement.
  * @param {Mixed} [options.src]
  *   Anything that can be passed to the `src` parameter of
  *   {@link CanvasRenderingContext2D#drawImage drawImage()}. This will be used
@@ -84,26 +84,26 @@ function Layer(options) {
    *   The canvas backing the Layer.
    * @readonly
    */
-  this.canvas = options.canvas || document.createElement('canvas');
+  this.canvas = options.canvas || document.createElement(&#39;canvas&#39;);
 <span id='Layer-property-context'>  /**
 </span>   * @property {CanvasRenderingContext2D} context
-   *   The Layer's graphics context. Use this to draw onto the Layer.
+   *   The Layer&#39;s graphics context. Use this to draw onto the Layer.
    * @readonly
    */
-  this.context = this.canvas.getContext('2d');
+  this.context = this.canvas.getContext(&#39;2d&#39;);
   this.context.__layer = this;
 <span id='Layer-property-width'>  /**
 </span>   * @property {Number} width
    *   The width of the Layer.
    * @readonly
    */
-  this.width = options.width || (options.canvas ? options.canvas.width : 0) || (options.relative == 'canvas' ? canvas.width : world.width);
+  this.width = options.width || (options.canvas ? options.canvas.width : 0) || (options.relative == &#39;canvas&#39; ? canvas.width : world.width);
 <span id='Layer-property-height'>  /**
 </span>   * @property {Number} height
    *   The height of the Layer.
    * @readonly
    */
-  this.height = options.height || (options.canvas ? options.canvas.height : 0) || (options.relative == 'canvas' ? canvas.height : world.height);
+  this.height = options.height || (options.canvas ? options.canvas.height : 0) || (options.relative == &#39;canvas&#39; ? canvas.height : world.height);
 <span id='Layer-property-x'>  /**
 </span>   * @property {Number} x
    *   The x-coordinate on the {@link global#canvas global canvas} of the
@@ -120,7 +120,7 @@ function Layer(options) {
 </span>   * @property {&quot;world&quot;/&quot;canvas&quot;} relative
    *   What to draw the Layer relative to.
    */
-  this.relative = options.relative || 'world';
+  this.relative = options.relative || &#39;world&#39;;
 <span id='Layer-property-opacity'>  /**
 </span>   * @property {Number} opacity
    *   A fractional percentage [0, 1] indicating the opacity of the Layer.
@@ -131,7 +131,7 @@ function Layer(options) {
 <span id='Layer-property-parallax'>  /**
 </span>   * @property {Number} parallax
    *   A fractional percentage indicating how much to
-   *   {@link Layer#scroll scroll} the Layer relative to the viewport's
+   *   {@link Layer#scroll scroll} the Layer relative to the viewport&#39;s
    *   movement.
    */
   this.parallax = options.parallax || 1;
@@ -174,14 +174,14 @@ function Layer(options) {
    *   An x-coordinate on the canvas specifying where to draw the upper-left
    *   corner of the Layer. The actual position that the coordinate equates to
    *   depends on the value of the
-   *   {@link Layer#relative Layer's &quot;relative&quot; property}. Defaults to the
-   *   {@link Layer#x Layer's &quot;x&quot; property} (which defaults to 0 [zero]).
+   *   {@link Layer#relative Layer&#39;s &quot;relative&quot; property}. Defaults to the
+   *   {@link Layer#x Layer&#39;s &quot;x&quot; property} (which defaults to 0 [zero]).
    * @param {Number} [y]
    *   A y-coordinate on the canvas specifying where to draw the upper-left
    *   corner of the Layer. The actual position that the coordinate equates to
    *   depends on the value of the
-   *   {@link Layer#relative Layer's &quot;relative&quot; property}. Defaults to the
-   *   {@link Layer#y Layer's &quot;y&quot; property} (which defaults to 0 [zero]).
+   *   {@link Layer#relative Layer&#39;s &quot;relative&quot; property}. Defaults to the
+   *   {@link Layer#y Layer&#39;s &quot;y&quot; property} (which defaults to 0 [zero]).
    */
   this.draw = function(ctx, x, y) {
     if (!(ctx instanceof CanvasRenderingContext2D)) {
@@ -189,11 +189,11 @@ function Layer(options) {
       x = ctx;
       ctx = context;
     }
-    x = typeof x === 'undefined' ? this.x : x;
-    y = typeof y === 'undefined' ? this.y : y;
+    x = typeof x === &#39;undefined&#39; ? this.x : x;
+    y = typeof y === &#39;undefined&#39; ? this.y : y;
     ctx.save();
     ctx.globalAlpha = this.opacity;
-    if (this.relative == 'canvas') {
+    if (this.relative == &#39;canvas&#39;) {
       ctx.translate(world.xOffset, world.yOffset);
     }
     if (this.xOffset || this.yOffset) {
@@ -232,7 +232,7 @@ function Layer(options) {
     return this;
   };
 <span id='Layer-method-positionOverCanvas'>  /**
-</span>   * Position the Layer's canvas over the primary canvas.
+</span>   * Position the Layer&#39;s canvas over the primary canvas.
    *
    * This is an alternative to drawing the Layer directly onto the primary
    * canvas. It is mostly useful when the `relative` property is `&quot;canvas&quot;`.
@@ -243,65 +243,65 @@ function Layer(options) {
    * over the primary canvas instead of drawn directly onto it.
    *
    * @return {HTMLElement}
-   *   A jQuery representation of a div containing the Layer's canvas.
+   *   A jQuery representation of a div containing the Layer&#39;s canvas.
    */
   this.positionOverCanvas = function() {
-    var $d = jQuery('&lt;div&gt;&lt;/div&gt;');
+    var $d = jQuery(&#39;&lt;div&gt;&lt;/div&gt;&#39;);
     var o = $canvas.offset();
     $d.css({
       left: o.left,
-      pointerEvents: 'none',
-      position: 'absolute',
+      pointerEvents: &#39;none&#39;,
+      position: &#39;absolute&#39;,
       top: o.top,
     });
     var $c = jQuery(this.canvas);
     $c.css({
-      backgroundColor: 'transparent',
-      margin: '0 auto',
-      overflow: 'hidden',
-      pointerEvents: 'none',
-      position: 'absolute',
-      'z-index': 50,
+      backgroundColor: &#39;transparent&#39;,
+      margin: &#39;0 auto&#39;,
+      overflow: &#39;hidden&#39;,
+      pointerEvents: &#39;none&#39;,
+      position: &#39;absolute&#39;,
+      &#39;z-index&#39;: 50,
     });
     $d.append($c);
-    jQuery('body').append($d);
+    jQuery(&#39;body&#39;).append($d);
     return $d;
   };
 <span id='Layer-method-showCanvasOverlay'>  /**
-</span>   * Display this Layer's canvas in an overlay (for debugging purposes).
+</span>   * Display this Layer&#39;s canvas in an overlay (for debugging purposes).
    *
    * Clicking the overlay will remove it.
    *
    * @return {HTMLElement}
-   *   A jQuery representation of a div containing the Layer's canvas.
+   *   A jQuery representation of a div containing the Layer&#39;s canvas.
    */
   this.showCanvasOverlay = function() {
     stopAnimating();
-    var $d = jQuery('&lt;div&gt;&lt;/div&gt;');
+    var $d = jQuery(&#39;&lt;div&gt;&lt;/div&gt;&#39;);
     $d.css({
-      cursor: 'pointer',
-      display: 'block',
-      height: '100%',
+      cursor: &#39;pointer&#39;,
+      display: &#39;block&#39;,
+      height: &#39;100%&#39;,
       left: 0,
-      position: 'absolute',
+      position: &#39;absolute&#39;,
       top: 0,
-      width: '100%',
+      width: &#39;100%&#39;,
     });
     var $c = jQuery(this.canvas);
     $c.css({
-      border: '1px solid black',
-      display: 'block',
-      margin: '0 auto',
-      position: 'absolute',
-      'z-index': 100,
+      border: &#39;1px solid black&#39;,
+      display: &#39;block&#39;,
+      margin: &#39;0 auto&#39;,
+      position: &#39;absolute&#39;,
+      &#39;z-index&#39;: 100,
     }).click(function() {
       $d.remove();
       startAnimating();
     });
     $d.append($c);
-    jQuery('body').append($d);
+    jQuery(&#39;body&#39;).append($d);
     $d.click(function(e) {
-      if (e.which != 3) { // Don't intercept right-click events
+      if (e.which != 3) { // Don&#39;t intercept right-click events
         $d.remove();
       }
     });
@@ -327,7 +327,7 @@ function Layer(options) {
  *
  * If the rendering context is the {@link global#context global context} for
  * the main canvas or if it belongs to a {@link Layer}, the visible area of the
- * relevant canvas will be cleared. Otherwise, the context doesn't know its
+ * relevant canvas will be cleared. Otherwise, the context doesn&#39;t know its
  * transformation matrix, so we have to temporarily reset it to clear the
  * canvas. This has the effect of clearing the visible area of the canvas, but
  * if the fillStyle is being used to draw something, it will not scroll with
@@ -379,7 +379,7 @@ CanvasRenderingContext2D.prototype.__drawImage = CanvasRenderingContext2D.protot
  * Additionally, this method has an optional `finished` parameter which is a
  * callback that runs when the image passed in the `src` parameter is finished
  * loading (or immediately if the image is already loaded or is a video). The
- * callback's context (its `this` object) is the canvas graphics object. Having
+ * callback&#39;s context (its `this` object) is the canvas graphics object. Having
  * this callback is useful because if you do not pre-load images, the image
  * will not be loaded (and therefore will not be drawn) for at least the first
  * time that drawing it is attempted. You can use the `finished` callback to
@@ -441,7 +441,7 @@ CanvasRenderingContext2D.prototype.__drawImage = CanvasRenderingContext2D.protot
  *   An array containing the arguments passed to the drawImage() invocation.
  * @param {Boolean} [finished.drawn]
  *   Whether the image was actually drawn (it will not be drawn if the image
- *   wasn't loaded before drawImage() attempted to draw it).
+ *   wasn&#39;t loaded before drawImage() attempted to draw it).
  *
  * @member CanvasRenderingContext2D
  */
@@ -450,23 +450,23 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
   // regardless of how many parameters there are.
   if (arguments.length % 2 === 0) {
     finished = Array.prototype.pop.call(arguments);
-    // Don't let finished interfere with other arguments.
+    // Don&#39;t let finished interfere with other arguments.
     if (sw instanceof Function) sw = undefined;
     else if (x instanceof Function) x = undefined;
     else if (w instanceof Function) w = undefined;
-    if (typeof finished != 'function') {
+    if (typeof finished != &#39;function&#39;) {
       finished = undefined;
     }
   }
   var t = this, a = arguments;
   // Keep the stupid order of parameters specified by the W3C.
-  // It doesn't matter that we're not providing the correct default values;
+  // It doesn&#39;t matter that we&#39;re not providing the correct default values;
   // those will be implemented by the original __drawImage() later.
-  if (typeof x != 'number' &amp;&amp; typeof y === 'undefined' &amp;&amp;
-      typeof w != 'number' &amp;&amp; typeof h === 'undefined') {
+  if (typeof x != &#39;number&#39; &amp;&amp; typeof y === &#39;undefined&#39; &amp;&amp;
+      typeof w != &#39;number&#39; &amp;&amp; typeof h === &#39;undefined&#39;) {
     x = sx;
     y = sy;
-    if (typeof sw == 'number' &amp;&amp; typeof sh !== 'undefined') {
+    if (typeof sw == &#39;number&#39; &amp;&amp; typeof sh !== &#39;undefined&#39;) {
       w = sw;
       h = sh;
     }
@@ -493,21 +493,21 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     }
   };
   var image;
-  if ((typeof Sprite !== 'undefined' &amp;&amp; src instanceof Sprite) ||
-      (typeof SpriteMap !== 'undefined' &amp;&amp; src instanceof SpriteMap)) { // draw a sprite
+  if ((typeof Sprite !== &#39;undefined&#39; &amp;&amp; src instanceof Sprite) ||
+      (typeof SpriteMap !== &#39;undefined&#39; &amp;&amp; src instanceof SpriteMap)) { // draw a sprite
     src.draw(this, x, y, w, h);
     if (finished instanceof Function) {
       finished.call(t, a, true); // Sprite images are loaded on instantiation
     }
   }
-  else if (typeof Layer !== 'undefined' &amp;&amp; src instanceof Layer) { // Draw the Layer's canvas
+  else if (typeof Layer !== &#39;undefined&#39; &amp;&amp; src instanceof Layer) { // Draw the Layer&#39;s canvas
     t.save();
     t.globalAlpha = src.opacity;
-    if (src.relative == 'canvas') {
+    if (src.relative == &#39;canvas&#39;) {
       t.translate(world.xOffset, world.yOffset);
     }
     var f = finished;
-    finished = undefined; // Don't call finished() until after translating back
+    finished = undefined; // Don&#39;t call finished() until after translating back
     _drawImage(src.canvas, x, y, w, h, sx, sy, sw, sh);
     t.restore();
     finished = f;
@@ -523,7 +523,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       src instanceof Image) { // same thing
     image = src;
     src = image._src || image.src; // check for preloaded src
-    if (!src) { // can't draw an empty image
+    if (!src) { // can&#39;t draw an empty image
       if (finished instanceof Function) {
         finished.call(t, a, false);
       }
@@ -535,14 +535,14 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     if (image.complete || (image.width &amp;&amp; image.height)) { // draw loaded images
       _drawImage(image, x, y, w, h, sx, sy, sw, sh);
     }
-    else { // if the image is not loaded, don't draw it
-      if (image._src) { // We've already tried to draw this one
+    else { // if the image is not loaded, don&#39;t draw it
+      if (image._src) { // We&#39;ve already tried to draw this one
         // The finished callback will run from the first time it was attempted to be drawn
         return;
       }
       var o = image.onload;
       image.onload = function() {
-        if (typeof o == 'function') { // don't overwrite any existing handler
+        if (typeof o == &#39;function&#39;) { // don&#39;t overwrite any existing handler
           o();
         }
         if (finished instanceof Function) {
@@ -551,7 +551,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
       };
     }
   }
-  else if (typeof src == 'string' &amp;&amp; Caches.images[src]) { // cached image path
+  else if (typeof src == &#39;string&#39; &amp;&amp; Caches.images[src]) { // cached image path
     image = Caches.images[src];
     if (image.complete || (image.width &amp;&amp; image.height)) { // Cached image is loaded
       _drawImage(image, x, y, w, h, sx, sy, sw, sh);
@@ -559,7 +559,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     // If cached image is not loaded, bail; the finished callback will run
     // from the first time it was attempted to be drawn
   }
-  else if (typeof src == 'string') { // uncached image path
+  else if (typeof src == &#39;string&#39;) { // uncached image path
     image = new Image();
     image.onload = function() {
       if (finished instanceof Function) {
@@ -571,7 +571,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
     Caches.images[src] = image; // prevent loading an unloaded image multiple times
   }
   else {
-    throw new TypeMismatchError('Image type not recognized.');
+    throw new TypeMismatchError(&#39;Image type not recognized.&#39;);
   }
 };
 
@@ -622,7 +622,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
  * @param {Function} [finished]
  *   A callback that runs when the image passed in the &quot;src&quot; parameter is
  *   finished loading (or immediately if the image is already loaded or is a
- *   video). The callback's context (its `this` object) is the canvas graphics
+ *   video). The callback&#39;s context (its `this` object) is the canvas graphics
  *   object. Having this callback is useful because if you do not pre-load
  *   images, the image will not be loaded (and therefore will not be drawn) for
  *   at least the first time that drawing it is attempted. You can use the
@@ -631,7 +631,7 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
  *   An array containing the arguments passed to the drawPattern() invocation.
  * @param {Boolean} [finished.drawn]
  *   Whether the image was actually drawn (it will not be drawn if the image
- *   wasn't loaded before drawPattern() attempted to draw it).
+ *   wasn&#39;t loaded before drawPattern() attempted to draw it).
  *
  * @return {CanvasPattern}
  *   The CanvasPattern object for the pattern that was drawn, if possible; or
@@ -646,18 +646,18 @@ CanvasRenderingContext2D.prototype.drawImage = function(src, sx, sy, sw, sh, x, 
  * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, finished) {
-  if (typeof x === 'undefined') x = 0;
-  if (typeof y === 'undefined') y = 0;
-  if (typeof w === 'undefined') w = this.canvas.width;
-  if (typeof h === 'undefined') h = this.canvas.height;
-  if (typeof rpt == 'function') {
+  if (typeof x === &#39;undefined&#39;) x = 0;
+  if (typeof y === &#39;undefined&#39;) y = 0;
+  if (typeof w === &#39;undefined&#39;) w = this.canvas.width;
+  if (typeof h === &#39;undefined&#39;) h = this.canvas.height;
+  if (typeof rpt == &#39;function&#39;) {
     finished = rpt;
-    rpt = 'repeat';
+    rpt = &#39;repeat&#39;;
   }
   else if (!rpt) {
-    rpt = 'repeat';
+    rpt = &#39;repeat&#39;;
   }
-  if (typeof Layer !== 'undefined' &amp;&amp; src instanceof Layer) { // Draw the Layer's canvas
+  if (typeof Layer !== &#39;undefined&#39; &amp;&amp; src instanceof Layer) { // Draw the Layer&#39;s canvas
     src = src.canvas;
   }
   var image;
@@ -668,10 +668,10 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       finished.call(this, arguments, true);
     }
   }
-  else if (typeof Layer !== 'undefined' &amp;&amp; src instanceof Layer) { // Draw the Layer's canvas
+  else if (typeof Layer !== &#39;undefined&#39; &amp;&amp; src instanceof Layer) { // Draw the Layer&#39;s canvas
     this.save();
     this.globalAlpha = src.opacity;
-    if (src.relative == 'canvas') {
+    if (src.relative == &#39;canvas&#39;) {
       this.translate(world.xOffset, world.yOffset);
     }
     this.fillStyle = this.createPattern(src.canvas, rpt);
@@ -693,7 +693,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       src instanceof Image) { // same thing
     image = src;
     src = image._src || image.src; // check for preloaded src
-    if (!src) { // can't draw an empty image
+    if (!src) { // can&#39;t draw an empty image
       if (finished instanceof Function) {
         finished.call(this, arguments, false);
       }
@@ -718,14 +718,14 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
         finished.call(this, arguments, true);
       }
     }
-    else { // if the image is not loaded, don't draw it
-      if (image._src) { // We've already tried to draw this one
+    else { // if the image is not loaded, don&#39;t draw it
+      if (image._src) { // We&#39;ve already tried to draw this one
         // The finished callback will run from the first time it was attempted to be drawn
         return;
       }
       var t = this, o = image.onload;
       image.onload = function() {
-        if (typeof o == 'function') { // don't overwrite any existing handler
+        if (typeof o == &#39;function&#39;) { // don&#39;t overwrite any existing handler
           o();
         }
         Caches.imagePatterns[src] = this.createPattern(image, rpt);
@@ -735,7 +735,7 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
       };
     }
   }
-  else if (typeof src == 'string') { // file path
+  else if (typeof src == &#39;string&#39;) { // file path
     if (Caches.imagePatterns[src]) { // We already have a pattern; just draw it
       this.fillStyle = Caches.imagePatterns[src];
       this.fillRect(x, y, w, h);
@@ -789,10 +789,10 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
  *   The width and height, in pixels, of each square in the checkerboard
  *   pattern.
  * @param {Number} [x=0]
- *   The x-coordinate of where the pattern's upper-left corner should be drawn
+ *   The x-coordinate of where the pattern&#39;s upper-left corner should be drawn
  *   on the canvas.
  * @param {Number} [y=0]
- *   The y-coordinate of where the pattern's upper-left corner should be drawn
+ *   The y-coordinate of where the pattern&#39;s upper-left corner should be drawn
  *   on the canvas.
  * @param {Number} [w=squareSize*2]
  *   The width of the pattern to draw onto the canvas.
@@ -813,8 +813,8 @@ CanvasRenderingContext2D.prototype.drawPattern = function(src, x, y, w, h, rpt, 
  * @member CanvasRenderingContext2D
  */
 CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w, h, color1, color2) {
-  if (typeof squareSize === 'undefined') squareSize = 80;
-  if (typeof squareSize == 'string' &amp;&amp; typeof x == 'string') {
+  if (typeof squareSize === &#39;undefined&#39;) squareSize = 80;
+  if (typeof squareSize == &#39;string&#39; &amp;&amp; typeof x == &#39;string&#39;) {
     var c1 = squareSize, c2 = x;
     squareSize = y;
     x = w;
@@ -824,13 +824,13 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
     color1 = c1;
     color2 = c2;
   }
-  var pattern = document.createElement('canvas'), pctx = pattern.getContext('2d');
+  var pattern = document.createElement(&#39;canvas&#39;), pctx = pattern.getContext(&#39;2d&#39;);
   pattern.width = squareSize*2;
   pattern.height = squareSize*2;
-  pctx.fillStyle = color1 || 'silver';
+  pctx.fillStyle = color1 || &#39;silver&#39;;
   pctx.fillRect(0, 0, squareSize, squareSize);
   pctx.fillRect(squareSize, squareSize, squareSize, squareSize);
-  pctx.fillStyle = color2 || 'lightGray';
+  pctx.fillStyle = color2 || &#39;lightGray&#39;;
   pctx.fillRect(squareSize, 0, squareSize, squareSize);
   pctx.fillRect(0, squareSize, squareSize, squareSize);
   return this.drawPattern(pattern, x || 0, y || 0, w || this.canvas.width, h || this.canvas.height);
@@ -851,7 +851,7 @@ CanvasRenderingContext2D.prototype.drawCheckered = function(squareSize, x, y, w,
  *   A canvas fillStyle used to fill the circle. If not specified, the circle
  *   uses the current fillStyle. If null, the circle is not filled.
  * @param {Mixed} [strokeStyle]
- *   A canvas strokeStyle used to draw the circle's border. If not specified,
+ *   A canvas strokeStyle used to draw the circle&#39;s border. If not specified,
  *   no border is drawn on the circle. If null, the border uses the current
  *   strokeStyle.
  *

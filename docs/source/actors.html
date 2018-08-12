@@ -53,12 +53,12 @@ var Box = Class.extend({
 </span>     * @property {Number} x
      *   The x-coordinate of the top-left corner of the Box.
      */
-    this.x = typeof x !== 'undefined' ? x : Math.floor((world.width-this.DEFAULT_WIDTH)/2);
+    this.x = typeof x !== &#39;undefined&#39; ? x : Math.floor((world.width-this.DEFAULT_WIDTH)/2);
 <span id='Box-property-y'>    /**
 </span>     * @property {Number} y
      *   The y-coordinate of the top-left corner of the Box.
      */
-    this.y = typeof y !== 'undefined' ? y : Math.floor((world.height-this.DEFAULT_HEIGHT)/2);
+    this.y = typeof y !== &#39;undefined&#39; ? y : Math.floor((world.height-this.DEFAULT_HEIGHT)/2);
 <span id='Box-property-width'>    /**
 </span>     * @property {Number} width
      *   The width of the Box.
@@ -73,7 +73,7 @@ var Box = Class.extend({
 </span>     * @property {String} fillStyle
      *   A fillStyle to use when drawing the Box if no `src` is specified.
      */
-    this.fillStyle = fillStyle || 'black';
+    this.fillStyle = fillStyle || &#39;black&#39;;
   },
 <span id='Box-property-DEFAULT_WIDTH'>  /**
 </span>   * The default width of a Box.
@@ -106,13 +106,13 @@ var Box = Class.extend({
    *   the {@link global#context global context} for the default canvas.
    * @param {Boolean} [smooth=true]
    *   A boolean indicating whether to force the Box to be drawn at whole-pixel
-   *   coordinates. If you don't already know that your coordinates will be
+   *   coordinates. If you don&#39;t already know that your coordinates will be
    *   integers, this option can speed up painting since the browser does not
    *   have to interpolate the image.
    */
   draw: function(ctx, smooth) {
     ctx = ctx || context;
-    if (typeof smooth === 'undefined') {
+    if (typeof smooth === &#39;undefined&#39;) {
       smooth = true;
     }
     ctx.save();
@@ -201,7 +201,7 @@ var Box = Class.extend({
    * The collision checking here uses AABB detection, meaning it uses upright
    * rectangles. It is accurate, but not as fast as it could be if there are
    * many objects to check against. If you need faster collision checking
-   * against many objects and you're willing to do it manually, consider
+   * against many objects and you&#39;re willing to do it manually, consider
    * implementing
    * [spatial partitioning](http://buildnewgames.com/broad-phase-collision-detection/).
    * If you need different collision models (for example with rotated
@@ -228,7 +228,7 @@ var Box = Class.extend({
       return this.overlaps(collideWith) ? collideWith : false;
     }
     var items = collideWith, found = [];
-    if (typeof TileMap !== 'undefined' &amp;&amp; collideWith instanceof TileMap) {
+    if (typeof TileMap !== &#39;undefined&#39; &amp;&amp; collideWith instanceof TileMap) {
       items = collideWith.getAll();
     }
     for (var i = 0, l = items.length; i &lt; l; i++) {
@@ -282,9 +282,9 @@ var Box = Class.extend({
 </span>   * Determine whether the mouse is hovering over this Box.
    */
   isHovered: function() {
-    if (typeof App.isHovered != 'function') {
+    if (typeof App.isHovered != &#39;function&#39;) {
       if (window.console &amp;&amp; console.warn) {
-        console.warn('Box#isHovered called, but App.isHovered does not exist.');
+        console.warn(&#39;Box#isHovered called, but App.isHovered does not exist.&#39;);
       }
       return false;
     }
@@ -304,16 +304,16 @@ var Box = Class.extend({
    *   unlisten()ing to callbacks bound to a namespace across multiple events.
    * @param {Function} callback
    *   A function to execute when the relevant event is triggered on the
-   *   listening object. The function's `this` object is the listening Box
+   *   listening object. The function&#39;s `this` object is the listening Box
    *   and it receives any other parameters passed by the trigger call. Usually
    *   an event object is the first parameter, and propagation can be stopped
-   *   by calling the event's stopPropagation() method.
+   *   by calling the event&#39;s stopPropagation() method.
    * @param {Number} [weight=0]
    *   An integer indicating the order in which callbacks for the relevant
    *   event should be triggered. Lower numbers cause the callback to get
    *   triggered earlier than higher numbers. This can be useful for getting
-   *   around the fact that the canvas doesn't track display order so event
-   *   callbacks can't distinguish which object should be triggered first if
+   *   around the fact that the canvas doesn&#39;t track display order so event
+   *   callbacks can&#39;t distinguish which object should be triggered first if
    *   multiple listening objects are overlapping.
    */
   listen: function(eventName, callback, weight) {
@@ -321,7 +321,7 @@ var Box = Class.extend({
       App.Events.listen(this, eventName, callback, weight);
     }
     else if (window.console &amp;&amp; console.warn) {
-      console.warn('Box#listen called, but App.Events does not exist.');
+      console.warn(&#39;Box#listen called, but App.Events does not exist.&#39;);
     }
     return this;
   },
@@ -340,16 +340,16 @@ var Box = Class.extend({
    *   unlisten()ing to callbacks bound to a namespace across multiple events.
    * @param {Function} callback
    *   A function to execute when the relevant event is triggered on the
-   *   listening object. The function's `this` object is the listening Box
+   *   listening object. The function&#39;s `this` object is the listening Box
    *   and it receives any other parameters passed by the trigger call. Usually
    *   an event object is the first parameter, and propagation can be stopped
-   *   by calling the event's stopPropagation() method.
+   *   by calling the event&#39;s stopPropagation() method.
    * @param {Number} [weight=0]
    *   An integer indicating the order in which callbacks for the relevant
    *   event should be triggered. Lower numbers cause the callback to get
    *   triggered earlier than higher numbers. This can be useful for getting
-   *   around the fact that the canvas doesn't track display order so event
-   *   callbacks can't distinguish which object should be triggered first if
+   *   around the fact that the canvas doesn&#39;t track display order so event
+   *   callbacks can&#39;t distinguish which object should be triggered first if
    *   multiple listening objects are overlapping.
    */
   once: function(eventName, callback, weight) {
@@ -357,7 +357,7 @@ var Box = Class.extend({
       App.Events.once(this, eventName, callback, weight);
     }
     else if (window.console &amp;&amp; console.warn) {
-      console.warn('Box#once called, but App.Events does not exist.');
+      console.warn(&#39;Box#once called, but App.Events does not exist.&#39;);
     }
     return this;
   },
@@ -368,7 +368,7 @@ var Box = Class.extend({
    *
    * @param {String} eventName
    *   The name of the event for which to listen, e.g. &quot;click.&quot; The event can
-   *   have a namespace using a dot, e.g. &quot;click.custom&quot; will unbind obj's
+   *   have a namespace using a dot, e.g. &quot;click.custom&quot; will unbind obj&#39;s
    *   listeners for the &quot;click&quot; that are using the &quot;custom&quot; namespace. You can
    *   also unlisten to multiple events using the same namespace, e.g.
    *   &quot;.custom&quot; could unlisten to &quot;mousemove.custom&quot; and &quot;touchmove.custom.&quot;
@@ -380,7 +380,7 @@ var Box = Class.extend({
       App.Events.unlisten(this, eventName);
     }
     else if (window.console &amp;&amp; console.warn) {
-      console.warn('Box#unlisten called, but App.Events does not exist.');
+      console.warn(&#39;Box#unlisten called, but App.Events does not exist.&#39;);
     }
     return this;
   },
@@ -404,7 +404,7 @@ var Box = Class.extend({
    * Actor#GRAVITY is enabled. This is useful for changing Actor behavior
    * depending on the surface. Example applications include making a surface
    * slippery (by changing {@link Actor#DAMPING_FACTOR}), making it bouncy (by
-   * adding upward velocity), or changing the Actor's speed. This can also be
+   * adding upward velocity), or changing the Actor&#39;s speed. This can also be
    * used for special actions like making the Box move only when a Player is
    * standing on it.
    *
@@ -583,7 +583,7 @@ var Actor = Box.extend({
    */
   keys: undefined,
 
-  // Used internally; not publicly documented. Reading is okay, but don't write.
+  // Used internally; not publicly documented. Reading is okay, but don&#39;t write.
   lastJump: 0, // Time when the last jump occurred in milliseconds since the epoch
   lastDirection: [], // The last direction (i.e. key press) passed to processInput()
   jumpDirection: {right: false, left: false}, // Whether the Actor was moving horizontally before jumping
@@ -594,7 +594,7 @@ var Actor = Box.extend({
   isDraggable: false, // Whether the Actor is draggable
   dragStartX: 0, // Last position of the Actor before being dragged
   dragStartY: 0, // Last position of the Actor before being dragged
-  animLoop: '', // Current SpriteMap animation sequence
+  animLoop: &#39;&#39;, // Current SpriteMap animation sequence
 
 <span id='Actor-method-constructor'>  /**
 </span>   * @constructor
@@ -614,7 +614,7 @@ var Actor = Box.extend({
     this.jumpDirection = {right: false, left: false};
     this.dropTargets = [];
     if (arguments.length &lt; 5) {
-      this.fillStyle = 'lightBlue';
+      this.fillStyle = &#39;lightBlue&#39;;
     }
   },
 
@@ -641,19 +641,19 @@ var Actor = Box.extend({
     var r = (w+h)/4;
 
     // Circle
-    ctx.circle(x, y, r, this.fillStyle, 'black');
+    ctx.circle(x, y, r, this.fillStyle, &#39;black&#39;);
 
     // Smile
     ctx.beginPath();
     ctx.arc(x, y, r*0.6, Math.PI*0.1, Math.PI*0.9, false);
     ctx.lineWidth = Math.max(Math.ceil(r/15), 1);
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = &#39;black&#39;;
     ctx.stroke();
 
     // Eyes
     ctx.beginPath();
     ctx.arc(x - r*0.3, y - r*0.25, Math.max(Math.ceil(r/15), 1), 0, 2 * Math.PI, false);
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = &#39;black&#39;;
     ctx.fill();
     ctx.arc(x + r*0.3, y - r*0.25, Math.max(Math.ceil(r/15), 1), 0, 2 * Math.PI, false);
     ctx.fill();
@@ -681,7 +681,7 @@ var Actor = Box.extend({
       if (App.Utils.almostEqual(this.lastX, this.x, 0.000001)) {
         this.fallLeft = null;
       }
-      // If we're not actually falling, collideSolid() will catch us.
+      // If we&#39;re not actually falling, collideSolid() will catch us.
       if (this.GRAVITY &amp;&amp;
           (this.y + this.height != world.height || !this.STAY_IN_WORLD)) {
         this.startFalling();
@@ -709,10 +709,10 @@ var Actor = Box.extend({
         anyIn = App.Utils.anyIn,
         keys = this.keys || window.keys;
     // Bail if someone deleted the keys variable.
-    if (typeof keys === 'undefined') {
+    if (typeof keys === &#39;undefined&#39;) {
       return;
     }
-    if (typeof direction === 'undefined' || direction.length === 0) {
+    if (typeof direction === &#39;undefined&#39; || direction.length === 0) {
       // For continuous movement, if no direction is given, use the last one.
       if (this.CONTINUOUS_MOVEMENT) {
         direction = this.lastLooked;
@@ -770,7 +770,7 @@ var Actor = Box.extend({
         if (now - this.lastJump &gt; this.JUMP_DELAY &amp;&amp; // sufficient delay
             (!this.JUMP_RELEASE || !this.jumpKeyDown)) { // press jump again
           this.yVelocity = -this.JUMP_VEL;
-          this.yAcceleration = 0; // Don't aggregate gravity
+          this.yAcceleration = 0; // Don&#39;t aggregate gravity
           this.lastJump = now;
           this.jumpDirection.right = right;
           this.jumpDirection.left = left;
@@ -782,7 +782,7 @@ var Actor = Box.extend({
     }
     // Move down.
     else if (anyIn(keys.down, direction)) {
-      if (!this.isInAir() || !this.GRAVITY) { // don't allow accelerating downward when falling
+      if (!this.isInAir() || !this.GRAVITY) { // don&#39;t allow accelerating downward when falling
         this.yVelocity = this.MOVEAMOUNT;
         looked = true;
       }
@@ -791,7 +791,7 @@ var Actor = Box.extend({
     if (looked) {
       this.lastLooked = direction.slice(); // shallow copy
       // Avoid looking anywhere but right or left if gravity is enabled.
-      // If we didn't have this here, we would be able to look diagonally.
+      // If we didn&#39;t have this here, we would be able to look diagonally.
       if (this.GRAVITY) {
         for (var i = this.lastLooked.length-1; i &gt;= 0; i--) {
           if (keys.left.indexOf(this.lastLooked[i]) == -1 &amp;&amp;
@@ -835,7 +835,7 @@ var Actor = Box.extend({
     // Apply half acceleration (first half of midpoint formula)
     this.xVelocity += this.xAcceleration*d2;
     this.yVelocity += this.yAcceleration*d2;
-    // Don't let diagonal movement be faster than axial movement
+    // Don&#39;t let diagonal movement be faster than axial movement
     var xV = this.xVelocity, yV = this.yVelocity;
     if (xV !== 0 &amp;&amp; yV !== 0 &amp;&amp; !this.GRAVITY) {
       var magnitude = Math.max(Math.abs(xV), Math.abs(yV));
@@ -876,7 +876,7 @@ var Actor = Box.extend({
   },
 
 <span id='Actor-method-dampVelocity'>  /**
-</span>   * Damp the Actor's velocity.
+</span>   * Damp the Actor&#39;s velocity.
    *
    * This affects how much control the Actor has over its movement, i.e.
    * whether the Actor can stop and turn on a dime or whether it slides around
@@ -1025,7 +1025,7 @@ var Actor = Box.extend({
    */
   moveOutsideX: function(other) {
     var moved = 0, movedTo;
-    // Only adjust if we're intersecting
+    // Only adjust if we&#39;re intersecting
     if (this.overlaps(other)) {
       // If our center is left of their center, move to the left side
       if (this.x + this.width / 2 &lt; other.x + other.width / 2) {
@@ -1054,7 +1054,7 @@ var Actor = Box.extend({
    */
   moveOutsideY: function(other) {
     var moved = 0, movedTo;
-    // Only adjust if we're intersecting
+    // Only adjust if we&#39;re intersecting
     if (this.overlaps(other)) {
       // If our center is above their center, move to the top
       if (this.y + this.height / 2 &lt;= other.y + other.height / 2) {
@@ -1154,8 +1154,8 @@ var Actor = Box.extend({
    * @param {Box/Collection/TileMap} box The Box or set of Boxes to check.
    */
   standingOn: function(box) {
-    if ((typeof Collection !== 'undefined' &amp;&amp; box instanceof Collection) ||
-        (typeof TileMap !== 'undefined' &amp;&amp; box instanceof TileMap)) {
+    if ((typeof Collection !== &#39;undefined&#39; &amp;&amp; box instanceof Collection) ||
+        (typeof TileMap !== &#39;undefined&#39; &amp;&amp; box instanceof TileMap)) {
       var items = box.getAll();
       for (var i = 0, l = items.length; i &lt; l; i++) {
         if (this.standingOn(items[i])) {
@@ -1169,7 +1169,7 @@ var Actor = Box.extend({
   },
 
 <span id='Actor-method-collideSolid'>  /**
-</span>   * Check collision with solids and adjust the Actor's position as necessary.
+</span>   * Check collision with solids and adjust the Actor&#39;s position as necessary.
    *
    * This method has the side-effect that it will stop the Actor from falling
    * if it is standing on a Box.
@@ -1177,7 +1177,7 @@ var Actor = Box.extend({
    * The collision checking here uses AABB detection, meaning it uses upright
    * rectangles. It is accurate, but not as fast as it could be if there are
    * many objects to check against. If you need faster collision checking
-   * against many objects and you're willing to do it manually, consider
+   * against many objects and you&#39;re willing to do it manually, consider
    * implementing
    * [spatial partitioning](http://buildnewgames.com/broad-phase-collision-detection/).
    * If you need different collision models (for example with rotated
@@ -1197,8 +1197,8 @@ var Actor = Box.extend({
     if (collideWith instanceof Box || collideWith instanceof ImageWrapper) {
       collided = this._collideSolidBox(collideWith);
     }
-    else if ((typeof Collection !== 'undefined' &amp;&amp; collideWith instanceof Collection) ||
-        (typeof TileMap !== 'undefined' &amp;&amp; collideWith instanceof TileMap)) {
+    else if ((typeof Collection !== &#39;undefined&#39; &amp;&amp; collideWith instanceof Collection) ||
+        (typeof TileMap !== &#39;undefined&#39; &amp;&amp; collideWith instanceof TileMap)) {
       var items = collideWith.getAll();
       for (var i = 0, l = items.length; i &lt; l; i++) {
         var c = this._collideSolidBox(items[i]);
@@ -1217,7 +1217,7 @@ var Actor = Box.extend({
   },
 
 <span id='global-method-_collideSolidBox'>  /**
-</span>   * Check collision with a single solid and adjust the Actor's position.
+</span>   * Check collision with a single solid and adjust the Actor&#39;s position.
    *
    * This method has the side-effect that it will stop the Actor from falling if
    * it is standing on the Box.
@@ -1255,12 +1255,12 @@ var Actor = Box.extend({
       if (this.standingOn(collideWith)) {
         this.stopFalling();
         falling = false;
-        if (typeof collideWith.stoodOn == 'function') {
+        if (typeof collideWith.stoodOn == &#39;function&#39;) {
           collideWith.stoodOn(this);
         }
       }
       this.x = x;
-      // If we're in the air and we hit something, stop the momentum.
+      // If we&#39;re in the air and we hit something, stop the momentum.
       if (falling &amp;&amp; (collided.x || collided.y)) {
         // If we hit the bottom, stop rising.
         if (App.Utils.almostEqual(this.y, collideWith.y + collideWith.height, 1)) {
@@ -1282,7 +1282,7 @@ var Actor = Box.extend({
   },
 
 <span id='Actor-method-updateAnimation'>  /**
-</span>   * Change the Actor's animation sequence if it uses a {@link SpriteMap}.
+</span>   * Change the Actor&#39;s animation sequence if it uses a {@link SpriteMap}.
    *
    * All animations fall back to the &quot;stand&quot; animation if they are not
    * available. The &quot;jumpRight&quot; and &quot;jumpLeft&quot; sequences will try to fall back
@@ -1314,9 +1314,9 @@ var Actor = Box.extend({
    * - drag
    *
    * Override this function if you want to modify the custom rules for which
-   * animations to play (or what the animations' names are).
+   * animations to play (or what the animations&#39; names are).
    *
-   * This function does nothing if the Actor's `src` attribute is not a
+   * This function does nothing if the Actor&#39;s `src` attribute is not a
    * SpriteMap.
    *
    * See also Actor#useAnimation().
@@ -1332,88 +1332,88 @@ var Actor = Box.extend({
     var keys = this.keys || window.keys,
         lastDirection = this.lastDirection,
         anyIn = App.Utils.anyIn,
-        keysIsDefined = typeof keys !== 'undefined'; // Don't fail if &quot;keys&quot; was removed
-    // Don't let shooting make us change where we're looking.
+        keysIsDefined = typeof keys !== &#39;undefined&#39;; // Don&#39;t fail if &quot;keys&quot; was removed
+    // Don&#39;t let shooting make us change where we&#39;re looking.
     if (keysIsDefined &amp;&amp;
-        typeof keys.shoot !== 'undefined' &amp;&amp;
+        typeof keys.shoot !== &#39;undefined&#39; &amp;&amp;
         anyIn(keys.shoot, lastDirection)) {
       lastDirection = this.lastLooked;
     }
     if (this.isBeingDragged) {
-      this.useAnimation('drag', 'stand');
+      this.useAnimation(&#39;drag&#39;, &#39;stand&#39;);
     }
     else if (this.isInAir()) {
       if (this.x &gt; this.lastX) {
-        this.useAnimation('jumpRight', 'lookRight', 'stand');
+        this.useAnimation(&#39;jumpRight&#39;, &#39;lookRight&#39;, &#39;stand&#39;);
       }
       else if (this.x &lt; this.lastX) {
-        this.useAnimation('jumpLeft', 'lookLeft', 'stand');
+        this.useAnimation(&#39;jumpLeft&#39;, &#39;lookLeft&#39;, &#39;stand&#39;);
       }
       else if (this.isJumping()) {
-        this.useAnimation('jump', 'stand');
+        this.useAnimation(&#39;jump&#39;, &#39;stand&#39;);
       }
       else {
-        this.useAnimation('fall', 'stand');
+        this.useAnimation(&#39;fall&#39;, &#39;stand&#39;);
       }
     }
     else if (this.y &gt; this.lastY) {
       if (this.x &gt; this.lastX) {
-        this.useAnimation('downRight', 'stand');
+        this.useAnimation(&#39;downRight&#39;, &#39;stand&#39;);
       }
       else if (this.x &lt; this.lastX) {
-        this.useAnimation('downLeft', 'stand');
+        this.useAnimation(&#39;downLeft&#39;, &#39;stand&#39;);
       }
       else {
-        this.useAnimation('down', 'stand');
+        this.useAnimation(&#39;down&#39;, &#39;stand&#39;);
       }
     }
     else if (this.y &lt; this.lastY) {
       if (this.x &gt; this.lastX) {
-        this.useAnimation('upRight', 'stand');
+        this.useAnimation(&#39;upRight&#39;, &#39;stand&#39;);
       }
       else if (this.x &lt; this.lastX) {
-        this.useAnimation('upLeft', 'stand');
+        this.useAnimation(&#39;upLeft&#39;, &#39;stand&#39;);
       }
       else {
-        this.useAnimation('up', 'stand');
+        this.useAnimation(&#39;up&#39;, &#39;stand&#39;);
       }
     }
     else if (this.x &gt; this.lastX) {
-      this.useAnimation('right', 'stand');
+      this.useAnimation(&#39;right&#39;, &#39;stand&#39;);
     }
     else if (this.x &lt; this.lastX) {
-      this.useAnimation('left', 'stand');
+      this.useAnimation(&#39;left&#39;, &#39;stand&#39;);
     }
     else if (keysIsDefined &amp;&amp; anyIn(keys.up, lastDirection)) {
       if (anyIn(keys.right, lastDirection)) {
-        this.useAnimation('lookUpRight', 'stand');
+        this.useAnimation(&#39;lookUpRight&#39;, &#39;stand&#39;);
       }
       else if (anyIn(keys.left, lastDirection)) {
-        this.useAnimation('lookUpLeft', 'stand');
+        this.useAnimation(&#39;lookUpLeft&#39;, &#39;stand&#39;);
       }
       else {
-        this.useAnimation('lookUp', 'stand');
+        this.useAnimation(&#39;lookUp&#39;, &#39;stand&#39;);
       }
     }
     else if (keysIsDefined &amp;&amp; anyIn(keys.down, lastDirection)) {
       if (anyIn(keys.right, lastDirection)) {
-        this.useAnimation('lookDownRight', 'stand');
+        this.useAnimation(&#39;lookDownRight&#39;, &#39;stand&#39;);
       }
       else if (anyIn(keys.left, lastDirection)) {
-        this.useAnimation('lookDownLeft', 'stand');
+        this.useAnimation(&#39;lookDownLeft&#39;, &#39;stand&#39;);
       }
       else {
-        this.useAnimation('lookDown', 'stand');
+        this.useAnimation(&#39;lookDown&#39;, &#39;stand&#39;);
       }
     }
     else if (keysIsDefined &amp;&amp; anyIn(keys.right, lastDirection)) {
-      this.useAnimation(collided &amp;&amp; collided.x ? 'right' : 'lookRight', 'stand');
+      this.useAnimation(collided &amp;&amp; collided.x ? &#39;right&#39; : &#39;lookRight&#39;, &#39;stand&#39;);
     }
     else if (keysIsDefined &amp;&amp; anyIn(keys.left, lastDirection)) {
-      this.useAnimation(collided &amp;&amp; collided.x ? 'left' : 'lookLeft', 'stand');
+      this.useAnimation(collided &amp;&amp; collided.x ? &#39;left&#39; : &#39;lookLeft&#39;, &#39;stand&#39;);
     }
     else {
-      this.useAnimation('stand');
+      this.useAnimation(&#39;stand&#39;);
     }
   },
 
@@ -1436,7 +1436,7 @@ var Actor = Box.extend({
    *   successful; false otherwise.
    */
   useAnimation: function() {
-    if (typeof this.src.maps === 'undefined') {
+    if (typeof this.src.maps === &#39;undefined&#39;) {
       return;
     }
     for (var i = 0; i &lt; arguments.length; i++) {
@@ -1464,23 +1464,23 @@ var Actor = Box.extend({
     }
     else if (!on) {
       this.isDraggable = false;
-      this.unlisten('.drag');
+      this.unlisten(&#39;.drag&#39;);
       return this;
     }
     else if (!App.Events) {
       if (window.console &amp;&amp; console.warn) {
-        console.warn('Actor#setDraggable called, but App.Events does not exist.');
+        console.warn(&#39;Actor#setDraggable called, but App.Events does not exist.&#39;);
       }
       return this;
     }
     else if (!window.Mouse) {
       if (window.console &amp;&amp; console.warn) {
-        console.warn('Actor#setDraggable called, but window.Mouse does not exist.');
+        console.warn(&#39;Actor#setDraggable called, but window.Mouse does not exist.&#39;);
       }
       return this;
     }
     this.isDraggable = true;
-    this.listen('mousedown.drag touchstart.drag', function() {
+    this.listen(&#39;mousedown.drag touchstart.drag&#39;, function() {
       App.isSomethingBeingDragged = true;
       this.isBeingDragged = true;
       this.dragStartX = this.x;
@@ -1494,12 +1494,12 @@ var Actor = Box.extend({
        * @param {Actor} obj The object being dragged.
        * @member global
        */
-      jQuery(document).trigger('canvasdragstart', [this]);
+      jQuery(document).trigger(&#39;canvasdragstart&#39;, [this]);
     });
-    this.listen('canvasdragstop.drag', function() {
+    this.listen(&#39;canvasdragstop.drag&#39;, function() {
       this.isBeingDragged = false;
       // If there are no drop targets, the Actor can be dropped anywhere.
-      // If there are drop targets and we're not over one, snap back to the
+      // If there are drop targets and we&#39;re not over one, snap back to the
       // starting point.
       var target = this.collides(this.dropTargets);
       if (this.dropTargets.length &amp;&amp; !target) {
@@ -1516,7 +1516,7 @@ var Actor = Box.extend({
          * @member global
          * @ignore
          */
-        jQuery(document).trigger('canvasdrop', [target]);
+        jQuery(document).trigger(&#39;canvasdrop&#39;, [target]);
       }
     });
     return this;
@@ -1541,7 +1541,7 @@ var Actor = Box.extend({
    */
   release: function(releasedDirections) {
     var keys = this.keys || window.keys;
-    if (this.GRAVITY &amp;&amp; typeof keys !== 'undefined' &amp;&amp;
+    if (this.GRAVITY &amp;&amp; typeof keys !== &#39;undefined&#39; &amp;&amp;
         App.Utils.anyIn(keys.up, releasedDirections)) {
       this.jumpKeyDown = false;
     }
@@ -1607,7 +1607,7 @@ var Player = Actor.extend({
       }
     };
     // Notify the Player object when keys are released.
-    jQuery(document).on('keyup.release', this.__keytracker);
+    jQuery(document).on(&#39;keyup.release&#39;, this.__keytracker);
   },
 
 <span id='Player-method-processInput'>  /**
@@ -1618,7 +1618,7 @@ var Player = Actor.extend({
    * @inheritdoc Actor#processInput
    */
   processInput: function(direction) {
-    if (typeof direction === 'undefined' &amp;&amp; jQuery.hotkeys) {
+    if (typeof direction === &#39;undefined&#39; &amp;&amp; jQuery.hotkeys) {
       direction = jQuery.hotkeys.keysDown;
     }
     return this._super(direction);
@@ -1647,7 +1647,7 @@ var Player = Actor.extend({
    */
   setDraggable: function(on) {
     if (on &amp;&amp; !this.isDraggable &amp;&amp; App.Events &amp;&amp; window.Mouse) {
-      this.listen('canvasdragstop.drag', function() {
+      this.listen(&#39;canvasdragstop.drag&#39;, function() {
         if (this.isBeingDragged &amp;&amp;
             (!this.dropTargets.length || this.collides(this.dropTargets))) {
           world.centerViewportAround(this.x, this.y);
@@ -1706,7 +1706,7 @@ var Player = Actor.extend({
    */
   destroy: function() {
     this._super.apply(this, arguments);
-    jQuery(document).off('.release', this.__keytracker);
+    jQuery(document).off(&#39;.release&#39;, this.__keytracker);
   },
 });
 </pre>

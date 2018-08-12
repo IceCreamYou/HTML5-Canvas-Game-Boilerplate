@@ -27,7 +27,7 @@
  */
 App.Storage = (function(window, undefined) {
   var api = {enabled: true},
-      namespace = '__appstore__',
+      namespace = &#39;__appstore__&#39;,
       storage = window.localStorage,
       internal = {},
       fake = false;
@@ -63,8 +63,8 @@ App.Storage = (function(window, undefined) {
     key = namespace + key;
     try {
       var item = storage.getItem(key);
-      // If it's a string, we probably put it there. Un-stringify it.
-      if (typeof item === 'string') {
+      // If it&#39;s a string, we probably put it there. Un-stringify it.
+      if (typeof item === &#39;string&#39;) {
         return JSON.parse(item);
       }
       // Someone put something here.
@@ -142,7 +142,7 @@ App.Storage = (function(window, undefined) {
     api.enabled = false;
   }
   // If localStorage is unavailable, fake it. No point falling back to anything
-  // else; all we're going for here is avoiding breaking errors. Doing this
+  // else; all we&#39;re going for here is avoiding breaking errors. Doing this
   // avoids having to check for App.Storage.enabled every time you want to
   // store something. If you wanted to be really comprehensive with local
   // storage you could use something like

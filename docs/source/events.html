@@ -18,10 +18,10 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * Handles events on canvas objects.
  *
- * Objects in a Canvas are not represented in the DOM, so they don't benefit
+ * Objects in a Canvas are not represented in the DOM, so they don&#39;t benefit
  * from the traditional JavaScript event model. This file provides a similar
- * replacement event system modeled on jQuery's DOM event wrappers so that you
- * don't have to worry about this problem.
+ * replacement event system modeled on jQuery&#39;s DOM event wrappers so that you
+ * don&#39;t have to worry about this problem.
  *
  * Bindings for the {@link Box} class are available for easier access to this
  * event system.
@@ -32,9 +32,9 @@
 (function() {
 
 function _handlePointerBehavior() {
-  if (typeof App.isHovered != 'function') {
+  if (typeof App.isHovered != &#39;function&#39;) {
     if (window.console &amp;&amp; console.warn) {
-      console.warn('Mouse event triggered, but App.isHovered does not exist.');
+      console.warn(&#39;Mouse event triggered, but App.isHovered does not exist.&#39;);
     }
     return false;
   }
@@ -71,16 +71,16 @@ App.Events = {
    *   unlisten()ing to callbacks bound to a namespace across multiple events.
    * @param {Function} callback
    *   A function to execute when the relevant event is triggered on the
-   *   listening object. The function's `this` object is the listening object
+   *   listening object. The function&#39;s `this` object is the listening object
    *   and it receives any other parameters passed by the trigger call. Usually
    *   an event object is the first parameter, and propagation can be stopped
-   *   by calling the event's stopPropagation() method.
+   *   by calling the event&#39;s stopPropagation() method.
    * @param {Number} [weight=0]
    *   An integer indicating the order in which callbacks for the relevant
    *   event should be triggered. Lower numbers cause the callback to get
    *   triggered earlier than higher numbers. This can be useful for getting
-   *   around the fact that the canvas doesn't track display order so event
-   *   callbacks can't distinguish which object should be triggered first if
+   *   around the fact that the canvas doesn&#39;t track display order so event
+   *   callbacks can&#39;t distinguish which object should be triggered first if
    *   multiple listening objects are overlapping.
    *
    * @static
@@ -88,7 +88,7 @@ App.Events = {
   listen: function(obj, eventName, callback, weight) {
     var once = arguments[4];
     // Allow specifying multiple space-separated event names.
-    var events = eventName.split(' ');
+    var events = eventName.split(&#39; &#39;);
     if (events.length &gt; 1) {
       for (var j = 0, l = events.length; j &lt; l; j++) {
         App.Events.listen(obj, events[j], callback, weight, once);
@@ -96,7 +96,7 @@ App.Events = {
       return;
     }
     // Separate the event name from the namespace.
-    var namespace = '', i = eventName.indexOf('.');
+    var namespace = &#39;&#39;, i = eventName.indexOf(&#39;.&#39;);
     if (i !== -1) {
       namespace = eventName.substring(i+1);
       eventName = eventName.substring(0, i);
@@ -132,16 +132,16 @@ App.Events = {
    *   unlisten()ing to callbacks bound to a namespace across multiple events.
    * @param {Function} callback
    *   A function to execute when the relevant event is triggered on the
-   *   listening object. The function's `this` object is the listening object
+   *   listening object. The function&#39;s `this` object is the listening object
    *   and it receives any other parameters passed by the trigger call. Usually
    *   an event object is the first parameter, and propagation can be stopped
-   *   by calling the event's stopPropagation() method.
+   *   by calling the event&#39;s stopPropagation() method.
    * @param {Number} [weight=0]
    *   An integer indicating the order in which callbacks for the relevant
    *   event should be triggered. Lower numbers cause the callback to get
    *   triggered earlier than higher numbers. This can be useful for getting
-   *   around the fact that the canvas doesn't track display order so event
-   *   callbacks can't distinguish which object should be triggered first if
+   *   around the fact that the canvas doesn&#39;t track display order so event
+   *   callbacks can&#39;t distinguish which object should be triggered first if
    *   multiple listening objects are overlapping.
    *
    * @static
@@ -158,7 +158,7 @@ App.Events = {
    *   The object which should unlisten for the specified event.
    * @param {String} eventName
    *   The name of the event for which to listen, e.g. &quot;click.&quot; The event can
-   *   have a namespace using a dot, e.g. &quot;click.custom&quot; will unbind obj's
+   *   have a namespace using a dot, e.g. &quot;click.custom&quot; will unbind obj&#39;s
    *   listeners for the &quot;click&quot; that are using the &quot;custom&quot; namespace. You can
    *   also unlisten to multiple events using the same namespace, e.g.
    *   &quot;.custom&quot; could unlisten to &quot;mousemove.custom&quot; and &quot;touchmove.custom.&quot;
@@ -169,7 +169,7 @@ App.Events = {
    */
   unlisten: function(obj, eventName) {
     // Allow specifying multiple space-separated event names.
-    var events = eventName.split(' ');
+    var events = eventName.split(&#39; &#39;);
     if (events.length &gt; 1) {
       for (var j = 0, l = events.length; j &lt; l; j++) {
         App.Events.unlisten(obj, events[j]);
@@ -177,7 +177,7 @@ App.Events = {
       return;
     }
     // Separate the event name from the namespace.
-    var namespace = '', i = eventName.indexOf('.'), e;
+    var namespace = &#39;&#39;, i = eventName.indexOf(&#39;.&#39;), e;
     if (i !== -1) {
       namespace = eventName.substring(i+1);
       eventName = eventName.substring(0, i);
@@ -222,7 +222,7 @@ App.Events = {
     var event = arguments[0];
     var e = _listeners[eventName]; // All listeners for this event
     if (e) {
-      // Sort listeners by weight (lowest last, then we'll iterate in reverse).
+      // Sort listeners by weight (lowest last, then we&#39;ll iterate in reverse).
       e.sort(function(a, b) {
         return b.weight - a.weight;
       });
@@ -233,7 +233,7 @@ App.Events = {
           e[i].callback.apply(e[i].object, arguments);
           // Remove listeners that should only be called once.
           if (e[i].once) {
-            App.Events.unlisten(e[i].object, eventName + '.' + e[i].namespace);
+            App.Events.unlisten(e[i].object, eventName + &#39;.&#39; + e[i].namespace);
           }
           // Stop processing overlapping objects if propagation is stopped.
           if (event &amp;&amp; event.isPropagationStopped &amp;&amp; event.isPropagationStopped()) {
@@ -248,7 +248,7 @@ App.Events = {
    *
    * The Behaviors object has event names as keys and functions as values. The
    * functions evaluate whether the relevant event has been triggered on a
-   * given listening object. The listening object is the functions' `this`
+   * given listening object. The listening object is the functions&#39; `this`
    * object, and the functions receive all the same parameters passed to the
    * App.Events.trigger() method (usually starting with an Event object). Add
    * elements to App.Events.Behaviors if you want to support new event types

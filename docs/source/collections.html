@@ -75,15 +75,15 @@ Collection.prototype = {
    *   of each object in the Collection that should be invoked. In the first
    *   case, the function should return a truthy value in order to remove the
    *   item being processed from the Collection. In the second case, additional
-   *   arguments to the forEach method are also passed on to the items' method.
+   *   arguments to the forEach method are also passed on to the items&#39; method.
    */
   forEach: function(f) {
-    if (typeof f == 'string') {
+    if (typeof f == &#39;string&#39;) {
       return this._executeMethod.apply(this, arguments);
     }
     for (var i = this.length-1; i &gt;= 0; i--) {
       if (f(this[i])) {
-        if (typeof this[i].destroy == 'function') {
+        if (typeof this[i].destroy == &#39;function&#39;) {
           this[i].destroy();
         }
         this.splice(i, 1);
@@ -148,7 +148,7 @@ Collection.prototype = {
     for (var i = 0, l = this.length; i &lt; l; i++) {
       for (var j = i+1; j &lt; l; j++) {
         if (this[i].overlaps(this[j])) {
-          if (typeof callback == 'function') {
+          if (typeof callback == &#39;function&#39;) {
             callback.call(this, this[i], this[j]);
             collision = true;
           }
@@ -285,11 +285,11 @@ function ImageWrapper(src, x, y, w, h) {
  *
  *   is equivalent to this Array:
  *
- *       [[' ', ' ', ' ', ' ', 'A', ' ', ' ', ' ', ' '],
- *        [' ', ' ', ' ', 'B', 'B', 'B', ' ', ' ', ' '],
- *        ['B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B']]
+ *       [[&#39; &#39;, &#39; &#39;, &#39; &#39;, &#39; &#39;, &#39;A&#39;, &#39; &#39;, &#39; &#39;, &#39; &#39;, &#39; &#39;],
+ *        [&#39; &#39;, &#39; &#39;, &#39; &#39;, &#39;B&#39;, &#39;B&#39;, &#39;B&#39;, &#39; &#39;, &#39; &#39;, &#39; &#39;],
+ *        [&#39;B&#39;, &#39;B&#39;, &#39;B&#39;, &#39;B&#39;, &#39;B&#39;, &#39;B&#39;, &#39;B&#39;, &#39;B&#39;, &#39;B&#39;]]
  *
- *   If `map` was specified as `{'A': Actor, 'B': Box}`, then this layout would
+ *   If `map` was specified as `{&#39;A&#39;: Actor, &#39;B&#39;: Box}`, then this layout would
  *   correspond to an Actor standing on top of a small hill of Boxes.
  * @param {Object/Array} map
  *   An Array or object whose keys are found in the `grid` parameter and whose
@@ -338,14 +338,14 @@ function TileMap(grid, map, options) {
   if (options &amp;&amp; options.gridSize instanceof Array &amp;&amp; options.gridSize.length &gt; 1) {
     this.options.gridSize = options.gridSize;
   }
-  if (typeof map === 'undefined' || map === null) {
+  if (typeof map === &#39;undefined&#39; || map === null) {
     map = [];
   }
   // Place the TileMap in the lower-left corner of the world.
-  if (typeof this.options.startCoords === 'undefined' ||
+  if (typeof this.options.startCoords === &#39;undefined&#39; ||
       this.options.startCoords.length === 0) {
     this.options.startCoords = [0, world.height - this.options.cellSize[1] *
-                                  (typeof grid == 'string' ? grid.split(&quot;\n&quot;) : grid).length
+                                  (typeof grid == &#39;string&#39; ? grid.split(&quot;\n&quot;) : grid).length
                                 ];
   }
   var gs = this.options.gridSize,
@@ -364,17 +364,17 @@ function TileMap(grid, map, options) {
       }
     }
   }
-  // Allow specifying grid as a string; we'll deconstruct it into an array.
-  if (typeof grid == 'string') {
+  // Allow specifying grid as a string; we&#39;ll deconstruct it into an array.
+  if (typeof grid == &#39;string&#39;) {
     grid = grid.split(&quot;\n&quot;);
     for (i = 0, l = grid.length; i &lt; l; i++) {
-      grid[i] = grid[i].split('');
+      grid[i] = grid[i].split(&#39;&#39;);
     }
   }
   this.grid = grid;
   // Make space mean null (blank) unless otherwise specified.
-  if (typeof map !== 'undefined' &amp;&amp; typeof map[' '] === 'undefined') {
-    map[' '] = null;
+  if (typeof map !== &#39;undefined&#39; &amp;&amp; typeof map[&#39; &#39;] === &#39;undefined&#39;) {
+    map[&#39; &#39;] = null;
   }
 
   // Initialize all the objects in the grid.
@@ -393,7 +393,7 @@ function TileMap(grid, map, options) {
       else {
         var x = sx + j * cw, y = sy + i * ch; // x- and y-coordinates of tile
         // We can handle any image type that context.drawImage() can draw
-        if (typeof o === 'string' ||
+        if (typeof o === &#39;string&#39; ||
             o instanceof Image ||
             o instanceof HTMLImageElement ||
             o instanceof HTMLCanvasElement ||
@@ -428,7 +428,7 @@ function TileMap(grid, map, options) {
    *   unnecessary.
    * @param {Boolean} [smooth]
    *   Indicates whether to force the Box to be drawn at whole-pixel
-   *   coordinates. If you don't already know that your coordinates
+   *   coordinates. If you don&#39;t already know that your coordinates
    *   will be integers, this option can speed up painting since the browser
    *   does not have to interpolate the image. Defaults to whatever the default
    *   is for each object being drawn (the default for Boxes is true).
@@ -478,7 +478,7 @@ function TileMap(grid, map, options) {
    * @param {Object} obj The object to place at the specified tile.
    */
   this.setCell = function(row, col, obj) {
-    if (this.grid[row] &amp;&amp; typeof this.grid[row][col] !== 'undefined') {
+    if (this.grid[row] &amp;&amp; typeof this.grid[row][col] !== &#39;undefined&#39;) {
       this.grid[row][col] = obj;
     }
     return this;
@@ -503,14 +503,14 @@ function TileMap(grid, map, options) {
    * viewport by default).
    *
    * Note that if you just used a TileMap to easily initialize a bunch of
-   * tiles, or if you're not adding or removing tiles frequently but you are
+   * tiles, or if you&#39;re not adding or removing tiles frequently but you are
    * calling this function frequently, you can also convert your TileMap to a
    * {@link Collection}:
    *
    *     var myCollection = new Collection(myTileMap.getAll());
    *
    * This is more efficient if you always need to process every item in the
-   * TileMap and you don't care about their relative position.
+   * TileMap and you don&#39;t care about their relative position.
    */
   this.getAll = function() {
     var w = this.grid.length, h = (w &gt; 0 ? this.grid[0].length : 0), r = [], i, j;
@@ -579,7 +579,7 @@ function TileMap(grid, map, options) {
       for (j = 0; j &lt; h; j++) {
         if (this.grid[i][j] !== null || includeNull) {
           if (f(this.grid[i][j], i, j)) {
-            if (typeof this.grid[i][j].destroy == 'function') {
+            if (typeof this.grid[i][j].destroy == &#39;function&#39;) {
               this.grid[i][j].destroy();
             }
             this.clearCell(i, j);
@@ -605,10 +605,10 @@ function TileMap(grid, map, options) {
    * @ignore
    */
   this._getCellCoordsInRect = function(wx, wy, tw, th) {
-    if (typeof wx === 'undefined') wx = world.xOffset;
-    if (typeof wy === 'undefined') wy = world.yOffset;
-    if (typeof tw === 'undefined') tw = canvas.width;
-    if (typeof th === 'undefined') th = canvas.height;
+    if (typeof wx === &#39;undefined&#39;) wx = world.xOffset;
+    if (typeof wy === &#39;undefined&#39;) wy = world.yOffset;
+    if (typeof tw === &#39;undefined&#39;) tw = canvas.width;
+    if (typeof th === &#39;undefined&#39;) th = canvas.height;
     var x = this.options.startCoords[0], y = this.options.startCoords[1];
     var cw = this.options.cellSize[0], cy = this.options.cellSize[1];
     var sx = (wx - x) / cw, sy = (wy - y) / cy;

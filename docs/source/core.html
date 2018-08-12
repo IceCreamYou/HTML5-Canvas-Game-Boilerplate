@@ -27,7 +27,7 @@
  */
 
 <span id='App'>/**
-</span> * The App object holds all the miscellaneous things that don't deserve to be
+</span> * The App object holds all the miscellaneous things that don&#39;t deserve to be
  * global.
  * @static
  */
@@ -166,24 +166,24 @@ var world;
  */
 App.setCanvas = function(c) {
   // Allow passing a DOM ID
-  if (typeof c == 'string') {
+  if (typeof c == &#39;string&#39;) {
     var oc = c;
     c = document.getElementById(c);
     if (!(c instanceof HTMLCanvasElement) &amp;&amp; window.console &amp;&amp; console.warn) {
-      console.warn('No canvas with ID ' + oc + ' found.');
+      console.warn(&#39;No canvas with ID &#39; + oc + &#39; found.&#39;);
     }
   }
   if (!(c instanceof HTMLCanvasElement)) {
-    // If no canvas was specified and we already have one set up, don't switch.
-    if (canvas instanceof HTMLCanvasElement &amp;&amp; typeof $canvas !== 'undefined') {
+    // If no canvas was specified and we already have one set up, don&#39;t switch.
+    if (canvas instanceof HTMLCanvasElement &amp;&amp; typeof $canvas !== &#39;undefined&#39;) {
       return;
     }
     // Try to use the canvas with the ID &quot;canvas&quot;
-    canvas = document.getElementById('canvas');
+    canvas = document.getElementById(&#39;canvas&#39;);
     // Automatically use the first canvas on the page without data-takeover=&quot;false&quot;
     if (!(canvas instanceof HTMLCanvasElement)) {
-      for (var i = 0, n = document.getElementsByTagName('canvas'), l = n.length; i &lt; l; i++) {
-        if (n[i].getAttribute('data-takeover') != 'false') {
+      for (var i = 0, n = document.getElementsByTagName(&#39;canvas&#39;), l = n.length; i &lt; l; i++) {
+        if (n[i].getAttribute(&#39;data-takeover&#39;) != &#39;false&#39;) {
           canvas = n[i];
           break;
         }
@@ -191,10 +191,10 @@ App.setCanvas = function(c) {
     }
     // If there is no available canvas on the page, create one
     if (!(canvas instanceof HTMLCanvasElement)) {
-      canvas = document.createElement('canvas');
+      canvas = document.createElement(&#39;canvas&#39;);
     }
     $canvas = jQuery(canvas);
-    // We've run setup before, we just decided to auto-detect again
+    // We&#39;ve run setup before, we just decided to auto-detect again
     if (App.isSetup) {
       App.beforeSetup();
     }
@@ -205,7 +205,7 @@ App.setCanvas = function(c) {
   }
   else {
     // Reset the existing canvas if there is one.
-    if (typeof world !== 'undefined') {
+    if (typeof world !== &#39;undefined&#39;) {
       context.translate(world.xOffset, world.yOffset);
       world.scaleResolution(1);
     }
@@ -223,38 +223,38 @@ jQuery(document).ready(App.setCanvas);
 App.beforeSetup = function() {
   App.isSetup = true;
 
-  // Prevent default behavior of these keys because we'll be using them and
+  // Prevent default behavior of these keys because we&#39;ll be using them and
   // they can cause other page behavior (like scrolling).
-  if (typeof keys !== 'undefined') {
+  if (typeof keys !== &#39;undefined&#39;) {
     for (var dir in keys) {
       if (keys.hasOwnProperty(dir)) {
-        App.preventDefaultKeyEvents(keys[dir].join(' '));
+        App.preventDefaultKeyEvents(keys[dir].join(&#39; &#39;));
       }
     }
   }
 
   // Resize the canvas and get the graphics context
   App.setDefaultCanvasSize();
-  context = canvas.getContext('2d');
+  context = canvas.getContext(&#39;2d&#39;);
 
   // If we have the Stats widget, set it up.
-  if (typeof Stats !== 'undefined' &amp;&amp; App.debugMode) {
+  if (typeof Stats !== &#39;undefined&#39; &amp;&amp; App.debugMode) {
     App.stats = new Stats();
     App.stats.setMode(0);
-    App.stats.domElement.style.position = 'absolute';
+    App.stats.domElement.style.position = &#39;absolute&#39;;
     App.stats.domElement.style.left = $canvas.offset().left;
     App.stats.domElement.style.top = $canvas.offset().top;
     document.body.appendChild(App.stats.domElement);
   }
 
   // Pre-load images and start the animation.
-  Caches.preloadImages(typeof preloadables === 'undefined' ? [] : preloadables, {
+  Caches.preloadImages(typeof preloadables === &#39;undefined&#39; ? [] : preloadables, {
     finishCallback: function() {
       // Expose utilities globally if they are not already defined.
-      if (typeof Events === 'undefined' &amp;&amp; typeof App.Events !== 'undefined') {
+      if (typeof Events === &#39;undefined&#39; &amp;&amp; typeof App.Events !== &#39;undefined&#39;) {
         Events = App.Events;
       }
-      if (typeof Utils === 'undefined' &amp;&amp; typeof App.Utils !== 'undefined') {
+      if (typeof Utils === &#39;undefined&#39; &amp;&amp; typeof App.Utils !== &#39;undefined&#39;) {
         Utils = App.Utils;
       }
 
@@ -274,17 +274,17 @@ App.beforeSetup = function() {
  * @static
  */
 App.reset = function(first) {
-  // Don't animate while we're resetting things.
+  // Don&#39;t animate while we&#39;re resetting things.
   stopAnimating();
 
   // Stop dragging something if we were dragging when the game stopped...
   if (App.isSomethingBeingDragged) {
     App.isSomethingBeingDragged = false;
-    jQuery(document).trigger('canvasdragstop');
+    jQuery(document).trigger(&#39;canvasdragstop&#39;);
   }
 
   // If the world already exists, reset it to the origin.
-  if (typeof world !== 'undefined') {
+  if (typeof world !== &#39;undefined&#39;) {
     context.translate(world.xOffset, world.yOffset);
     world.scaleResolution(1);
   }
@@ -304,7 +304,7 @@ App.reset = function(first) {
    * or Timer#getElapsedTime() while animation is running will cause the next
    * frame to render less simulated time than expected. With animation stopped,
    * `App.timer.getElapsedTime()` will return how long the app has actually
-   * been animating. You can also use `Timer.getTimeSince('app start')` to get
+   * been animating. You can also use `Timer.getTimeSince(&#39;app start&#39;)` to get
    * the total time since animation began. Normally what you actually want is
    * `App.physicsTimeElapsed`.
    *
@@ -322,11 +322,11 @@ App.reset = function(first) {
   App.Debug.clearTimeElapsed = 0;
   App.Debug.drawTimeElapsed = 0;
 
-  // Run the developer's setup code.
+  // Run the developer&#39;s setup code.
   var start = setup(!!first);
 
   // Start animating!
-  Timer.event('app start');
+  Timer.event(&#39;app start&#39;);
   if (start !== false) {
     startAnimating();
   }
@@ -345,7 +345,7 @@ App.reset = function(first) {
    *   time it is being set up.
    * @member global
    */
-  jQuery(document).trigger('start', [!!first]);
+  jQuery(document).trigger(&#39;start&#39;, [!!first]);
 };
 
 <span id='App-static-method-setDefaultCanvasSize'>/**
@@ -392,33 +392,33 @@ App.setDefaultCanvasSize = function() {
   // screen, so from here forward if we change canvas.width or canvas.height
   // (for example, using World#scaleResolution) we will actually be changing
   // the render size; and then CSS will scale the rendered buffer to the
-  // display size. (That's right; the width/height attributes mean something
-  // different than the width/height CSS properties.) We're also setting the
+  // display size. (That&#39;s right; the width/height attributes mean something
+  // different than the width/height CSS properties.) We&#39;re also setting the
   // scale3d transform which enables GPU rendering.
   var ensureCanvasSize = function() {
     $canvas.css({
       // Force hardware accelerated rendering
-      transform: 'scale3d(1, 1, 1)',
-      mozTransform: 'scale3d(1, 1, 1)',
-      msTransform: 'scale3d(1, 1, 1)',
-      oTransform: 'scale3d(1, 1, 1)',
-      webkitTransform: 'scale3d(1, 1, 1)',
+      transform: &#39;scale3d(1, 1, 1)&#39;,
+      mozTransform: &#39;scale3d(1, 1, 1)&#39;,
+      msTransform: &#39;scale3d(1, 1, 1)&#39;,
+      oTransform: &#39;scale3d(1, 1, 1)&#39;,
+      webkitTransform: &#39;scale3d(1, 1, 1)&#39;,
     });
   };
   // Do not resize if data-resize is false (fall back to CSS).
-  if ($canvas.attr('data-resize') == 'false') {
+  if ($canvas.attr(&#39;data-resize&#39;) == &#39;false&#39;) {
     ensureCanvasSize();
     return;
   }
   var $window = jQuery(window);
   // If requested, make the canvas the size of the browser window.
-  if ($canvas.attr('data-resize') == 'full') {
+  if ($canvas.attr(&#39;data-resize&#39;) == &#39;full&#39;) {
     canvas.width = $window.innerWidth() -
-      parseInt($canvas.css('border-left-width'), 10) -
-      parseInt($canvas.css('border-right-width'), 10) - 1;
+      parseInt($canvas.css(&#39;border-left-width&#39;), 10) -
+      parseInt($canvas.css(&#39;border-right-width&#39;), 10) - 1;
     canvas.height = $window.innerHeight() -
-      parseInt($canvas.css('border-top-width'), 10) -
-      parseInt($canvas.css('border-bottom-width'), 10) - 1;
+      parseInt($canvas.css(&#39;border-top-width&#39;), 10) -
+      parseInt($canvas.css(&#39;border-bottom-width&#39;), 10) - 1;
   }
   // Use the following properties to determine canvas size automatically:
   // width, height, data-minwidth, data-maxwidth, data-minheight, data-maxheight
@@ -426,22 +426,22 @@ App.setDefaultCanvasSize = function() {
   // resized to the largest size that fits within the max and the window, with
   // a minimum of min.
   else {
-    var maxWidth = $canvas.attr('data-maxwidth') || canvas.width;
-    var minWidth = $canvas.attr('data-minwidth') || canvas.width;
+    var maxWidth = $canvas.attr(&#39;data-maxwidth&#39;) || canvas.width;
+    var minWidth = $canvas.attr(&#39;data-minwidth&#39;) || canvas.width;
     canvas.width = Math.min(maxWidth, Math.max($window.width(), minWidth));
-    var maxHeight = $canvas.attr('data-maxheight') || canvas.height;
-    var minHeight = $canvas.attr('data-minheight') || canvas.height;
+    var maxHeight = $canvas.attr(&#39;data-maxheight&#39;) || canvas.height;
+    var minHeight = $canvas.attr(&#39;data-minheight&#39;) || canvas.height;
     canvas.height = Math.min(maxHeight, Math.max($window.height(), minHeight));
   }
-  var aspectRatio = $canvas.attr('data-aspectratio') || 0;
+  var aspectRatio = $canvas.attr(&#39;data-aspectratio&#39;) || 0;
   if (aspectRatio) {
-    if (aspectRatio.indexOf(':') == -1) {
+    if (aspectRatio.indexOf(&#39;:&#39;) == -1) {
       aspectRatio = parseFloat(aspectRatio);
     }
     else {
-      if (aspectRatio == '4:3') aspectRatio = 4/3;
-      else if (aspectRatio == '16:9') aspectRatio = 16/9;
-      else if (aspectRatio == '16:10' || aspectRatio == '8:5') aspectRatio = 1.6;
+      if (aspectRatio == &#39;4:3&#39;) aspectRatio = 4/3;
+      else if (aspectRatio == &#39;16:9&#39;) aspectRatio = 16/9;
+      else if (aspectRatio == &#39;16:10&#39; || aspectRatio == &#39;8:5&#39;) aspectRatio = 1.6;
     }
     if (canvas.width &lt; canvas.height * aspectRatio) {
       canvas.height = Math.floor(canvas.width / aspectRatio);
@@ -497,10 +497,10 @@ var Caches = {
       var l = files.length, m = -1, src, image;
       var notifyLoaded = function(itemCallback, src) {
         m++;
-        if (typeof itemCallback == 'function') {
+        if (typeof itemCallback == &#39;function&#39;) {
           itemCallback(src, m, l);
         }
-        if (m == l &amp;&amp; typeof options.finishCallback == 'function') {
+        if (m == l &amp;&amp; typeof options.finishCallback == &#39;function&#39;) {
           options.finishCallback(l);
         }
       };
@@ -521,7 +521,7 @@ var Caches = {
 };
 
 // Override the Sprite caching mechanisms.
-if (typeof Sprite !== 'undefined') {
+if (typeof Sprite !== &#39;undefined&#39;) {
   Sprite.getImageFromCache = function(src) {
     return Caches.images[src];
   };
@@ -558,14 +558,14 @@ window.requestAnimFrame = (function() {
  * @member global
  */
 window.startAnimating = function() {
-  if (!_animate &amp;&amp; typeof App.timer !== 'undefined') {
+  if (!_animate &amp;&amp; typeof App.timer !== &#39;undefined&#39;) {
     _animate = true;
 <span id='global-event-startAnimating'>    /**
 </span>     * @event startAnimating
      *   Fires on the document when the animation loop is about to begin.
      * @member global
      */
-    jQuery(document).trigger('startAnimating');
+    jQuery(document).trigger(&#39;startAnimating&#39;);
     animate();
   }
 };
@@ -579,7 +579,7 @@ window.startAnimating = function() {
  * @member global
  */
 window.stopAnimating = function() {
-  if (!_animate || typeof App.timer === 'undefined') {
+  if (!_animate || typeof App.timer === &#39;undefined&#39;) {
     return;
   }
   _animate = false;
@@ -587,7 +587,7 @@ window.stopAnimating = function() {
   // this is effectively the same as stopping the timer immediately after the
   // last call to App.timer.getDelta() (i.e. when the last frame was rendered)
   // because nothing interesting happens after that, and when animation is
-  // started again the timer doesn't start until the first frame is requested
+  // started again the timer doesn&#39;t start until the first frame is requested
   // so the delta is still correct.
   App.timer.stop();
 <span id='global-event-stopAnimating'>  /**
@@ -595,7 +595,7 @@ window.stopAnimating = function() {
    *   Fires on the document when the animation loop is ending.
    * @member global
    */
-  jQuery(document).trigger('stopAnimating');
+  jQuery(document).trigger(&#39;stopAnimating&#39;);
 
   // Output performance statistics.
   // This can be slightly inaccurate because this function can be called in the
@@ -604,7 +604,7 @@ window.stopAnimating = function() {
     var elapsed = App.physicsTimeElapsed, frames = App.timer.frames, d = App.Debug;
     var sum = d.updateTimeElapsed + d.clearTimeElapsed + d.drawTimeElapsed;
     console.log({
-      'ms/frame': {
+      &#39;ms/frame&#39;: {
         update: d.updateTimeElapsed / frames,
         clear: d.clearTimeElapsed / frames,
         draw: d.drawTimeElapsed / frames,
@@ -645,7 +645,7 @@ window.isAnimating = function() {
  * @ignore
  */
 function animate() {
-  if (typeof App.stats !== 'undefined') {
+  if (typeof App.stats !== &#39;undefined&#39;) {
     App.stats.begin();
   }
 
@@ -669,14 +669,14 @@ function animate() {
      *
      * @member global
      */
-    jQuery(document).trigger('low_fps', [1 / frameDelta]);
+    jQuery(document).trigger(&#39;low_fps&#39;, [1 / frameDelta]);
     frameDelta = 1 / App.MIN_FPS;
   }
   // Count paints so we can calculate overall FPS
   App.timer.frames++;
 
   if (App.debugMode) {
-    Timer.event('debug timer update', true);
+    Timer.event(&#39;debug timer update&#39;, true);
   }
 
   // update
@@ -696,7 +696,7 @@ function animate() {
      * @static
      */
     App.physicsDelta = Math.min(frameDelta, 1 / App.MAX_FPS);
-    if (typeof update == 'function') {
+    if (typeof update == &#39;function&#39;) {
       update(App.physicsDelta, App.physicsTimeElapsed);
     }
     frameDelta -= App.physicsDelta;
@@ -704,26 +704,26 @@ function animate() {
   }
 
   if (App.debugMode) {
-    App.Debug.updateTimeElapsed += Timer.getTimeSince('debug timer update');
-    Timer.event('debug timer clear', true);
+    App.Debug.updateTimeElapsed += Timer.getTimeSince(&#39;debug timer update&#39;);
+    Timer.event(&#39;debug timer clear&#39;, true);
   }
 
   // clear
   context.clear();
 
   if (App.debugMode) {
-    App.Debug.clearTimeElapsed += Timer.getTimeSince('debug timer clear');
-    Timer.event('debug timer draw', true);
+    App.Debug.clearTimeElapsed += Timer.getTimeSince(&#39;debug timer clear&#39;);
+    Timer.event(&#39;debug timer draw&#39;, true);
   }
 
   // draw
   draw();
 
   if (App.debugMode) {
-    App.Debug.drawTimeElapsed += Timer.getTimeSince('debug timer draw');
+    App.Debug.drawTimeElapsed += Timer.getTimeSince(&#39;debug timer draw&#39;);
   }
 
-  if (typeof App.stats !== 'undefined') {
+  if (typeof App.stats !== &#39;undefined&#39;) {
     App.stats.end();
   }
 
@@ -736,20 +736,20 @@ function animate() {
 <span id='global-property-'>/**
 </span> * Stops animating when the window (tab) goes out of focus.
  *
- * This stops running the CPU when we don't need it, but it can cause
+ * This stops running the CPU when we don&#39;t need it, but it can cause
  * unexpected behavior if you expect something to be running in the background
- * while focus is not on the browser. If you don't want this behavior, you can
- * toggle it off with `$(window).off('.animFocus');`
+ * while focus is not on the browser. If you don&#39;t want this behavior, you can
+ * toggle it off with `$(window).off(&#39;.animFocus&#39;);`
  *
  * @ignore
  */
-jQuery(window).on('focus.animFocus', function() {
+jQuery(window).on(&#39;focus.animFocus&#39;, function() {
   if (_blurred &amp;&amp; !App.isGameOver) {
     _blurred = false;
     startAnimating();
   }
 });
-jQuery(window).on('blur.animFocus', function() {
+jQuery(window).on(&#39;blur.animFocus&#39;, function() {
   stopAnimating();
   _blurred = true;
 });
@@ -761,7 +761,7 @@ jQuery(window).on('blur.animFocus', function() {
 <span id='App-static-method-preventDefaultKeyEvents'>/**
 </span> * Prevent the default behavior from occurring when hitting keys.
  *
- * This won't prevent everything -- for example it won't prevent combinations
+ * This won&#39;t prevent everything -- for example it won&#39;t prevent combinations
  * of multiple non-control-character keys -- and if you want to do something
  * like prevent the default effect of hitting Enter but not Shift+Enter then
  * you need to handle that yourself.
@@ -782,7 +782,7 @@ App.preventDefaultKeyEvents = function(combinations) {
     jQuery(document).keydown(combinations, function() { return false; });
   }
   else if (window.console &amp;&amp; console.warn) {
-    console.warn('Tried to prevent default key events but jQuery.hotkeys does not exist.');
+    console.warn(&#39;Tried to prevent default key events but jQuery.hotkeys does not exist.&#39;);
   }
 };
 
@@ -806,7 +806,7 @@ performance.now = (function() {
  * [three.js clock](https://github.com/mrdoob/three.js/blob/master/src/core/Clock.js).
  *
  * If you only care about how long something takes (e.g. when testing
- * performance) and you don't need to stop the timer, Timer#event() and
+ * performance) and you don&#39;t need to stop the timer, Timer#event() and
  * Timer#getTimeSince() are more efficient than instantiating a new Timer
  * object.
  *
@@ -818,7 +818,7 @@ performance.now = (function() {
  *   only while animation was running (true) or the total time elapsed (false).
  */
 function Timer(autoStart, whileAnimating) {
-  this.autoStart = typeof autoStart === 'undefined' ? true : autoStart;
+  this.autoStart = typeof autoStart === &#39;undefined&#39; ? true : autoStart;
   this.whileAnimating = whileAnimating || false;
   this.lastStartTime = 0;
   this.lastDeltaTime = 0;
@@ -880,7 +880,7 @@ function Timer(autoStart, whileAnimating) {
 </span>   * Register the time at which an event occurred.
    *
    * If you only care about how long something takes (e.g. when testing
-   * performance) and you don't need to stop the timer, Timer#event() and
+   * performance) and you don&#39;t need to stop the timer, Timer#event() and
    * Timer#getTimeSince() are more efficient than instantiating a new Timer
    * object.
    *
@@ -898,7 +898,7 @@ function Timer(autoStart, whileAnimating) {
         whileAnimating: whileAnimating,
         startTime: whileAnimating ? App.physicsTimeElapsed : performance.now(),
     };
-    if (typeof id === 'undefined') {
+    if (typeof id === &#39;undefined&#39;) {
       noID = result;
     }
     else {
@@ -909,7 +909,7 @@ function Timer(autoStart, whileAnimating) {
 </span>   * Return the time since an event occurred.
    *
    * If you only care about how long something takes (e.g. when testing
-   * performance) and you don't need to stop the timer, Timer#event() and
+   * performance) and you don&#39;t need to stop the timer, Timer#event() and
    * Timer#getTimeSince() are more efficient than instantiating a new Timer
    * object.
    *
@@ -918,7 +918,7 @@ function Timer(autoStart, whileAnimating) {
    * @static
    */
   Timer.getTimeSince = function(id) {
-    var event = typeof events[id] === 'undefined' ? noID : events[id];
+    var event = typeof events[id] === &#39;undefined&#39; ? noID : events[id];
     var now = event.whileAnimating ? App.physicsTimeElapsed : performance.now();
     return event.startTime ? (now - event.startTime) / 1000 : 0;
   };
@@ -982,12 +982,12 @@ function World(w, h) {
 </span>   * @property {Number} width
    *   The width of the world.
    */
-  this.width = w || parseInt($canvas.attr('data-worldwidth'), 10) || canvas.width;
+  this.width = w || parseInt($canvas.attr(&#39;data-worldwidth&#39;), 10) || canvas.width;
 <span id='World-property-height'>  /**
 </span>   * @property {Number} height
    *   The height of the world.
    */
-  this.height = h || parseInt($canvas.attr('data-worldheight'), 10) || canvas.height;
+  this.height = h || parseInt($canvas.attr(&#39;data-worldheight&#39;), 10) || canvas.height;
 
 <span id='global-property-originalCanvasWidth'>  /**
 </span>   * @property {Number} originalCanvasWidth
@@ -1008,13 +1008,13 @@ function World(w, h) {
 
 <span id='World-property-xOffset'>  /**
 </span>   * @property {Number} xOffset
-   *   The pixel-offset of what's being displayed in the canvas compared to the
+   *   The pixel-offset of what&#39;s being displayed in the canvas compared to the
    *   world origin.
    */
   this.xOffset = (this.width - canvas.width)/2;
 <span id='World-property-yOffset'>  /**
 </span>   * @property {Number} yOffset
-   *   The pixel-offset of what's being displayed in the canvas compared to the
+   *   The pixel-offset of what&#39;s being displayed in the canvas compared to the
    *   world origin.
    */
   this.yOffset = (this.height - canvas.height)/2;
@@ -1032,7 +1032,7 @@ function World(w, h) {
    */
   this.resize = function(newWidth, newHeight) {
     // Try to re-center the offset of the part of the world in the canvas
-    // so we're still looking at approximately the same thing.
+    // so we&#39;re still looking at approximately the same thing.
     var deltaX = (newWidth - this.width) / 2, deltaY = (newHeight - this.height) / 2;
     this.xOffset += deltaX;
     this.yOffset += deltaY;
@@ -1051,7 +1051,7 @@ function World(w, h) {
      * @param {Number} y How far in pixels the viewport shifted vertically.
      * @param {World} resizedWorld The world that changed size.
      */
-    jQuery(document).trigger('resizeWorld', [deltaX, deltaY, this]);
+    jQuery(document).trigger(&#39;resizeWorld&#39;, [deltaX, deltaY, this]);
   };
 
 <span id='World-method-scaleResolution'>  /**
@@ -1063,7 +1063,7 @@ function World(w, h) {
    * page; it just scales how big each &quot;pixel&quot; is drawn on the canvas, much
    * like changing the resolution of your monitor does not change its physical
    * size. It is your responsibility to change the size of any fixed-size
-   * entities in the world after resizing, if applicable; if you don't do this,
+   * entities in the world after resizing, if applicable; if you don&#39;t do this,
    * calling this function works much like zooming in or out.
    *
    * Note that this method only scales the primary canvas, not any
@@ -1097,12 +1097,12 @@ function World(w, h) {
    */
   this.scaleResolution = function(factor, x, y) {
     // Define the display size so we can rescale the rendering size
-    if (!$canvas.hasClass('canvas-rescaled')) {
+    if (!$canvas.hasClass(&#39;canvas-rescaled&#39;)) {
       $canvas.css({
-        width: canvas.width + 'px',
-        height: canvas.height + 'px',
+        width: canvas.width + &#39;px&#39;,
+        height: canvas.height + &#39;px&#39;,
       });
-      $canvas.addClass('canvas-rescaled');
+      $canvas.addClass(&#39;canvas-rescaled&#39;);
     }
     // Default to centering around the current center of the viewport.
     x = x || this.xOffset + canvas.width / 2;
@@ -1346,8 +1346,8 @@ App.Utils.almostEqual = function(a, b, e) {
  * @static
  */
 App.Utils.randomString = function(n) {
-  var c = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_',
-      s = '';
+  var c = &#39;abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_&#39;,
+      s = &#39;&#39;;
   n = n || 32;
   for (var i = 0; i &lt; n; i++) {
     s += c.charAt(Math.floor(Math.random() * c.length));
@@ -1382,18 +1382,18 @@ App.Utils.randomString = function(n) {
  */
 App.Utils.positionOverCanvas = function(elem, x, y) {
   var o = $canvas.offset();
-  return jQuery(elem).detach().appendTo('body').css({
-    left: (o.left + parseInt($canvas.css('border-left-width'), 10) + x) + 'px',
-    position: 'absolute',
-    top: (o.top + parseInt($canvas.css('border-top-width'), 10) + y) + 'px',
-    'z-index': 100,
+  return jQuery(elem).detach().appendTo(&#39;body&#39;).css({
+    left: (o.left + parseInt($canvas.css(&#39;border-left-width&#39;), 10) + x) + &#39;px&#39;,
+    position: &#39;absolute&#39;,
+    top: (o.top + parseInt($canvas.css(&#39;border-top-width&#39;), 10) + y) + &#39;px&#39;,
+    &#39;z-index&#39;: 100,
   });
 };
 
 <span id='App-static-method-gameOver'>/**
 </span> * End the game, display a message, and allow clicking to restart.
  *
- * To disable clicking to restart, run `$canvas.off('.gameover');`
+ * To disable clicking to restart, run `$canvas.off(&#39;.gameover&#39;);`
  *
  * @param {String} [text=&quot;GAME OVER&quot;]
  *   Text to overlay on the screen.
@@ -1410,18 +1410,18 @@ App.gameOver = function(text) {
   if (player) {
     player.destroy();
   }
-  if (typeof text != 'string') {
+  if (typeof text != &#39;string&#39;) {
     text = &quot;GAME OVER&quot;;
   }
   // This runs during update() before the final draw(), so we have to delay it.
   setTimeout(function() {
     context.save();
-    context.font = '100px Arial';
-    context.fillStyle = 'black';
-    context.strokeStyle = 'lightGray';
-    context.textBaseline = 'middle';
-    context.textAlign = 'center';
-    context.shadowColor = 'black';
+    context.font = &#39;100px Arial&#39;;
+    context.fillStyle = &#39;black&#39;;
+    context.strokeStyle = &#39;lightGray&#39;;
+    context.textBaseline = &#39;middle&#39;;
+    context.textAlign = &#39;center&#39;;
+    context.shadowColor = &#39;black&#39;;
     context.shadowBlur = 8;
     context.lineWidth = 5;
     var x = Math.round(world.xOffset+canvas.width/2);
@@ -1430,10 +1430,10 @@ App.gameOver = function(text) {
     context.fillText(text, x, y);
     context.restore();
   }, 100);
-  $canvas.css('cursor', 'pointer');
-  $canvas.one('click.gameover', function(e) {
+  $canvas.css(&#39;cursor&#39;, &#39;pointer&#39;);
+  $canvas.one(&#39;click.gameover&#39;, function(e) {
     e.preventDefault();
-    $canvas.css('cursor', 'auto');
+    $canvas.css(&#39;cursor&#39;, &#39;auto&#39;);
     App.reset();
   });
 };
@@ -1478,7 +1478,7 @@ Array.prototype.remove = function(item) {
  *   is used instead, and only the precision parameter needs to be passed.)
  * @param {Number} a
  *   The precision, i.e. the number of digits after the decimal point
- *   (including trailing zeroes, even though they're truncated in the returned
+ *   (including trailing zeroes, even though they&#39;re truncated in the returned
  *   result). If negative, precision indicates the number of zeroes before the
  *   decimal point, e.g. round(1234, -2) yields 1200. If non-integral, the
  *   floor of the precision is used.
@@ -1489,7 +1489,7 @@ Array.prototype.remove = function(item) {
  * @member Number
  */
 Number.prototype.round = function(v, a) {
-  if (typeof a === 'undefined') {
+  if (typeof a === &#39;undefined&#39;) {
     a = v;
     v = this;
   }
@@ -1511,7 +1511,7 @@ Number.prototype.round = function(v, a) {
  * @member Number
  */
 Number.prototype.sign = function(v) {
-  if (typeof v === 'undefined') {
+  if (typeof v === &#39;undefined&#39;) {
     v = this;
   }
   return v &gt; 0 ? 1 : (v &lt; 0 ? -1 : 0);

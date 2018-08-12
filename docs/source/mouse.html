@@ -71,8 +71,8 @@ var Mouse = {
 <span id='Mouse-Coords-property-physicalX'>      /**
 </span>       * The mouse x-coordinate over the canvas DOM element.
        *
-       * This value is actually relative to `$canvas.css('width')` and
-       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * This value is actually relative to `$canvas.css(&#39;width&#39;)` and
+       * `$canvas.css(&#39;height&#39;)`, or the display size of the canvas. This can
        * be different than the size at which the canvas is rendered if the
        * canvas is scaled with {@link World#scaleResolution}. You may want to
        * use this if you are positioning DOM elements over the canvas.
@@ -81,8 +81,8 @@ var Mouse = {
 <span id='Mouse-Coords-property-physicalY'>      /**
 </span>       * The mouse y-coordinate over the canvas DOM element.
        *
-       * This value is actually relative to `$canvas.css('width')` and
-       * `$canvas.css('height')`, or the display size of the canvas. This can
+       * This value is actually relative to `$canvas.css(&#39;width&#39;)` and
+       * `$canvas.css(&#39;height&#39;)`, or the display size of the canvas. This can
        * be different than the size at which the canvas is rendered if the
        * canvas is scaled with {@link World#scaleResolution}. You may want to
        * use this if you are positioning DOM elements over the canvas.
@@ -116,7 +116,7 @@ jQuery(document).ready(function() {
       var x = e.pageX || e.originalEvent.touches[0].pageX;
       var y = e.pageY || e.originalEvent.touches[0].pageY;
       // Prevent window scrolling on iPhone and display freeze on Android
-      if (e.type == 'touchmove') {
+      if (e.type == &#39;touchmove&#39;) {
         e.preventDefault();
       }
       // The position we want is relative to the canvas
@@ -127,19 +127,19 @@ jQuery(document).ready(function() {
       Mouse.Coords.y = Math.round(Mouse.Coords.physicalY * world._actualYscale);
     }
     catch(ex) {
-      // Don't report anything. Probably the reason we had an error is because
+      // Don&#39;t report anything. Probably the reason we had an error is because
       // the mouse moved off the document so neither the pageX/Y nor the
       // touches properties have meaningful values.
     }
   };
 
   // Track cursor for touches
-  $canvas.on('touchmove.coords', trackmove);
-  // For mice, only track the cursor when it's over the canvas
+  $canvas.on(&#39;touchmove.coords&#39;, trackmove);
+  // For mice, only track the cursor when it&#39;s over the canvas
   $canvas.hover(function() {
-    jQuery(this).on('mousemove.coords', trackmove);
+    jQuery(this).on(&#39;mousemove.coords&#39;, trackmove);
   }, function() {
-    jQuery(this).off('mousemove.coords');
+    jQuery(this).off(&#39;mousemove.coords&#39;);
     Mouse.Coords.physicalX = -9999;
     Mouse.Coords.physicalY = -9999;
     Mouse.Coords.x = -9999;
@@ -147,19 +147,19 @@ jQuery(document).ready(function() {
   });
 
   // Track and delegate click events
-  $canvas.on('mousedown mouseup click touchstart touchend', function(e) {
-    if (e.type == 'touchstart') {
+  $canvas.on(&#39;mousedown mouseup click touchstart touchend&#39;, function(e) {
+    if (e.type == &#39;touchstart&#39;) {
       trackmove(e);
     }
-    if (isAnimating() &amp;&amp; typeof App.Events !== 'undefined') {
+    if (isAnimating() &amp;&amp; typeof App.Events !== &#39;undefined&#39;) {
       App.Events.trigger(e.type, e);
     }
   });
 
   // Track and delegate dragend events
-  $canvas.on('mouseup.drag touchend.drag', function(e) {
-    if (typeof App.Events !== 'undefined') {
-      App.Events.trigger('canvasdragstop', e);
+  $canvas.on(&#39;mouseup.drag touchend.drag&#39;, function(e) {
+    if (typeof App.Events !== &#39;undefined&#39;) {
+      App.Events.trigger(&#39;canvasdragstop&#39;, e);
     }
     App.isSomethingBeingDragged = false;
 <span id='global-event-canvasdragstop'>    /**
@@ -168,13 +168,13 @@ jQuery(document).ready(function() {
      *   i.e. when the player releases the mouse or stops touching the canvas.
      * @member global
      */
-    jQuery(document).trigger('canvasdragstop');
+    jQuery(document).trigger(&#39;canvasdragstop&#39;);
   });
 
   // Track and delegate drop events
-  jQuery(document).on('canvasdrop', function(e, target) {
-    if (typeof App.Events !== 'undefined') {
-      App.Events.trigger('canvasdrop', e, target);
+  jQuery(document).on(&#39;canvasdrop&#39;, function(e, target) {
+    if (typeof App.Events !== &#39;undefined&#39;) {
+      App.Events.trigger(&#39;canvasdrop&#39;, e, target);
     }
   });
 });
@@ -210,13 +210,13 @@ App.isHovered = function(obj) {
  */
 Mouse.Scroll = (function() {
   var THRESHOLD = 0.2, MOVEAMOUNT = 350;
-  // Whether we're allowed to mouse scroll
+  // Whether we&#39;re allowed to mouse scroll
   var enabled = false;
   // If enabled is true, then whether the mouse is over the canvas
   var hovered = false;
   // Whether the mouse is pressed down over the canvas
   var mousedown = false;
-  // Whether we're currently scrolling
+  // Whether we&#39;re currently scrolling
   var translating = false;
   // How far we scrolled last time
   var scrolled = {x: 0, y: 0};
@@ -267,10 +267,10 @@ Mouse.Scroll = (function() {
       context.translate(0, -ma);
     }
 
-    // We're not translating if we're not moving.
+    // We&#39;re not translating if we&#39;re not moving.
     translating = scrolled.x !== 0 &amp;&amp; scrolled.y !== 0;
 
-    // We weren't scrolling. Now we are. Fire the relevant event.
+    // We weren&#39;t scrolling. Now we are. Fire the relevant event.
     if (!initialTranslationState &amp;&amp; translating) {
 <span id='Mouse-Scroll-event-mousescrollon'>      /**
 </span>       * @event mousescrollon
@@ -278,9 +278,9 @@ Mouse.Scroll = (function() {
        *   to this event may be useful if you want to pause animation or
        *   display something while the viewport is moving.
        */
-      jQuery(document).trigger('mousescrollon');
+      jQuery(document).trigger(&#39;mousescrollon&#39;);
     }
-    // We were scrolling. Now we're not. Fire the relevant event.
+    // We were scrolling. Now we&#39;re not. Fire the relevant event.
     else if (initialTranslationState &amp;&amp; !translating) {
 <span id='Mouse-Scroll-event-mousescrolloff'>      /**
 </span>       * @event mousescrolloff
@@ -288,7 +288,7 @@ Mouse.Scroll = (function() {
        *   to this event may be useful if you want to pause animation or
        *   display something while the viewport is moving.
        */
-      jQuery(document).trigger('mousescrolloff');
+      jQuery(document).trigger(&#39;mousescrolloff&#39;);
     }
     return scrolled;
   }
@@ -302,28 +302,28 @@ Mouse.Scroll = (function() {
         return;
       }
       enabled = true;
-      $canvas.one('mousemove.translate', function() {
-        // Enable translating if we're over the canvas
+      $canvas.one(&#39;mousemove.translate&#39;, function() {
+        // Enable translating if we&#39;re over the canvas
         if (Mouse.Coords.x &gt;= 0 &amp;&amp; Mouse.Coords.y &gt;= 0) {
           hovered = true;
           translate();
         }
       });
-      $canvas.on('mouseenter.translate touchstart.translate', function() {
+      $canvas.on(&#39;mouseenter.translate touchstart.translate&#39;, function() {
         hovered = true;
         translate();
       });
-      $canvas.on('mouseleave.translate touchleave.translate', function() {
+      $canvas.on(&#39;mouseleave.translate touchleave.translate&#39;, function() {
         hovered = false;
         if (translating) {
           translating = false;
-          jQuery(document).trigger('mousescrolloff');
+          jQuery(document).trigger(&#39;mousescrolloff&#39;);
         }
       });
-      $canvas.on('mousedown.translate touchstart.translate', function() {
+      $canvas.on(&#39;mousedown.translate touchstart.translate&#39;, function() {
         mousedown = true;
       });
-      $canvas.on('mouseup.translate touchend.translate', function() {
+      $canvas.on(&#39;mouseup.translate touchend.translate&#39;, function() {
         mousedown = false;
       });
     },
@@ -332,7 +332,7 @@ Mouse.Scroll = (function() {
      * @static
      */
     disable: function() {
-      $canvas.off('.translate');
+      $canvas.off(&#39;.translate&#39;);
       hovered = false;
       enabled = false;
       translating = false;
@@ -358,7 +358,7 @@ Mouse.Scroll = (function() {
     },
     // Called in the core animation loop.
     _update: function() {
-      // Don't scroll while dragging.
+      // Don&#39;t scroll while dragging.
       if (hovered &amp;&amp; !mousedown) {
         return translate();
       }
