@@ -160,6 +160,15 @@ Collection.prototype = {
     }
     return collision;
   },
+<span id='Collection-method-getAll'>  /**
+</span>   * Returns the items in this Collection as an Array.
+   *
+   * @return {Array}
+   *   The Array of items in this Collection.
+   */
+  getAll: function() {
+    Array.prototype.slice.call(this);
+  },
 <span id='Collection-property-splice'>  /**
 </span>   * Changes the content of a Collection by adding and/or removing elements.
    *

@@ -4767,6 +4767,15 @@ Collection.prototype = {
     return collision;
   },
   /**
+   * Returns the items in this Collection as an Array.
+   *
+   * @return {Array}
+   *   The Array of items in this Collection.
+   */
+  getAll: function() {
+    Array.prototype.slice.call(this);
+  },
+  /**
    * Changes the content of a Collection by adding and/or removing elements.
    *
    * This method works exactly the same way as
