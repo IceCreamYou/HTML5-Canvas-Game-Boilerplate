@@ -363,15 +363,28 @@ function TileMap(grid, map, options) {
         grid[i][j] = null;
       }
     }
+    this.grid = grid;
   }
   // Allow specifying grid as a string; we&#39;ll deconstruct it into an array.
-  if (typeof grid == &#39;string&#39;) {
+  else if (typeof grid === &#39;string&#39;) {
     grid = grid.split(&quot;\n&quot;);
     for (i = 0, l = grid.length; i &lt; l; i++) {
       grid[i] = grid[i].split(&#39;&#39;);
     }
+    this.grid = grid;
   }
-  this.grid = grid;
+  // If the provided grid is a 2D array, copy it before modifying it.
+  else {
+    l = grid.length;
+    this.grid = new Array(l);
+    for (i = 0; i &lt; l; i++) {
+      m = grid[i].length;
+      this.grid[i] = new Array(m);
+      for (j = 0; j &lt; m; j++) {
+        this.grid[i][j] = grid[i][j];
+      }
+    }
+  }
   // Make space mean null (blank) unless otherwise specified.
   if (typeof map !== &#39;undefined&#39; &amp;&amp; typeof map[&#39; &#39;] === &#39;undefined&#39;) {
     map[&#39; &#39;] = null;
