@@ -87,7 +87,7 @@ adventurer has a little more room to run around, and let's place him at the
 Refresh the page and you should see your smiley-face character fall to the
 ground. Try jumping around a bit and moving to the sides so you can see that
 the world still scrolls. Cool! (Note that all the movement mechanics are
-[configurable](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor).)
+[configurable](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor).)
 
 *[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/walkthrough/walkthrough01-scrolling.js)*
 
@@ -95,7 +95,7 @@ the world still scrolls. Cool! (Note that all the movement mechanics are
 
 Mario would be no fun if he just ran around on flat terrain all the time. We
 need platforms and things to jump over! Let's put a
-[Box](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Box)
+[Box](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Box)
 into the world. Put this at the bottom of `setup()`:
 
     // Add terrain.
@@ -142,7 +142,7 @@ Voilà!
 
 A world with one box isn't much of a world at all. Let's build some more
 interesting terrain. Back in setup(), instead of adding a new Box, let's add a
-[TileMap](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/TileMap).
+[TileMap](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/TileMap).
 TileMaps are basically helpers to initialize and manage grids of objects. Using
 them is fairly intuitive:
 
@@ -196,9 +196,9 @@ top of main.js so that it will be loaded and cached before animation starts.
 
 Let's assign the sprite to our player in `setup()`. Notice that the sprite
 we're using has several different animation sequences in it, so we'll use a
-[SpriteMap](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/SpriteMap)
+[SpriteMap](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/SpriteMap)
 to keep track of them. SpriteMaps are basically wrappers around
-[Sprite](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Sprite)s
+[Sprite](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Sprite)s
 that make it easier to switch between different animation sequences. If you
 just have one animation sequence that you want to run continuously, you could
 assign a Sprite to `player.src` instead; you'd leave out the parameter that
@@ -267,7 +267,7 @@ already work. That's because there are certain magic-named animation sequences
 that run automatically. If you want to add animations that aren't covered, use
 different names for the animation sequences, or run the animations at different
 times, you can override the
-[`updateAnimation()`](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor-method-updateAnimation)
+[`updateAnimation()`](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor-method-updateAnimation)
 method from the Actor class (that link goes to the documentation for that
 method, which lists the magic animation sequence names). More on inheritance
 below.
@@ -290,7 +290,7 @@ bullets we've fired:
      */
     var bullets = new Collection();
 
-[Collection](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Collection)s
+[Collection](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Collection)s
 are sets of things. They let you keep track of them easily and perform
 operations on all the items in the set at once. They're a lot like TileMaps
 except they don't keep track of their items' placement relative to each other.
@@ -299,14 +299,14 @@ Next, let's create a Bullet class. We have a class/inheritance framework
 available to us as
 [defined by John Resig](http://ejohn.org/blog/simple-javascript-inheritance/)
 (creator of jQuery). New child classes are created using the
-[`Class.extend()`](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Class)
+[`Class.extend()`](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Class)
 method, and the `init()` method of the new class runs when it is instantiated.
 We've already been using the
-[Box](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Box)
+[Box](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Box)
 class, which is the parent of most things you'll want to put in your world, and the
-[Player](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Player)
+[Player](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Player)
 class, which is controlled by the user's keyboard. Player inherits from
-[Actor](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor),
+[Actor](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor),
 which is a child of Box that adds movement mechanics. We're going to extend
 Actor with a new class called Bullet.
 
@@ -456,7 +456,7 @@ point we may want to draw text onto the screen as part of a HUD (Heads-Up
 Display) -- for example, to display the score and the player's remaining lives;
 and text renders very slowly, so having to render it in every frame will
 immediately make our project unusable. To resolve this dilemma, we use
-[Layer](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Layer)s,
+[Layer](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Layer)s,
 which are intermediate canvases we can draw onto in order to cache the display
 and draw it more quickly onto the main canvas.
 
@@ -491,7 +491,7 @@ don't pass anything they'll default to drawing onto the main canvas). We're
 using this in our call to `solid.draw()`.
 
 While we're on the topic, note that H5CGB overrides the native
-[`drawImage()`](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/CanvasRenderingContext2D-method-drawImage)
+[`drawImage()`](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/CanvasRenderingContext2D-method-drawImage)
 method for performance and flexibility. You can use it to draw almost anything
 efficiently onto the canvas or a Layer. The Box/Actor/Player, Collection, and
 TileMap `draw()` methods use this under the hood.
@@ -531,7 +531,7 @@ Mario games, most notably enemies and coins. These can be written with the
 tools we've already encountered, so they're not covered here for brevity. It's
 a good exercise to implement these features yourself. If you get stuck or want
 to see the end product, you can
-[play with](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html) or
+[play with](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/examples/mario.html) or
 [read the code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js)
 of a more complete example.
 
@@ -545,14 +545,14 @@ to show off to your friends!
 
 These tools are quite flexible and are useful in many different scenarios
 beyond a Mario game. You can
-[read the complete API reference](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/) or
+[read the complete API reference](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/) or
 [view a comprehensive feature list](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/wiki/What%27s-Included-&-API-Overview)
 to get more familiar with them. Also feel free to dig through the code; it's
 well-documented.
 
 The one major feature set we didn't cover is mouse interactions. There is a lot
 to cover there, so it is addressed in a
-[separate tutorial](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/mouse).
+[separate tutorial](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/mouse).
 
 Congratulations! Go
 [get the code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate) if

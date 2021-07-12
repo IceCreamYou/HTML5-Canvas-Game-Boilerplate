@@ -11,7 +11,7 @@ by using them to write a
 ## Prerequisites
 
 You should already be familiar with the concepts introduced in the
-[basics walkthrough](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/walkthrough).
+[basics walkthrough](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/walkthrough).
 To avoid rehashing those lessons, we're going to start with most of the game
 built out already; in fact, we'll skip everything that could be built with the
 tools introduced in that tutorial. Since that's too much code to copy-paste
@@ -57,7 +57,7 @@ defines how fast scrolling reaches maximum speed. Here's how to set them:
     Mouse.Scroll.setEasingFunction(Mouse.Scroll.easings.SMOOTH);
 
 You can read more in the
-[Mouse.Scroll](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Mouse.Scroll)
+[Mouse.Scroll](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Mouse.Scroll)
 documentation.
 
 Sometimes when your world is really big, scrolling doesn't let you move around
@@ -80,7 +80,7 @@ the default:
 
 You can also configure how fast and how far in and out you can zoom by changing
 values on the
-[Mouse.Zoom](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Mouse.Zoom)
+[Mouse.Zoom](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Mouse.Zoom)
 object.
 
 *[Review the code for this section](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/guides/mouse/rts01-scrollzoom.js)*
@@ -88,10 +88,10 @@ object.
 ## Hovering
 
 Any instance of `Box` or any of its descendants have an
-[`isHovered()`](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Box-method-isHovered)
+[`isHovered()`](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Box-method-isHovered)
 method that returns `true` or `false` depending on whether the mouse is
 currently hovered over it, respectively. For non-Box objects there is the
-[`App.isHovered()`](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App-static-method-isHovered)
+[`App.isHovered()`](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App-static-method-isHovered)
 function which accepts anything with `x`, `y`, `width`, and `height` properties.
 
 In our case, it would be nice to have soldiers change color when hovering over
@@ -146,7 +146,7 @@ appropriately. This is a utility provided by H5CGB; there is no native way to
 interact with objects drawn onto canvases because unlike DOM elements, the
 canvas is viewed as an entire image without sub-components. To get around this,
 H5CGB provides a jQuery-style
-[event system](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App.Events)
+[event system](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/App.Events)
 for canvas objects.
 
 Note the call to `e.stopPropagation()`. This prevents the event from bubbling
@@ -194,7 +194,7 @@ clarity over sophistication. At the end of the file:
     }
 
 The key here is the
-[`Mouse.Coords`](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Mouse.Coords)
+[`Mouse.Coords`](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Mouse.Coords)
 calls. The `worldX()` and `worldY()` methods return the position of the mouse
 coordinates relative to the world origin, which is what we want in order to
 interact with the world. `Mouse.Coords` also has `x` and `y` properties, which
@@ -325,7 +325,7 @@ still just using `Mouse.Coords` to get the mouse's location.
 While we're on the topic of dragging, you should know that drag-&-drop
 functionality is also supported. We don't have a good use for it in this
 game so far, but you enable it on specific `Actor`s by calling
-[Actor#setDraggable](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor-method-setDraggable).
+[Actor#setDraggable](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/api/Actor-method-setDraggable).
 For an amusing example, try executing this code in your browser's JavaScript
 console:
 
@@ -349,7 +349,7 @@ missing from the game we've built compared to full RTS games. These can be
 written with the tools we've already encountered, so they're not covered here
 for brevity. It's a good exercise to implement these features yourself. If you
 get stuck or want to see the end product, you can
-[play with](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/cnc.html) or
+[play with](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/examples/cnc.html) or
 [read the code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/cnc.js)
 of a more complete example.
 
@@ -361,11 +361,11 @@ to your friends!
 
 These tools are quite flexible and are useful in many different scenarios
 beyond an RTS game. You can
-[read the complete API reference](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/) or
+[read the complete API reference](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/) or
 [view a comprehensive feature list](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/wiki/What%27s-Included-&-API-Overview)
 to get more familiar with them. Also feel free to dig through the code; it's
 well-documented. If you'd like a recap of the basics, check out the
-[first tutorial](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/walkthrough).
+[first tutorial](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/walkthrough).
 
 Congratulations! Go
 [get the code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate) if

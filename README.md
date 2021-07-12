@@ -31,23 +31,23 @@ There are three functions there which are the backbone of your application:
 
 These functions are called automatically for you. Just fill in the logic! To
 see your project, open index.html in your browser.
-[By default](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/), it
+[By default](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/), it
 has a keyboard-controlled player who can wander around.
 
 At this point you can dive in and start building right away, explore more
 features, or dig deeper into the documentation:
 
  - **[What's Included & API Overview](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/wiki/What%27s-Included-&-API-Overview)**
- - **[Full API Documentation](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/docs/)**
- - **[Walk-Through Guide/Tutorial](http://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/walkthrough)** -
+ - **[Full API Documentation](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/)**
+ - **[Walk-Through Guide/Tutorial](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/docs/#!/guide/walkthrough)** -
    Build a Mario-style platformer game in part 1 and a C&C-style RTS game in part 2
  - **[Examples](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/tree/gh-pages/examples)**
    in the examples folder &mdash;
-   [Mario-style platformer](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
+   [Mario-style platformer](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/examples/mario.html)
    ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/mario.js));
-   [Command & Conquer-style RTS](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/cnc.html)
+   [Command & Conquer-style RTS](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/examples/cnc.html)
    ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/cnc.js));
-   [Paint](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
+   [Paint](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
    ([code](https://github.com/IceCreamYou/HTML5-Canvas-Game-Boilerplate/blob/gh-pages/examples/paint.js));
    and more!
 
@@ -106,7 +106,7 @@ This project is [MIT-licensed](https://github.com/IceCreamYou/HTML5-Canvas-Game-
 
 Compatible with all modern browsers, meaning not IE8. Also works in modern
 mobile browsers as long as you accommodate mobile input methods. The
-[Paint demo](http://icecreamyou.github.com/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
+[Paint demo](https://icecreamyou.github.io/HTML5-Canvas-Game-Boilerplate/examples/paint.html)
 is a good example of this.
 
 **Contributions are welcome!**
